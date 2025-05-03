@@ -1,10 +1,10 @@
 <?php
 session_start();
-require_once 'config.php';
+require_once '../config.php';
 
 // Cek role admin
 if (!isset($_SESSION['username']) || $_SESSION['role'] != 'admin') {
-    header("Location: login.php");
+    header("Location: ../auth/login.php");
     exit;
 }
 
@@ -478,7 +478,7 @@ $categories = mysqli_query($conn, $query);
 </head>
 
 <body>
-    <?php include 'sidebar_admin.php'; ?>
+    <?php include '../views/sidebar_admin.php'; ?>
 
     <main class="main-content">
         <div class="header">

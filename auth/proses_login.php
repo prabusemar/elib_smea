@@ -1,6 +1,6 @@
 <?php
 session_start();
-include 'config.php';
+include '../config.php';
 
 function displayError($message)
 {
@@ -49,7 +49,7 @@ if (mysqli_num_rows($result) === 1) {
         // Redirect based on role
         switch ($user['role']) {
             case 'admin':
-                header("Location: dashboard_admin.php");
+                header("Location: ../admin/dashboard_admin.php");
                 break;
             case 'staff':
                 header("Location: dashboard_staff.php");

@@ -3,7 +3,7 @@ session_start();
 
 // Check if user is logged in
 if (!isset($_SESSION['username'])) {
-    header("Location: login.php");
+    header("Location: ../auth/login.php");
     exit;
 }
 
@@ -386,7 +386,7 @@ $username = $_SESSION['username'];
 </head>
 
 <body>
-    <?php include 'sidebar_admin.php'; ?>
+    <?php include '../views/sidebar_admin.php'; ?>
 
     <!-- Main Content -->
     <main class="main-content">

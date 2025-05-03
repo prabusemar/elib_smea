@@ -1,8 +1,9 @@
 <?php
 session_start();
-include 'config.php';
+include '../config.php';
 
-function displayError($message) {
+function displayError($message)
+{
     $_SESSION['register_error'] = $message;
     header("Location: register.php");
     exit;
@@ -63,4 +64,3 @@ if (mysqli_stmt_execute($stmt)) {
 
 mysqli_stmt_close($stmt);
 mysqli_close($conn);
-?>

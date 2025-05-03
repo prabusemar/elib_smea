@@ -3,12 +3,12 @@ session_start();
 
 // Check if user is logged in and is admin
 if (!isset($_SESSION['username'])) {
-    header("Location: login.php");
+    header("Location: ../auth/login.php");
     exit;
 }
 
 // Database connection
-include 'config.php';
+include '../config.php';
 ?>
 
 <!DOCTYPE html>
@@ -472,7 +472,7 @@ include 'config.php';
 
 <body>
     <!-- Include your sidebar navigation -->
-    <?php include 'sidebar_admin.php'; ?>
+    <?php include '../views/sidebar_admin.php'; ?>
 
     <!-- Main Content -->
     <main class="main-content">

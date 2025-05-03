@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Perpustakaan Digital</title>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" />
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="assets/styles/style.css">
 </head>
 
 <body>
@@ -21,7 +21,7 @@
             </div>
         </div>
         <div class="right">
-            <button class="login-btn"><a href="login.php">Login</a></button>
+            <button class="login-btn"><a href="auth/login.php">Login</a></button>
         </div>
     </nav>
 
