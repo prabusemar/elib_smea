@@ -22,8 +22,10 @@
 
             <div class="form-group">
                 <label for="icon">Icon *</label>
-                <div id="iconPreviewContainer" style="margin-bottom: 10px;">
-                    <img id="iconPreview" src="" alt="Preview Icon" style="max-width: 100px; max-height: 100px; display: none;">
+                <div id="iconPreviewContainer">
+                    <img id="iconPreview" src="" alt="Preview Icon"
+                        style="max-width: 100px; max-height: 100px; display: none;"
+                        onerror="this.style.display='none'">
                 </div>
                 <input type="file" id="icon" name="icon" class="form-control" accept="image/*">
                 <small class="text-muted">Format: JPG, PNG, SVG. Maksimal 1MB.</small>
@@ -43,4 +45,4 @@
     <input type="hidden" name="delete_category" value="1">
 </form>
 
-<script src="../../assets/js/kategori_script.js"></script>
+<script src="<?= BASE_URL ?>/assets/js/kategori_script.js"></script>

@@ -1,8 +1,8 @@
 <?php
-include '../config.php';
-require_once '../admin/kategori/kategori_admin.php';
+// header.php
+require_once __DIR__ . '/../config.php'; // Gunakan __DIR__ untuk path absolut
+// Hapus require_once kategori_admin.php karena tidak diperlukan di sini
 ?>
-<!-- header.php -->
 <!DOCTYPE html>
 <html lang="id">
 
@@ -11,8 +11,9 @@ require_once '../admin/kategori/kategori_admin.php';
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= isset($page_title) ? $page_title : "Default Title" ?></title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <link rel="stylesheet" href="../assets/styles/kategori_admin.css">
-    <script src="../assets/js/kategori_script.js"></script>
+    <!-- Di bagian head -->
+    <link rel="stylesheet" href="<?= BASE_URL ?>/assets/styles/kategori_admin.css">
+
 </head>
 
 <body>

@@ -1,13 +1,22 @@
 <?php
+
+// Database configuration
 $host = "localhost";
 $user = "root";
-$pass = ""; // sesuaikan dengan password MySQL kamu
-$db   = "library"; // nama database
+$pass = "";
+$db = "library";
 
-// Membuat koneksi
+// Create connection
 $conn = mysqli_connect($host, $user, $pass, $db);
 
-// Cek koneksi
+// Check connection
 if (!$conn) {
-    die("Koneksi gagal: " . mysqli_connect_error());
+    die("Connection failed: " . mysqli_connect_error());
 }
+
+// Define base URL - CHANGE THIS TO YOUR ACTUAL BASE URL
+define('BASE_URL', 'http://localhost/library');
+
+// Error reporting
+error_reporting(E_ALL);
+ini_set('display_errors', 1);

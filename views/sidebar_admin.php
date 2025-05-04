@@ -8,7 +8,7 @@ if (!isset($_SESSION['username'])) {
 $username = $_SESSION['username'];
 
 // Get current page filename
-$current_page = basename(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH));
+$current_page = basename($_SERVER['PHP_SELF']);
 ?>
 
 <aside class="sidebar">
@@ -31,7 +31,7 @@ $current_page = basename(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH));
 
     <nav class="nav-menu">
         <!-- Dashboard -->
-        <a href="dashboard_admin.php" class="nav-item <?php echo ($current_page == 'dashboard_admin.php') ? 'active' : ''; ?>">
+        <a href="/library/admin/dashboard_admin.php" class="nav-item <?php echo ($current_page == 'dashboard_admin.php') ? 'active' : ''; ?>">
             <div class="tooltip">
                 <i class="fas fa-tachometer-alt"></i>
                 <span>Dashboard</span>
@@ -48,21 +48,21 @@ $current_page = basename(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH));
                     <span class="tooltiptext">Manajemen Konten</span>
                 </div>
             </div>
-            <a href="buku_admin.php" class="nav-item <?php echo ($current_page == 'buku_admin.php') ? 'active' : ''; ?>">
+            <a href="/library/admin/buku/buku_admin.php" class="nav-item <?php echo ($current_page == 'buku_admin.php') ? 'active' : ''; ?>">
                 <div class="tooltip">
                     <i class="fas fa-book"></i>
                     <span>E-Books</span>
                     <span class="tooltiptext">E-Books</span>
                 </div>
             </a>
-            <a href="../admin/kategori/kategori_admin.php" class="nav-item <?php echo ($current_page == 'kategori_admin.php') ? 'active' : ''; ?>">
+            <a href="/library/admin/kategori/kategori_admin.php" class="nav-item <?php echo ($current_page == 'kategori_admin.php') ? 'active' : ''; ?>">
                 <div class="tooltip">
                     <i class="fas fa-tags"></i>
                     <span>Kategori</span>
                     <span class="tooltiptext">Kategori</span>
                 </div>
             </a>
-            <a href="koleksi.php" class="nav-item <?php echo ($current_page == 'koleksi.php') ? 'active' : ''; ?>">
+            <a href="/library/admin/koleksi.php" class="nav-item <?php echo ($current_page == 'koleksi.php') ? 'active' : ''; ?>">
                 <div class="tooltip">
                     <i class="fas fa-layer-group"></i>
                     <span>Koleksi</span>
@@ -80,21 +80,21 @@ $current_page = basename(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH));
                     <span class="tooltiptext">Manajemen Pengguna</span>
                 </div>
             </div>
-            <a href="anggota.php" class="nav-item <?php echo ($current_page == 'anggota.php') ? 'active' : ''; ?>">
+            <a href="/library/admin/anggota.php" class="nav-item <?php echo ($current_page == 'anggota.php') ? 'active' : ''; ?>">
                 <div class="tooltip">
                     <i class="fas fa-users"></i>
                     <span>Anggota</span>
                     <span class="tooltiptext">Anggota</span>
                 </div>
             </a>
-            <a href="staff.php" class="nav-item <?php echo ($current_page == 'staff.php') ? 'active' : ''; ?>">
+            <a href="/library/admin/staff.php" class="nav-item <?php echo ($current_page == 'staff.php') ? 'active' : ''; ?>">
                 <div class="tooltip">
                     <i class="fas fa-user-shield"></i>
                     <span>Staff</span>
                     <span class="tooltiptext">Staff</span>
                 </div>
             </a>
-            <a href="grup_membaca.php" class="nav-item <?php echo ($current_page == 'grup_membaca.php') ? 'active' : ''; ?>">
+            <a href="/library/admin/grup_membaca.php" class="nav-item <?php echo ($current_page == 'grup_membaca.php') ? 'active' : ''; ?>">
                 <div class="tooltip">
                     <i class="fas fa-user-friends"></i>
                     <span>Grup Membaca</span>
@@ -112,21 +112,21 @@ $current_page = basename(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH));
                     <span class="tooltiptext">Transaksi</span>
                 </div>
             </div>
-            <a href="peminjaman.php" class="nav-item <?php echo ($current_page == 'peminjaman.php') ? 'active' : ''; ?>">
+            <a href="/library/admin/peminjaman.php" class="nav-item <?php echo ($current_page == 'peminjaman.php') ? 'active' : ''; ?>">
                 <div class="tooltip">
                     <i class="fas fa-book-reader"></i>
                     <span>Peminjaman</span>
                     <span class="tooltiptext">Peminjaman</span>
                 </div>
             </a>
-            <a href="riwayat_baca.php" class="nav-item <?php echo ($current_page == 'riwayat_baca.php') ? 'active' : ''; ?>">
+            <a href="/library/admin/riwayat_baca.php" class="nav-item <?php echo ($current_page == 'riwayat_baca.php') ? 'active' : ''; ?>">
                 <div class="tooltip">
                     <i class="fas fa-history"></i>
                     <span>Riwayat Baca</span>
                     <span class="tooltiptext">Riwayat Baca</span>
                 </div>
             </a>
-            <a href="favorit.php" class="nav-item <?php echo ($current_page == 'favorit.php') ? 'active' : ''; ?>">
+            <a href="/library/admin/favorit.php" class="nav-item <?php echo ($current_page == 'favorit.php') ? 'active' : ''; ?>">
                 <div class="tooltip">
                     <i class="fas fa-heart"></i>
                     <span>Favorit</span>
@@ -144,21 +144,21 @@ $current_page = basename(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH));
                     <span class="tooltiptext">Analitik & Laporan</span>
                 </div>
             </div>
-            <a href="laporan.php" class="nav-item <?php echo ($current_page == 'laporan.php') ? 'active' : ''; ?>">
+            <a href="/library/admin/laporan.php" class="nav-item <?php echo ($current_page == 'laporan.php') ? 'active' : ''; ?>">
                 <div class="tooltip">
                     <i class="fas fa-file-alt"></i>
                     <span>Laporan</span>
                     <span class="tooltiptext">Laporan</span>
                 </div>
             </a>
-            <a href="statistik.php" class="nav-item <?php echo ($current_page == 'statistik.php') ? 'active' : ''; ?>">
+            <a href="/library/admin/statistik.php" class="nav-item <?php echo ($current_page == 'statistik.php') ? 'active' : ''; ?>">
                 <div class="tooltip">
                     <i class="fas fa-chart-pie"></i>
                     <span>Statistik</span>
                     <span class="tooltiptext">Statistik</span>
                 </div>
             </a>
-            <a href="pencarian.php" class="nav-item <?php echo ($current_page == 'pencarian.php') ? 'active' : ''; ?>">
+            <a href="/library/admin/pencarian.php" class="nav-item <?php echo ($current_page == 'pencarian.php') ? 'active' : ''; ?>">
                 <div class="tooltip">
                     <i class="fas fa-search"></i>
                     <span>Trend Pencarian</span>
@@ -176,21 +176,21 @@ $current_page = basename(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH));
                     <span class="tooltiptext">Sistem</span>
                 </div>
             </div>
-            <a href="pengaturan.php" class="nav-item <?php echo ($current_page == 'pengaturan.php') ? 'active' : ''; ?>">
+            <a href="/library/admin/pengaturan.php" class="nav-item <?php echo ($current_page == 'pengaturan.php') ? 'active' : ''; ?>">
                 <div class="tooltip">
                     <i class="fas fa-wrench"></i>
                     <span>Pengaturan</span>
                     <span class="tooltiptext">Pengaturan</span>
                 </div>
             </a>
-            <a href="backup.php" class="nav-item <?php echo ($current_page == 'backup.php') ? 'active' : ''; ?>">
+            <a href="/library/admin/backup.php" class="nav-item <?php echo ($current_page == 'backup.php') ? 'active' : ''; ?>">
                 <div class="tooltip">
                     <i class="fas fa-database"></i>
                     <span>Backup Data</span>
                     <span class="tooltiptext">Backup Data</span>
                 </div>
             </a>
-            <a href="notifikasi.php" class="nav-item <?php echo ($current_page == 'notifikasi.php') ? 'active' : ''; ?>">
+            <a href="/library/admin/notifikasi.php" class="nav-item <?php echo ($current_page == 'notifikasi.php') ? 'active' : ''; ?>">
                 <div class="tooltip">
                     <i class="fas fa-bell"></i>
                     <span>Notifikasi</span>
@@ -201,7 +201,7 @@ $current_page = basename(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH));
     </nav>
 
     <div class="logout-container">
-        <a href="proses_logout.php" class="logout-btn">
+        <a href="/library/admin/proses_logout.php" class="logout-btn">
             <div class="tooltip">
                 <i class="fas fa-sign-out-alt"></i>
                 <span>Keluar</span>
@@ -210,7 +210,6 @@ $current_page = basename(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH));
         </a>
     </div>
 </aside>
-
 
 <style>
     /* CSS Variables */
@@ -613,6 +612,14 @@ $current_page = basename(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH));
             border-color: transparent transparent transparent var(--tooltip-bg);
         }
     }
+
+    .fas {
+        margin-right: 10px
+    }
+
+    .fa-chevron-left {
+        margin-right: 0px;
+    }
 </style>
 
 <script>
@@ -681,22 +688,21 @@ $current_page = basename(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH));
 
             // Apply styles
             tooltipText.style.cssText = `
-            position: fixed;
-            right: ${rightPosition}px;
-            top: ${topPosition}px;
-            left: 5px;
-            transform: translateY(-50%);
-            visibility: visible;
-            opacity: 1;
-            z-index: 1100;
-            background-color: rgba(51, 51, 51, 0.95);
-            backdrop-filter: blur(2px);
-            max-width: 200px;
-            padding: 8px 105px 8px 10px;
-            border-radius: 6px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
-            
-        `;
+                position: fixed;
+                right: ${rightPosition}px;
+                top: ${topPosition}px;
+                left: 5px;
+                transform: translateY(-50%);
+                visibility: visible;
+                opacity: 1;
+                z-index: 1100;
+                background-color: rgba(51, 51, 51, 0.95);
+                backdrop-filter: blur(2px);
+                max-width: 200px;
+                padding: 8px 105px 8px 10px;
+                border-radius: 6px;
+                box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+            `;
 
             // Create arrow
             tooltipText.setAttribute('data-arrow', 'right');
@@ -789,17 +795,17 @@ $current_page = basename(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH));
         // Add arrow styles dynamically
         const style = document.createElement('style');
         style.textContent = `
-        [data-arrow="right"]::after {
-            content: "";
-            position: absolute;
-            right: -10px;
-            top: 50%;
-            transform: translateY(-50%);
-            border-width: 5px;
-            border-style: solid;
-            border-color: transparent transparent transparent rgba(51, 51, 51, 0.95);
-        }
-    `;
+            [data-arrow="right"]::after {
+                content: "";
+                position: absolute;
+                right: -10px;
+                top: 50%;
+                transform: translateY(-50%);
+                border-width: 5px;
+                border-style: solid;
+                border-color: transparent transparent transparent rgba(51, 51, 51, 0.95);
+            }
+        `;
         document.head.appendChild(style);
     });
 </script>
