@@ -495,7 +495,6 @@ $kategori_result = mysqli_query($conn, $kategori_query);
 </head>
 
 <body>
-    <!-- Include your sidebar navigation -->
     <?php include '../../views/sidebar_admin.php'; ?>
 
     <!-- Main Content -->
@@ -505,6 +504,8 @@ $kategori_result = mysqli_query($conn, $kategori_query);
         </div>
 
         <div class="content-container">
+            <?php include '../../views/alert_messages.php'; ?>
+
             <div class="page-header">
                 <h2 class="page-title">Daftar Buku</h2>
                 <button class="btn btn-primary" id="addBookBtn">
@@ -526,8 +527,8 @@ $kategori_result = mysqli_query($conn, $kategori_query);
                     </select>
                     <select class="filter-select" id="statusFilter">
                         <option value="">Status</option>
-                        <option value="tersedia">Tersedia</option>
-                        <option value="dipinjam">Dipinjam</option>
+                        <option value="Tersedia">Tersedia</option>
+                        <option value="Dipinjam">Dipinjam</option>
                     </select>
                 </div>
 
@@ -547,15 +548,20 @@ $kategori_result = mysqli_query($conn, $kategori_query);
                             </tr>
                         </thead>
                         <tbody>
-                            <?php $no = 1; ?>
+                            <?php
+                            mysqli_data_seek($result, 0); // Reset pointer
+                            $no = 1;
+                            ?>
                             <?php while ($buku = mysqli_fetch_assoc($result)) : ?>
                                 <tr>
                                     <td><?= $no++ ?></td>
                                     <td>
                                         <?php if (!empty($buku['Cover'])) : ?>
-                                            <img src="<?= $buku['Cover'] ?>" alt="Cover" style="max-width: 50px;">
+                                            <img src="<?= $buku['Cover'] ?>" alt="Cover"
+                                                style="max-width: 50px; height: auto;"
+                                                onerror="this.onerror=null;this.src='https://via.placeholder.com/50x75?text=No+Cover';">
                                         <?php else : ?>
-                                            <i class="fas fa-book" style="font-size: 24px;"></i>
+                                            <i class="fas fa-book" style="font-size: 24px; color: var(--primary);"></i>
                                         <?php endif; ?>
                                     </td>
                                     <td><?= htmlspecialchars($buku['Judul']) ?></td>
@@ -604,14 +610,19 @@ $kategori_result = mysqli_query($conn, $kategori_query);
             </div>
             <form id="bookForm" enctype="multipart/form-data">
                 <input type="hidden" id="bukuId" name="bukuId">
+                <input type="hidden" id="existingCover" name="existingCover">
+                <input type="hidden" id="existingFile" name="existingFile">
+
                 <div class="form-row" style="display: flex; gap: 1rem;">
                     <div class="form-group" style="flex: 1;">
                         <label for="judul">Judul Buku*</label>
                         <input type="text" id="judul" name="judul" class="form-control" required>
+                        <div class="error-message" id="judul-error"></div>
                     </div>
                     <div class="form-group" style="flex: 1;">
                         <label for="isbn">ISBN*</label>
                         <input type="text" id="isbn" name="isbn" class="form-control" required>
+                        <div class="error-message" id="isbn-error"></div>
                     </div>
                 </div>
 
@@ -619,17 +630,20 @@ $kategori_result = mysqli_query($conn, $kategori_query);
                     <div class="form-group" style="flex: 1;">
                         <label for="penulis">Pengarang*</label>
                         <input type="text" id="penulis" name="penulis" class="form-control" required>
+                        <div class="error-message" id="penulis-error"></div>
                     </div>
                     <div class="form-group" style="flex: 1;">
                         <label for="penerbit">Penerbit*</label>
                         <input type="text" id="penerbit" name="penerbit" class="form-control" required>
+                        <div class="error-message" id="penerbit-error"></div>
                     </div>
                 </div>
 
                 <div class="form-row" style="display: flex; gap: 1rem;">
                     <div class="form-group" style="flex: 1;">
                         <label for="tahun">Tahun Terbit*</label>
-                        <input type="number" id="tahun" name="tahun" class="form-control" required>
+                        <input type="number" id="tahun" name="tahun" class="form-control" min="1900" max="<?= date('Y') ?>" required>
+                        <div class="error-message" id="tahun-error"></div>
                     </div>
                     <div class="form-group" style="flex: 1;">
                         <label for="kategori">Kategori*</label>
@@ -641,6 +655,7 @@ $kategori_result = mysqli_query($conn, $kategori_query);
                                 <option value="<?= $kategori['KategoriID'] ?>"><?= $kategori['NamaKategori'] ?></option>
                             <?php endwhile; ?>
                         </select>
+                        <div class="error-message" id="kategori-error"></div>
                     </div>
                 </div>
 
@@ -648,10 +663,12 @@ $kategori_result = mysqli_query($conn, $kategori_query);
                     <div class="form-group" style="flex: 1;">
                         <label for="bahasa">Bahasa*</label>
                         <input type="text" id="bahasa" name="bahasa" class="form-control" required>
+                        <div class="error-message" id="bahasa-error"></div>
                     </div>
                     <div class="form-group" style="flex: 1;">
                         <label for="halaman">Jumlah Halaman*</label>
-                        <input type="number" id="halaman" name="halaman" class="form-control" required>
+                        <input type="number" id="halaman" name="halaman" class="form-control" min="1" required>
+                        <div class="error-message" id="halaman-error"></div>
                     </div>
                 </div>
 
@@ -666,11 +683,13 @@ $kategori_result = mysqli_query($conn, $kategori_query);
                         <input type="file" id="cover" name="cover" class="form-control" accept="image/*">
                         <img id="coverPreview" class="cover-preview" src="" alt="Preview Cover">
                         <div class="file-info" id="currentCoverInfo"></div>
+                        <div class="error-message" id="cover-error"></div>
                     </div>
                     <div class="form-group" style="flex: 1;">
                         <label for="fileEbook">File E-Book*</label>
-                        <input type="file" id="fileEbook" name="fileEbook" class="form-control" accept=".pdf,.epub,.mobi">
+                        <input type="file" id="fileEbook" name="fileEbook" class="form-control" accept=".pdf,.epub,.mobi" required>
                         <div class="file-info" id="currentFileInfo"></div>
+                        <div class="error-message" id="fileEbook-error"></div>
                     </div>
                 </div>
 
@@ -680,11 +699,14 @@ $kategori_result = mysqli_query($conn, $kategori_query);
                         <option value="Tersedia">Tersedia</option>
                         <option value="Dipinjam">Dipinjam</option>
                     </select>
+                    <div class="error-message" id="status-error"></div>
                 </div>
 
                 <div class="modal-footer">
                     <button type="button" class="btn btn-cancel close-modal">Batal</button>
-                    <button type="submit" class="btn btn-primary">Simpan</button>
+                    <button type="submit" class="btn btn-primary" id="submitBtn">
+                        <i class="fas fa-save"></i> Simpan
+                    </button>
                 </div>
             </form>
         </div>
@@ -719,6 +741,7 @@ $kategori_result = mysqli_query($conn, $kategori_query);
         const coverPreview = document.getElementById('coverPreview');
         const currentCoverInfo = document.getElementById('currentCoverInfo');
         const currentFileInfo = document.getElementById('currentFileInfo');
+        const submitBtn = document.getElementById('submitBtn');
 
         // Show add book modal
         addBookBtn.addEventListener('click', () => {
@@ -727,6 +750,15 @@ $kategori_result = mysqli_query($conn, $kategori_query);
             currentCoverInfo.textContent = '';
             currentFileInfo.textContent = '';
             coverPreview.style.display = 'none';
+            document.getElementById('bukuId').value = '';
+            document.getElementById('existingCover').value = '';
+            document.getElementById('existingFile').value = '';
+
+            // Clear error messages
+            document.querySelectorAll('.error-message').forEach(el => {
+                el.textContent = '';
+            });
+
             bookModal.style.display = 'flex';
         });
 
@@ -752,11 +784,26 @@ $kategori_result = mysqli_query($conn, $kategori_query);
         coverInput.addEventListener('change', function() {
             const file = this.files[0];
             if (file) {
+                // Validate image file
+                const validTypes = ['image/jpeg', 'image/png', 'image/gif'];
+                if (!validTypes.includes(file.type)) {
+                    document.getElementById('cover-error').textContent = 'Format file harus JPG, PNG, atau GIF';
+                    return;
+                }
+
+                // Validate file size (max 2MB)
+                if (file.size > 2 * 1024 * 1024) {
+                    document.getElementById('cover-error').textContent = 'Ukuran file maksimal 2MB';
+                    return;
+                }
+
+                document.getElementById('cover-error').textContent = '';
+
                 const reader = new FileReader();
                 reader.onload = function(e) {
                     coverPreview.src = e.target.result;
                     coverPreview.style.display = 'block';
-                    currentCoverInfo.textContent = `File: ${file.name}`;
+                    currentCoverInfo.textContent = `File: ${file.name} (${(file.size / 1024).toFixed(2)} KB)`;
                 }
                 reader.readAsDataURL(file);
             }
@@ -766,6 +813,42 @@ $kategori_result = mysqli_query($conn, $kategori_query);
         bookForm.addEventListener('submit', function(e) {
             e.preventDefault();
 
+            // Validate form
+            let isValid = true;
+            const requiredFields = [
+                'judul', 'isbn', 'penulis', 'penerbit', 'tahun',
+                'kategori', 'bahasa', 'halaman', 'status'
+            ];
+
+            // Clear previous errors
+            document.querySelectorAll('.error-message').forEach(el => {
+                el.textContent = '';
+            });
+
+            // Validate required fields
+            requiredFields.forEach(field => {
+                const element = document.getElementById(field);
+                if (!element.value.trim()) {
+                    document.getElementById(`${field}-error`).textContent = 'Field ini wajib diisi';
+                    isValid = false;
+                }
+            });
+
+            // Validate file upload for new book
+            if (!document.getElementById('bukuId').value && !document.getElementById('fileEbook').files[0]) {
+                document.getElementById('fileEbook-error').textContent = 'File E-book wajib diunggah';
+                isValid = false;
+            }
+
+            if (!isValid) {
+                return;
+            }
+
+            // Show loading state
+            const originalBtnText = submitBtn.innerHTML;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Memproses...';
+            submitBtn.disabled = true;
+
             const formData = new FormData(this);
             const bukuId = document.getElementById('bukuId').value;
             const action = bukuId ? 'update' : 'add';
@@ -774,19 +857,28 @@ $kategori_result = mysqli_query($conn, $kategori_query);
                     method: 'POST',
                     body: formData
                 })
-                .then(response => response.json())
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
                 .then(data => {
                     if (data.success) {
                         alert(data.message);
                         bookModal.style.display = 'none';
                         window.location.reload();
                     } else {
-                        alert('Error: ' + data.message);
+                        throw new Error(data.message || 'Terjadi kesalahan saat menyimpan data');
                     }
                 })
                 .catch(error => {
                     console.error('Error:', error);
-                    alert('Terjadi kesalahan saat menyimpan data');
+                    alert('Error: ' + error.message);
+                })
+                .finally(() => {
+                    submitBtn.innerHTML = originalBtnText;
+                    submitBtn.disabled = false;
                 });
         });
 
@@ -808,18 +900,32 @@ $kategori_result = mysqli_query($conn, $kategori_query);
                         document.getElementById('halaman').value = data.JumlahHalaman;
                         document.getElementById('deskripsi').value = data.Deskripsi;
                         document.getElementById('status').value = data.Status;
+                        document.getElementById('existingCover').value = data.Cover;
+                        document.getElementById('existingFile').value = data.FileEbook;
 
                         // Show current cover info if exists
                         if (data.Cover) {
-                            currentCoverInfo.textContent = `Current: ${data.Cover.split('/').pop()}`;
-                            coverPreview.src = data.Cover;
-                            coverPreview.style.display = 'block';
+                            const fileName = data.Cover.split('/').pop();
+                            document.getElementById('currentCoverInfo').textContent = 'Current: ' + fileName;
+                            document.getElementById('coverPreview').src = data.Cover;
+                            document.getElementById('coverPreview').style.display = 'block';
+                        } else {
+                            document.getElementById('coverPreview').style.display = 'none';
+                            document.getElementById('currentCoverInfo').textContent = '';
                         }
 
                         // Show current file info if exists
                         if (data.FileEbook) {
-                            currentFileInfo.textContent = `Current: ${data.FileEbook.split('/').pop()}`;
+                            const fileName = data.FileEbook.split('/').pop();
+                            document.getElementById('currentFileInfo').textContent = 'Current: ' + fileName;
+                        } else {
+                            document.getElementById('currentFileInfo').textContent = '';
                         }
+
+                        // Clear error messages
+                        document.querySelectorAll('.error-message').forEach(el => {
+                            el.textContent = '';
+                        });
 
                         bookModal.style.display = 'flex';
                     }
@@ -839,6 +945,11 @@ $kategori_result = mysqli_query($conn, $kategori_query);
         // Delete book
         document.getElementById('confirmDelete').addEventListener('click', function() {
             const id = document.getElementById('deleteId').value;
+            const deleteBtn = this;
+            const originalBtnText = deleteBtn.innerHTML;
+
+            deleteBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Menghapus...';
+            deleteBtn.disabled = true;
 
             fetch('process_book.php?action=delete', {
                     method: 'POST',
@@ -854,12 +965,16 @@ $kategori_result = mysqli_query($conn, $kategori_query);
                         deleteModal.style.display = 'none';
                         window.location.reload();
                     } else {
-                        alert('Error: ' + data.message);
+                        throw new Error(data.message || 'Gagal menghapus buku');
                     }
                 })
                 .catch(error => {
                     console.error('Error:', error);
-                    alert('Terjadi kesalahan saat menghapus data');
+                    alert('Error: ' + error.message);
+                })
+                .finally(() => {
+                    deleteBtn.innerHTML = originalBtnText;
+                    deleteBtn.disabled = false;
                 });
         });
 
@@ -890,6 +1005,25 @@ $kategori_result = mysqli_query($conn, $kategori_query);
                 } else {
                     const rowCategory = row.querySelector('td:nth-child(7)').textContent;
                     if (rowCategory === this.options[this.selectedIndex].text) {
+                        row.style.display = '';
+                    } else {
+                        row.style.display = 'none';
+                    }
+                }
+            });
+        });
+
+        // Filter by status
+        document.getElementById('statusFilter').addEventListener('change', function() {
+            const status = this.value;
+            const rows = document.querySelectorAll('tbody tr');
+
+            rows.forEach(row => {
+                if (status === '') {
+                    row.style.display = '';
+                } else {
+                    const rowStatus = row.querySelector('td:nth-child(8) span').textContent.toLowerCase();
+                    if (rowStatus === status.toLowerCase()) {
                         row.style.display = '';
                     } else {
                         row.style.display = 'none';
