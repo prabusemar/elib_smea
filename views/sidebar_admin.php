@@ -55,7 +55,7 @@ $current_page = basename(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH));
                     <span class="tooltiptext">E-Books</span>
                 </div>
             </a>
-            <a href="kategori_admin.php" class="nav-item <?php echo ($current_page == 'kategori_admin.php') ? 'active' : ''; ?>">
+            <a href="../admin/kategori/kategori_admin.php" class="nav-item <?php echo ($current_page == 'kategori_admin.php') ? 'active' : ''; ?>">
                 <div class="tooltip">
                     <i class="fas fa-tags"></i>
                     <span>Kategori</span>
