@@ -88,7 +88,7 @@ try {
                 unlink('../../' . parse_url($coverPath, PHP_URL_PATH));
             }
 
-            $coverPath = BASE_URL . '/uploads/covers/' . $coverName;
+            $coverPath = '/uploads/covers/' . $coverName;
         }
 
         // Process ebook file upload
@@ -214,4 +214,10 @@ try {
     }
 } catch (Exception $e) {
     jsonResponse(false, $e->getMessage());
+}
+
+// Di process_book.php
+if (!move_uploaded_file($coverTmp, $coverDir . $coverName)) {
+    error_log("Failed to move uploaded file from $coverTmp to " . $coverDir . $coverName);
+    throw new Exception("Gagal mengunggah cover buku");
 }

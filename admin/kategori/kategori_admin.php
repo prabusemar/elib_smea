@@ -20,7 +20,7 @@ require_once 'kategori_handler.php';
 $query = "SELECT KategoriID, NamaKategori, Deskripsi, Icon FROM kategori ORDER BY NamaKategori";
 $categories = mysqli_query($conn, $query);
 
-$page_title = "Manajemen Kategori";
+$page_title = "Manajemen Kategori - Perpustakaan Digital";
 require_once '../../views/header.php';
 ?>
 
@@ -73,13 +73,13 @@ require_once '../../views/header.php';
                                         data-nama="<?= htmlspecialchars($row['NamaKategori']) ?>"
                                         data-deskripsi="<?= htmlspecialchars($row['Deskripsi']) ?>"
                                         data-icon="<?= htmlspecialchars($row['Icon']) ?>">
-                                        <i class="fas fa-edit"></i>
+                                        <i style="margin-left: 10px" class="fas fa-edit"></i>
                                     </button>
 
                                     <!-- Delete Button -->
                                     <button type="button" class="btn-icon btn-delete delete-category"
                                         data-id="<?= $row['KategoriID'] ?>">
-                                        <i class="fas fa-trash"></i>
+                                        <i style="margin-left: 10px" class="fas fa-trash"></i>
                                     </button>
                                 </div>
                             </td>

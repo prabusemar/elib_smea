@@ -80,7 +80,7 @@ $current_page = basename($_SERVER['PHP_SELF']);
                     <span class="tooltiptext">Manajemen Pengguna</span>
                 </div>
             </div>
-            <a href="/library/admin/anggota.php" class="nav-item <?php echo ($current_page == 'anggota.php') ? 'active' : ''; ?>">
+            <a href="/library/admin/anggota/anggota_admin.php" class="nav-item <?php echo ($current_page == 'anggota.php') ? 'active' : ''; ?>">
                 <div class="tooltip">
                     <i class="fas fa-users"></i>
                     <span>Anggota</span>
@@ -556,6 +556,7 @@ $current_page = basename($_SERVER['PHP_SELF']);
         .sidebar {
             transform: translateX(-100%);
             z-index: 1000;
+            width: var(--sidebar-width);
         }
 
         .sidebar.active {
@@ -563,39 +564,27 @@ $current_page = basename($_SERVER['PHP_SELF']);
         }
 
         .sidebar.collapsed {
-            transform: translateX(0);
+            transform: translateX(-100%);
+            width: var(--sidebar-collapsed-width);
         }
 
         .main-content {
             margin-left: 0;
-            padding-left: 20px;
         }
 
-        .sidebar.collapsed~.main-content {
-            margin-left: var(--sidebar-collapsed-width);
-        }
-
+        /* Toggle button fixes for mobile */
         .toggle-btn {
-            display: none;
+            display: flex !important;
+            right: -31px;
+            top: 20px;
+            background: white;
+            z-index: 1100;
+
         }
 
-        /* Mobile menu button */
-        .mobile-menu-btn {
-            position: fixed;
-            top: 10px;
-            left: 10px;
-            z-index: 1001;
-            background: var(--primary);
-            color: white;
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.2rem;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-            cursor: pointer;
+        .fa-chevron-left {
+
+            transform: scaleX(-1);
         }
 
         /* Mobile tooltip adjustments */
@@ -609,12 +598,19 @@ $current_page = basename($_SERVER['PHP_SELF']);
         .sidebar.collapsed .tooltip .tooltiptext::after {
             right: -10px;
             left: auto;
-            border-color: transparent transparent transparent var(--tooltip-bg);
+            border-color: transparent var(--tooltip-bg) transparent transparent;
+            transform: translateY(-50%);
+        }
+
+        /* Ensure no hamburger menu appears */
+        .mobile-menu-btn {
+            display: none !important;
         }
     }
 
+    /* Icon spacing */
     .fas {
-        margin-right: 10px
+        margin-right: 10px;
     }
 
     .fa-chevron-left {
@@ -636,8 +632,11 @@ $current_page = basename($_SERVER['PHP_SELF']);
             const savedState = localStorage.getItem('sidebarCollapsed');
 
             if (isMobile) {
-                sidebar.classList.add('collapsed');
+                // Di mobile, sidebar default hidden
+                sidebar.classList.remove('collapsed');
+                sidebar.classList.remove('active');
             } else {
+                // Di desktop, gunakan saved state
                 if (savedState === 'true') {
                     sidebar.classList.add('collapsed');
                 } else {
@@ -646,11 +645,21 @@ $current_page = basename($_SERVER['PHP_SELF']);
             }
         }
 
-        // Toggle sidebar
+        // Toggle sidebar - diperbaiki untuk mobile/desktop
         function toggleSidebar() {
-            sidebar.classList.toggle('collapsed');
-            localStorage.setItem('sidebarCollapsed', sidebar.classList.contains('collapsed'));
-            setTimeout(initTooltips, 300); // Wait for transition to complete
+            const isMobile = window.innerWidth <= 992;
+
+            if (isMobile) {
+                // Di mobile, toggle class 'active' untuk show/hide
+                sidebar.classList.toggle('active');
+            } else {
+                // Di desktop, toggle class 'collapsed'
+                sidebar.classList.toggle('collapsed');
+                localStorage.setItem('sidebarCollapsed', sidebar.classList.contains('collapsed'));
+            }
+
+            // Update tooltip positions after transition
+            setTimeout(initTooltips, 300);
         }
 
         // Initialize tooltips with perfect positioning
@@ -681,6 +690,11 @@ $current_page = basename($_SERVER['PHP_SELF']);
             const tooltip = e.currentTarget || e;
             const tooltipText = tooltip.querySelector('.tooltiptext');
             const rect = tooltip.getBoundingClientRect();
+            const isMobile = window.innerWidth <= 992;
+
+            if (isMobile && !sidebar.classList.contains('active')) {
+                return; // Don't show tooltips if sidebar is hidden on mobile
+            }
 
             // Calculate position (right side of the icon)
             const rightPosition = window.innerWidth - rect.right - 5;
@@ -688,21 +702,21 @@ $current_page = basename($_SERVER['PHP_SELF']);
 
             // Apply styles
             tooltipText.style.cssText = `
-                position: fixed;
-                right: ${rightPosition}px;
-                top: ${topPosition}px;
-                left: 5px;
-                transform: translateY(-50%);
-                visibility: visible;
-                opacity: 1;
-                z-index: 1100;
-                background-color: rgba(51, 51, 51, 0.95);
-                backdrop-filter: blur(2px);
-                max-width: 200px;
-                padding: 8px 105px 8px 10px;
-                border-radius: 6px;
-                box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
-            `;
+            position: fixed;
+            right: ${rightPosition}px;
+            top: ${topPosition}px;
+            left: 5px;
+            transform: translateY(-50%);
+            visibility: visible;
+            opacity: 1;
+            z-index: 1100;
+            background-color: var(--tooltip-bg);
+            backdrop-filter: blur(2px);
+            max-width: 200px;
+            padding: 8px 100px 8px 12px;
+            border-radius: 6px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+        `;
 
             // Create arrow
             tooltipText.setAttribute('data-arrow', 'right');
@@ -745,14 +759,19 @@ $current_page = basename($_SERVER['PHP_SELF']);
                 const isMobile = window.innerWidth <= 992;
 
                 if (isMobile) {
-                    sidebar.classList.add('collapsed');
+                    // Di mobile, pastikan sidebar hidden dan tidak collapsed
+                    sidebar.classList.remove('collapsed');
+                    sidebar.classList.remove('active');
                 } else {
+                    // Di desktop, gunakan state yang disimpan
                     const savedState = localStorage.getItem('sidebarCollapsed');
                     if (savedState === 'true') {
                         sidebar.classList.add('collapsed');
                     } else {
                         sidebar.classList.remove('collapsed');
                     }
+                    // Pastikan sidebar visible di desktop
+                    sidebar.classList.add('active');
                 }
 
                 initTooltips();
@@ -768,24 +787,9 @@ $current_page = basename($_SERVER['PHP_SELF']);
             }
         }
 
-        // Setup mobile menu toggle button
-        function setupMobileMenu() {
-            if (window.innerWidth > 992) return;
-
-            const mobileMenuBtn = document.createElement('button');
-            mobileMenuBtn.className = 'mobile-menu-btn';
-            mobileMenuBtn.innerHTML = '<i class="fas fa-bars"></i>';
-            document.body.appendChild(mobileMenuBtn);
-
-            mobileMenuBtn.addEventListener('click', () => {
-                sidebar.classList.toggle('active');
-            });
-        }
-
         // Initialize everything
         initSidebarState();
         initTooltips();
-        setupMobileMenu();
 
         // Event Listeners
         if (toggleBtn) toggleBtn.addEventListener('click', toggleSidebar);
@@ -795,17 +799,17 @@ $current_page = basename($_SERVER['PHP_SELF']);
         // Add arrow styles dynamically
         const style = document.createElement('style');
         style.textContent = `
-            [data-arrow="right"]::after {
-                content: "";
-                position: absolute;
-                right: -10px;
-                top: 50%;
-                transform: translateY(-50%);
-                border-width: 5px;
-                border-style: solid;
-                border-color: transparent transparent transparent rgba(51, 51, 51, 0.95);
-            }
-        `;
+        [data-arrow="right"]::after {
+            content: "";
+            position: absolute;
+            right: -10px;
+            top: 50%;
+            transform: translateY(-50%);
+            border-width: 5px;
+            border-style: solid;
+            border-color: transparent transparent transparent var(--tooltip-bg);
+        }
+    `;
         document.head.appendChild(style);
     });
 </script>
