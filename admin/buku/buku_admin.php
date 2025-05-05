@@ -10,11 +10,12 @@ if (!isset($_SESSION['username'])) {
 // Database connection
 include '../../config.php';
 
-// Query untuk mendapatkan data buku
+// Query untuk mendapatkan data buku dengan join ke tabel kategori
 $query = "SELECT b.*, k.NamaKategori 
           FROM buku b 
           LEFT JOIN kategori k ON b.KategoriID = k.KategoriID
-          ORDER BY b.TanggalUpload DESC";
+          WHERE b.DeletedAt IS NULL
+          ORDER BY b.CreatedAt DESC";
 $result = mysqli_query($conn, $query);
 
 // Query untuk opsi kategori
@@ -496,6 +497,41 @@ $kategori_result = mysqli_query($conn, $kategori_query);
         .fa-trash {
             margin-left: 10px;
         }
+
+        .form-row {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .form-row .form-group {
+            flex: 1;
+        }
+
+        .badge-free {
+            background-color: #d1fae5;
+            color: #065f46;
+        }
+
+        .badge-premium {
+            background-color: #e0f2fe;
+            color: #0369a1;
+        }
+
+        .badge-public {
+            background-color: #d1fae5;
+            color: #065f46;
+        }
+
+        .badge-private {
+            background-color: #fee2e2;
+            color: #b91c1c;
+        }
+
+        .badge-draft {
+            background-color: #fef3c7;
+            color: #92400e;
+        }
     </style>
 </head>
 
@@ -531,9 +567,15 @@ $kategori_result = mysqli_query($conn, $kategori_query);
                         <?php endwhile; ?>
                     </select>
                     <select class="filter-select" id="statusFilter">
-                        <option value="">Status</option>
-                        <option value="Tersedia">Tersedia</option>
-                        <option value="Dipinjam">Dipinjam</option>
+                        <option value="">Semua Status</option>
+                        <option value="Published">Published</option>
+                        <option value="Archived">Archived</option>
+                        <option value="PendingReview">Pending Review</option>
+                    </select>
+                    <select class="filter-select" id="accessFilter">
+                        <option value="">Semua Akses</option>
+                        <option value="Free">Free</option>
+                        <option value="Premium">Premium</option>
                     </select>
                 </div>
 
@@ -545,10 +587,10 @@ $kategori_result = mysqli_query($conn, $kategori_query);
                                 <th>Cover</th>
                                 <th>Judul</th>
                                 <th>Pengarang</th>
-                                <th>Penerbit</th>
-                                <th>Tahun</th>
                                 <th>Kategori</th>
+                                <th>Akses</th>
                                 <th>Status</th>
+                                <th>Dibuat</th>
                                 <th>Aksi</th>
                             </tr>
                         </thead>
@@ -562,23 +604,31 @@ $kategori_result = mysqli_query($conn, $kategori_query);
                                     <td><?= $no++ ?></td>
                                     <td>
                                         <?php if (!empty($buku['Cover'])) : ?>
-                                            <img src="<?= BASE_URL . $buku['Cover'] ?>" alt="Cover"
-                                                style="max-width: 50px; height: auto;"
+                                            <img src="<?= BASE_URL . $buku['Cover'] ?>" alt="Cover" style="max-width: 50px; height: auto;"
                                                 onerror="this.onerror=null;this.src='https://via.placeholder.com/50x75?text=No+Cover';">
                                         <?php else : ?>
                                             <i class="fas fa-book" style="font-size: 24px; color: var(--primary);"></i>
                                         <?php endif; ?>
                                     </td>
-                                    <td><?= htmlspecialchars($buku['Judul']) ?></td>
+                                    <td>
+                                        <?= htmlspecialchars($buku['Judul']) ?>
+                                        <?php if (!empty($buku['Slug'])) : ?>
+                                            <br><small class="text-muted">/<?= $buku['Slug'] ?></small>
+                                        <?php endif; ?>
+                                    </td>
                                     <td><?= htmlspecialchars($buku['Penulis']) ?></td>
-                                    <td><?= htmlspecialchars($buku['Penerbit']) ?></td>
-                                    <td><?= $buku['TahunTerbit'] ?></td>
                                     <td><?= $buku['NamaKategori'] ?? 'Tidak Berkategori' ?></td>
                                     <td>
-                                        <span class="badge <?= $buku['Status'] == 'Tersedia' ? 'badge-success' : 'badge-warning' ?>">
+                                        <span class="badge <?= $buku['JenisAkses'] === 'Premium' ? 'badge-premium' : 'badge-free' ?>">
+                                            <?= $buku['JenisAkses'] ?>
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="badge <?= 'badge-' . strtolower($buku['Status']) ?>">
                                             <?= $buku['Status'] ?>
                                         </span>
                                     </td>
+                                    <td><?= date('d M Y', strtotime($buku['CreatedAt'])) ?></td>
                                     <td>
                                         <div class="action-btns">
                                             <div class="btn-icon btn-edit" title="Edit" onclick="editBook(<?= $buku['BukuID'] ?>)">
@@ -618,41 +668,43 @@ $kategori_result = mysqli_query($conn, $kategori_query);
                 <input type="hidden" id="existingCover" name="existingCover">
                 <input type="hidden" id="existingFile" name="existingFile">
 
-                <div class="form-row" style="display: flex; gap: 1rem;">
-                    <div class="form-group" style="flex: 1;">
+                <div class="form-row">
+                    <div class="form-group">
                         <label for="judul">Judul Buku*</label>
                         <input type="text" id="judul" name="judul" class="form-control" required>
-                        <div class="error-message" id="judul-error"></div>
                     </div>
-                    <div class="form-group" style="flex: 1;">
-                        <label for="isbn">ISBN*</label>
-                        <input type="text" id="isbn" name="isbn" class="form-control" required>
-                        <div class="error-message" id="isbn-error"></div>
+                    <div class="form-group">
+                        <label for="slug">Slug URL</label>
+                        <input type="text" id="slug" name="slug" class="form-control" placeholder="Akan digenerate otomatis">
                     </div>
                 </div>
 
-                <div class="form-row" style="display: flex; gap: 1rem;">
-                    <div class="form-group" style="flex: 1;">
+                <div class="form-row">
+                    <div class="form-group">
                         <label for="penulis">Pengarang*</label>
                         <input type="text" id="penulis" name="penulis" class="form-control" required>
-                        <div class="error-message" id="penulis-error"></div>
                     </div>
-                    <div class="form-group" style="flex: 1;">
-                        <label for="penerbit">Penerbit*</label>
-                        <input type="text" id="penerbit" name="penerbit" class="form-control" required>
-                        <div class="error-message" id="penerbit-error"></div>
+                    <div class="form-group">
+                        <label for="penerbit">Penerbit</label>
+                        <input type="text" id="penerbit" name="penerbit" class="form-control">
                     </div>
                 </div>
 
-                <div class="form-row" style="display: flex; gap: 1rem;">
-                    <div class="form-group" style="flex: 1;">
-                        <label for="tahun">Tahun Terbit*</label>
-                        <input type="number" id="tahun" name="tahun" class="form-control" min="1900" max="<?= date('Y') ?>" required>
-                        <div class="error-message" id="tahun-error"></div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="tahun">Tahun Terbit</label>
+                        <input type="number" id="tahun" name="tahun" class="form-control" min="1900" max="<?= date('Y') ?>">
                     </div>
-                    <div class="form-group" style="flex: 1;">
-                        <label for="kategori">Kategori*</label>
-                        <select id="kategori" name="kategori" class="form-control" required>
+                    <div class="form-group">
+                        <label for="isbn">ISBN</label>
+                        <input type="text" id="isbn" name="isbn" class="form-control">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="kategori">Kategori</label>
+                        <select id="kategori" name="kategori" class="form-control">
                             <option value="">Pilih Kategori</option>
                             <?php
                             mysqli_data_seek($kategori_result, 0); // Reset pointer
@@ -660,20 +712,25 @@ $kategori_result = mysqli_query($conn, $kategori_query);
                                 <option value="<?= $kategori['KategoriID'] ?>"><?= $kategori['NamaKategori'] ?></option>
                             <?php endwhile; ?>
                         </select>
-                        <div class="error-message" id="kategori-error"></div>
+                    </div>
+                    <div class="form-group">
+                        <label for="bahasa">Bahasa*</label>
+                        <input type="text" id="bahasa" name="bahasa" class="form-control" value="Indonesia" required>
                     </div>
                 </div>
 
-                <div class="form-row" style="display: flex; gap: 1rem;">
-                    <div class="form-group" style="flex: 1;">
-                        <label for="bahasa">Bahasa*</label>
-                        <input type="text" id="bahasa" name="bahasa" class="form-control" required>
-                        <div class="error-message" id="bahasa-error"></div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="halaman">Jumlah Halaman</label>
+                        <input type="number" id="halaman" name="halaman" class="form-control" min="1">
                     </div>
-                    <div class="form-group" style="flex: 1;">
-                        <label for="halaman">Jumlah Halaman*</label>
-                        <input type="number" id="halaman" name="halaman" class="form-control" min="1" required>
-                        <div class="error-message" id="halaman-error"></div>
+                    <div class="form-group">
+                        <label for="format">Format E-book*</label>
+                        <select id="format" name="format" class="form-control" required>
+                            <option value="PDF">PDF</option>
+                            <option value="EPUB">EPUB</option>
+                            <option value="MOBI">MOBI</option>
+                        </select>
                     </div>
                 </div>
 
@@ -682,29 +739,46 @@ $kategori_result = mysqli_query($conn, $kategori_query);
                     <textarea id="deskripsi" name="deskripsi" class="form-control" rows="3"></textarea>
                 </div>
 
-                <div class="form-row" style="display: flex; gap: 1rem;">
-                    <div class="form-group" style="flex: 1;">
+                <div class="form-row">
+                    <div class="form-group">
                         <label for="cover">Cover Buku</label>
                         <input type="file" id="cover" name="cover" class="form-control" accept="image/*">
                         <img id="coverPreview" class="cover-preview" src="" alt="Preview Cover">
                         <div class="file-info" id="currentCoverInfo"></div>
-                        <div class="error-message" id="cover-error"></div>
                     </div>
-                    <div class="form-group" style="flex: 1;">
-                        <label for="fileEbook">File E-Book*</label>
-                        <input type="file" id="fileEbook" name="fileEbook" class="form-control" accept=".pdf,.epub,.mobi" required>
-                        <div class="file-info" id="currentFileInfo"></div>
-                        <div class="error-message" id="fileEbook-error"></div>
+                    <div class="form-group">
+                        <label for="fileEbook">File E-book (Link Google Drive)*</label>
+                        <input type="url" id="fileEbook" name="fileEbook" class="form-control"
+                            placeholder="https://drive.google.com/file/d/..." required>
+                        <small class="text-muted">Masukkan link Google Drive untuk file PDF/EPUB/MOBI</small>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="jenisAkses">Jenis Akses*</label>
+                        <select id="jenisAkses" name="jenisAkses" class="form-control" required>
+                            <option value="Free">Free</option>
+                            <option value="Premium">Premium</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="visibility">Visibilitas*</label>
+                        <select id="visibility" name="visibility" class="form-control" required>
+                            <option value="Public">Public</option>
+                            <option value="Private">Private</option>
+                            <option value="Draft">Draft</option>
+                        </select>
                     </div>
                 </div>
 
                 <div class="form-group">
                     <label for="status">Status*</label>
                     <select id="status" name="status" class="form-control" required>
-                        <option value="Tersedia">Tersedia</option>
-                        <option value="Dipinjam">Dipinjam</option>
+                        <option value="Published">Published</option>
+                        <option value="Archived">Archived</option>
+                        <option value="PendingReview">Pending Review</option>
                     </select>
-                    <div class="error-message" id="status-error"></div>
                 </div>
 
                 <div class="modal-footer">
@@ -735,341 +809,484 @@ $kategori_result = mysqli_query($conn, $kategori_query);
         </div>
     </div>
 
-
     <script>
-        // Define BASE_URL globally
-        const BASE_URL = '<?= BASE_URL ?>';
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log("DOM fully loaded and parsed");
 
-        // Modal functionality
-        const addBookBtn = document.getElementById('addBookBtn');
-        const bookModal = document.getElementById('bookModal');
-        const deleteModal = document.getElementById('deleteModal');
-        const closeModalBtns = document.querySelectorAll('.close-modal');
-        const bookForm = document.getElementById('bookForm');
-        const coverInput = document.getElementById('cover');
-        const coverPreview = document.getElementById('coverPreview');
-        const currentCoverInfo = document.getElementById('currentCoverInfo');
-        const currentFileInfo = document.getElementById('currentFileInfo');
-        const submitBtn = document.getElementById('submitBtn');
+            // Define BASE_URL globally
+            const BASE_URL = '<?= BASE_URL ?>';
 
-        // Show add book modal
-        addBookBtn.addEventListener('click', () => {
-            document.getElementById('modalTitle').textContent = 'Tambah Buku Baru';
-            bookForm.reset();
-            currentCoverInfo.textContent = '';
-            currentFileInfo.textContent = '';
-            coverPreview.style.display = 'none';
-            document.getElementById('bukuId').value = '';
-            document.getElementById('existingCover').value = '';
-            document.getElementById('existingFile').value = '';
+            // Get all necessary elements
+            const addBookBtn = document.getElementById('addBookBtn');
+            const bookModal = document.getElementById('bookModal');
+            const deleteModal = document.getElementById('deleteModal');
+            const closeModalBtns = document.querySelectorAll('.close-modal');
+            const bookForm = document.getElementById('bookForm');
+            const coverInput = document.getElementById('cover');
+            const coverPreview = document.getElementById('coverPreview');
+            const currentCoverInfo = document.getElementById('currentCoverInfo');
+            const submitBtn = document.getElementById('submitBtn');
+            const searchInput = document.getElementById('searchInput');
+            const categoryFilter = document.getElementById('categoryFilter');
+            const statusFilter = document.getElementById('statusFilter');
+            const accessFilter = document.getElementById('accessFilter');
+            const judulInput = document.getElementById('judul');
+            const slugInput = document.getElementById('slug');
+            const isbnInput = document.getElementById('isbn');
 
-            // Clear error messages
-            document.querySelectorAll('.error-message').forEach(el => {
-                el.textContent = '';
+            // Debugging: Check if elements exist
+            console.log({
+                addBookBtn,
+                bookModal,
+                deleteModal,
+                bookForm,
+                coverInput,
+                coverPreview,
+                currentCoverInfo,
+                submitBtn
             });
 
-            bookModal.style.display = 'flex';
-        });
+            // ======================
+            // MODAL FUNCTIONALITY
+            // ======================
 
-        // Close modals
-        closeModalBtns.forEach(btn => {
-            btn.addEventListener('click', () => {
-                bookModal.style.display = 'none';
-                deleteModal.style.display = 'none';
-            });
-        });
+            // Show add book modal
+            if (addBookBtn && bookModal) {
+                addBookBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    console.log("Add book button clicked");
 
-        // Close modal when clicking outside
-        window.addEventListener('click', (e) => {
-            if (e.target === bookModal) {
-                bookModal.style.display = 'none';
-            }
-            if (e.target === deleteModal) {
-                deleteModal.style.display = 'none';
-            }
-        });
+                    // Set modal title
+                    document.getElementById('modalTitle').textContent = 'Tambah Buku Baru';
 
-        // Cover image preview
-        coverInput.addEventListener('change', function() {
-            const file = this.files[0];
-            if (file) {
-                // Validate image file
-                const validTypes = ['image/jpeg', 'image/png', 'image/gif'];
-                if (!validTypes.includes(file.type)) {
-                    document.getElementById('cover-error').textContent = 'Format file harus JPG, PNG, atau GIF';
-                    return;
-                }
+                    // Reset form
+                    if (bookForm) bookForm.reset();
 
-                // Validate file size (max 2MB)
-                if (file.size > 2 * 1024 * 1024) {
-                    document.getElementById('cover-error').textContent = 'Ukuran file maksimal 2MB';
-                    return;
-                }
-
-                document.getElementById('cover-error').textContent = '';
-
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    coverPreview.src = e.target.result;
-                    coverPreview.style.display = 'block';
-                    currentCoverInfo.textContent = `File: ${file.name} (${(file.size / 1024).toFixed(2)} KB)`;
-                }
-                reader.readAsDataURL(file);
-            }
-        });
-
-        // Form submission
-        bookForm.addEventListener('submit', function(e) {
-            e.preventDefault();
-
-            // Validate form
-            let isValid = true;
-            const requiredFields = [
-                'judul', 'isbn', 'penulis', 'penerbit', 'tahun',
-                'kategori', 'bahasa', 'halaman', 'status'
-            ];
-
-            // Clear previous errors
-            document.querySelectorAll('.error-message').forEach(el => {
-                el.textContent = '';
-            });
-
-            // Validate required fields
-            requiredFields.forEach(field => {
-                const element = document.getElementById(field);
-                if (!element.value.trim()) {
-                    document.getElementById(`${field}-error`).textContent = 'Field ini wajib diisi';
-                    isValid = false;
-                }
-            });
-
-            // Validate file upload for new book
-            if (!document.getElementById('bukuId').value && !document.getElementById('fileEbook').files[0]) {
-                document.getElementById('fileEbook-error').textContent = 'File E-book wajib diunggah';
-                isValid = false;
-            }
-
-            if (!isValid) {
-                return;
-            }
-
-            // Show loading state
-            const originalBtnText = submitBtn.innerHTML;
-            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Memproses...';
-            submitBtn.disabled = true;
-
-            const formData = new FormData(this);
-            const bukuId = document.getElementById('bukuId').value;
-            const action = bukuId ? 'update' : 'add';
-
-            fetch('process_book.php?action=' + action, {
-                    method: 'POST',
-                    body: formData
-                })
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error('Network response was not ok');
-                    }
-                    return response.json();
-                })
-                .then(data => {
-                    if (data.success) {
-                        alert(data.message);
-                        bookModal.style.display = 'none';
-                        window.location.reload();
-                    } else {
-                        throw new Error(data.message || 'Terjadi kesalahan saat menyimpan data');
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    alert('Error: ' + error.message);
-                })
-                .finally(() => {
-                    submitBtn.innerHTML = originalBtnText;
-                    submitBtn.disabled = false;
-                });
-        });
-
-        // Improved edit book function with better error handling
-        function editBook(id) {
-            // Tampilkan loading state
-            const originalBtnText = submitBtn.innerHTML;
-            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Memuat...';
-            submitBtn.disabled = true;
-
-            fetch('get_book.php?id=' + id)
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error('Network response was not ok');
-                    }
-                    return response.json();
-                })
-                .then(data => {
-                    if (!data.success || !data.data) {
-                        throw new Error(data.message || 'Data buku tidak valid');
-                    }
-
-                    const book = data.data;
-
-                    // Isi form dengan data buku
-                    document.getElementById('modalTitle').textContent = 'Edit Buku';
-                    document.getElementById('bukuId').value = book.BukuID;
-                    document.getElementById('judul').value = book.Judul || '';
-                    document.getElementById('isbn').value = book.ISBN || '';
-                    document.getElementById('penulis').value = book.Penulis || '';
-                    document.getElementById('penerbit').value = book.Penerbit || '';
-                    document.getElementById('tahun').value = book.TahunTerbit || '';
-                    document.getElementById('kategori').value = book.KategoriID || '';
-                    document.getElementById('bahasa').value = book.Bahasa || '';
-                    document.getElementById('halaman').value = book.JumlahHalaman || '';
-                    document.getElementById('deskripsi').value = book.Deskripsi || '';
-                    document.getElementById('status').value = book.Status || 'Tersedia';
-                    document.getElementById('existingCover').value = book.Cover || '';
-                    document.getElementById('existingFile').value = book.FileEbook || '';
-
-                    // Handle cover preview
-                    const coverPreview = document.getElementById('coverPreview');
-                    if (book.Cover) {
-                        document.getElementById('currentCoverInfo').textContent =
-                            'Current: ' + (book.Cover.split('/').pop() || 'cover');
-
-                        coverPreview.src = book.Cover;
-                        coverPreview.style.display = 'block';
-
-                        // Fallback jika gambar error
-                        coverPreview.onerror = function() {
-                            this.src = 'https://via.placeholder.com/150x200?text=Cover+Tidak+Tersedia';
-                        };
-                    } else {
+                    // Clear cover preview
+                    if (currentCoverInfo) currentCoverInfo.textContent = '';
+                    if (coverPreview) {
                         coverPreview.style.display = 'none';
-                        document.getElementById('currentCoverInfo').textContent = '';
+                        coverPreview.src = '';
                     }
 
-                    // Handle file info
-                    if (book.FileEbook) {
-                        document.getElementById('currentFileInfo').textContent =
-                            'Current: ' + (book.FileEbook.split('/').pop() || 'ebook');
-                    } else {
-                        document.getElementById('currentFileInfo').textContent = '';
-                    }
+                    // Clear hidden fields
+                    document.getElementById('bukuId').value = '';
+                    document.getElementById('existingCover').value = '';
+                    document.getElementById('existingFile').value = '';
+
+                    // Set default values
+                    document.getElementById('bahasa').value = 'Indonesia';
+                    document.getElementById('format').value = 'PDF';
+                    document.getElementById('jenisAkses').value = 'Free';
+                    document.getElementById('visibility').value = 'Public';
+                    document.getElementById('status').value = 'Published';
 
                     // Clear error messages
                     document.querySelectorAll('.error-message').forEach(el => {
                         el.textContent = '';
                     });
 
+                    // Show modal
                     bookModal.style.display = 'flex';
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    alert('Gagal memuat data buku: ' + error.message);
-                })
-                .finally(() => {
-                    submitBtn.innerHTML = originalBtnText;
-                    submitBtn.disabled = false;
+                    console.log("Modal should be visible now");
                 });
-        }
+            } else {
+                console.error("Critical elements missing - addBookBtn or bookModal not found");
+            }
 
-        // Delete confirmation
-        function confirmDelete(id) {
-            document.getElementById('deleteId').value = id;
-            deleteModal.style.display = 'flex';
-        }
-
-        // Delete book
-        document.getElementById('confirmDelete').addEventListener('click', function() {
-            const id = document.getElementById('deleteId').value;
-            const deleteBtn = this;
-            const originalBtnText = deleteBtn.innerHTML;
-
-            deleteBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Menghapus...';
-            deleteBtn.disabled = true;
-
-            fetch('process_book.php?action=delete', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded',
-                    },
-                    body: 'id=' + id
-                })
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error('Network response was not ok');
-                    }
-                    return response.json();
-                })
-                .then(data => {
-                    if (data.success) {
-                        alert(data.message);
-                        deleteModal.style.display = 'none';
-                        window.location.reload();
-                    } else {
-                        throw new Error(data.message || 'Gagal menghapus buku');
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    alert('Error: ' + error.message);
-                })
-                .finally(() => {
-                    deleteBtn.innerHTML = originalBtnText;
-                    deleteBtn.disabled = false;
+            // Close modals
+            if (closeModalBtns) {
+                closeModalBtns.forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        if (bookModal) bookModal.style.display = 'none';
+                        if (deleteModal) deleteModal.style.display = 'none';
+                    });
                 });
-        });
+            }
 
-        // Search functionality
-        document.getElementById('searchInput').addEventListener('keyup', function() {
-            const searchTerm = this.value.toLowerCase();
-            const rows = document.querySelectorAll('tbody tr');
-
-            rows.forEach(row => {
-                const title = row.querySelector('td:nth-child(3)').textContent.toLowerCase();
-                const author = row.querySelector('td:nth-child(4)').textContent.toLowerCase();
-                if (title.includes(searchTerm) || author.includes(searchTerm)) {
-                    row.style.display = '';
-                } else {
-                    row.style.display = 'none';
+            // Close modal when clicking outside
+            window.addEventListener('click', function(e) {
+                if (e.target === bookModal) {
+                    bookModal.style.display = 'none';
+                }
+                if (e.target === deleteModal) {
+                    deleteModal.style.display = 'none';
                 }
             });
-        });
 
-        // Filter by category
-        document.getElementById('categoryFilter').addEventListener('change', function() {
-            const categoryId = this.value;
-            const rows = document.querySelectorAll('tbody tr');
+            // ======================
+            // FORM FUNCTIONALITY
+            // ======================
 
-            rows.forEach(row => {
-                if (categoryId === '') {
-                    row.style.display = '';
-                } else {
-                    const rowCategory = row.querySelector('td:nth-child(7)').textContent;
-                    if (rowCategory === this.options[this.selectedIndex].text) {
-                        row.style.display = '';
-                    } else {
-                        row.style.display = 'none';
+            // Cover image preview
+            if (coverInput && coverPreview) {
+                coverInput.addEventListener('change', function() {
+                    const file = this.files[0];
+                    if (file) {
+                        // Validate image file
+                        const validTypes = ['image/jpeg', 'image/png', 'image/gif'];
+                        if (!validTypes.includes(file.type)) {
+                            alert('Format file harus JPG, PNG, atau GIF');
+                            this.value = '';
+                            return;
+                        }
+
+                        // Validate file size (max 2MB)
+                        if (file.size > 2 * 1024 * 1024) {
+                            alert('Ukuran file maksimal 2MB');
+                            this.value = '';
+                            return;
+                        }
+
+                        const reader = new FileReader();
+                        reader.onload = function(e) {
+                            coverPreview.src = e.target.result;
+                            coverPreview.style.display = 'block';
+                            if (currentCoverInfo) {
+                                currentCoverInfo.textContent = `File: ${file.name} (${(file.size / 1024).toFixed(2)} KB)`;
+                            }
+                        }
+                        reader.readAsDataURL(file);
                     }
-                }
-            });
-        });
+                });
+            }
 
-        // Filter by status
-        document.getElementById('statusFilter').addEventListener('change', function() {
-            const status = this.value;
-            const rows = document.querySelectorAll('tbody tr');
-
-            rows.forEach(row => {
-                if (status === '') {
-                    row.style.display = '';
-                } else {
-                    const rowStatus = row.querySelector('td:nth-child(8) span').textContent.toLowerCase();
-                    if (rowStatus === status.toLowerCase()) {
-                        row.style.display = '';
-                    } else {
-                        row.style.display = 'none';
+            // Auto-generate slug from title
+            if (judulInput && slugInput) {
+                judulInput.addEventListener('input', function() {
+                    const title = this.value;
+                    if (!slugInput.value) {
+                        const slug = title.toLowerCase()
+                            .replace(/[^\w\s-]/g, '')
+                            .replace(/[\s_-]+/g, '-')
+                            .replace(/^-+|-+$/g, '');
+                        slugInput.value = slug;
                     }
-                }
-            });
+                });
+            }
+
+            // ISBN format validation
+            if (isbnInput) {
+                isbnInput.addEventListener('input', function() {
+                    // Allow only numbers and hyphens
+                    this.value = this.value.replace(/[^0-9-]/g, '');
+
+                    // Auto-format ISBN if typing numbers only
+                    if (this.value.length === 13 && !this.value.includes('-')) {
+                        this.value = `${this.value.substring(0, 3)}-${this.value.substring(3, 8)}-${this.value.substring(8, 12)}-${this.value.substring(12)}`;
+                    }
+                });
+            }
+
+            // Form submission
+            if (bookForm) {
+                bookForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    console.log("Form submission started");
+
+                    // Validate form
+                    let isValid = true;
+                    const requiredFields = [
+                        'judul', 'penulis', 'bahasa', 'format', 'fileEbook'
+                    ];
+
+                    // Clear previous errors
+                    document.querySelectorAll('.error-message').forEach(el => {
+                        el.textContent = '';
+                    });
+
+                    // Validate required fields
+                    requiredFields.forEach(field => {
+                        const element = document.getElementById(field);
+                        if (element && !element.value.trim()) {
+                            const errorElement = document.getElementById(`${field}-error`) || element.nextElementSibling;
+                            if (errorElement) {
+                                errorElement.textContent = 'Field ini wajib diisi';
+                            }
+                            isValid = false;
+                        }
+                    });
+
+                    // Validate ISBN format if provided
+                    const isbnValue = isbnInput.value.trim();
+                    if (isbnValue && !/^(\d{3}-)?\d{1,5}-\d{1,7}-\d{1,7}-\d{1}$|^\d{9}[\dX]$/i.test(isbnValue)) {
+                        alert('Format ISBN tidak valid. Gunakan format seperti 978-602-06-3724-2');
+                        isValid = false;
+                    }
+
+                    if (!isValid) {
+                        alert('Harap isi semua field yang wajib diisi dan pastikan format valid');
+                        return;
+                    }
+
+                    // Show loading state
+                    const originalBtnText = submitBtn.innerHTML;
+                    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Memproses...';
+                    submitBtn.disabled = true;
+
+                    const formData = new FormData(this);
+                    const bukuId = document.getElementById('bukuId').value;
+                    const action = bukuId ? 'update' : 'add';
+
+                    fetch('process_book.php?action=' + action, {
+                            method: 'POST',
+                            body: formData
+                        })
+                        .then(response => {
+                            if (!response.ok) {
+                                throw new Error('Network response was not ok');
+                            }
+                            return response.json();
+                        })
+                        .then(data => {
+                            if (data.success) {
+                                alert(data.message);
+                                bookModal.style.display = 'none';
+                                window.location.reload();
+                            } else {
+                                throw new Error(data.message || 'Terjadi kesalahan saat menyimpan data');
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                            alert('Error: ' + error.message);
+                        })
+                        .finally(() => {
+                            submitBtn.innerHTML = originalBtnText;
+                            submitBtn.disabled = false;
+                        });
+                });
+            }
+
+            // ======================
+            // BOOK MANAGEMENT
+            // ======================
+
+            // Edit book function
+            window.editBook = function(id) {
+                console.log("Editing book ID:", id);
+
+                // Show loading state
+                const originalBtnText = submitBtn.innerHTML;
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Memuat...';
+                submitBtn.disabled = true;
+
+                // Clear previous data
+                coverPreview.style.display = 'none';
+                coverPreview.src = '';
+                currentCoverInfo.textContent = '';
+
+                fetch('get_book.php?id=' + id)
+                    .then(response => {
+                        // First check for HTTP errors
+                        if (!response.ok) {
+                            return response.text().then(text => {
+                                throw new Error(`HTTP error! status: ${response.status}, response: ${text}`);
+                            });
+                        }
+
+                        // Then check if response is JSON
+                        const contentType = response.headers.get('content-type');
+                        if (!contentType || !contentType.includes('application/json')) {
+                            return response.text().then(text => {
+                                throw new Error(`Expected JSON but got: ${text.substring(0, 100)}`);
+                            });
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        if (!data.success) {
+                            throw new Error(data.message || 'Gagal memuat data buku');
+                        }
+
+                        const book = data.data;
+                        console.log("Book data:", book);
+
+                        // Fill form
+                        document.getElementById('modalTitle').textContent = 'Edit Buku';
+                        document.getElementById('bukuId').value = book.BukuID;
+                        document.getElementById('judul').value = book.Judul || '';
+                        document.getElementById('slug').value = book.Slug || '';
+                        document.getElementById('penulis').value = book.Penulis || '';
+                        document.getElementById('penerbit').value = book.Penerbit || '';
+                        document.getElementById('tahun').value = book.TahunTerbit || '';
+                        document.getElementById('isbn').value = book.ISBN || ''; // Handle null ISBN
+                        document.getElementById('kategori').value = book.KategoriID || '';
+                        document.getElementById('bahasa').value = book.Bahasa || 'Indonesia';
+                        document.getElementById('halaman').value = book.JumlahHalaman || '';
+                        document.getElementById('deskripsi').value = book.Deskripsi || '';
+                        document.getElementById('format').value = book.FormatEbook || 'PDF';
+                        document.getElementById('fileEbook').value = book.FileEbook || '';
+                        document.getElementById('jenisAkses').value = book.JenisAkses || 'Free';
+                        document.getElementById('visibility').value = book.Visibility || 'Public';
+                        document.getElementById('status').value = book.Status || 'Published';
+                        document.getElementById('existingCover').value = book.Cover || '';
+                        document.getElementById('existingFile').value = book.FileEbook || '';
+
+                        // Handle cover image
+                        if (book.Cover) {
+                            // Ensure proper URL
+                            let coverUrl = book.Cover;
+                            if (!coverUrl.startsWith('http') && !coverUrl.startsWith('/')) {
+                                coverUrl = BASE_URL + coverUrl;
+                            }
+
+                            coverPreview.src = coverUrl;
+                            coverPreview.style.display = 'block';
+                            currentCoverInfo.textContent = 'Current cover';
+
+                            coverPreview.onerror = function() {
+                                this.src = 'https://via.placeholder.com/150x200?text=Cover+Error';
+                                console.error('Failed to load cover:', coverUrl);
+                            };
+                        }
+
+                        bookModal.style.display = 'flex';
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('Gagal memuat data buku: ' + error.message);
+                    })
+                    .finally(() => {
+                        submitBtn.innerHTML = originalBtnText;
+                        submitBtn.disabled = false;
+                    });
+            };
+
+            // Delete confirmation
+            window.confirmDelete = function(id) {
+                console.log("Confirm delete for ID:", id);
+                document.getElementById('deleteId').value = id;
+                deleteModal.style.display = 'flex';
+            };
+
+            // Delete book
+            if (document.getElementById('confirmDelete')) {
+                document.getElementById('confirmDelete').addEventListener('click', function() {
+                    const id = document.getElementById('deleteId').value;
+                    const deleteBtn = this;
+                    const originalBtnText = deleteBtn.innerHTML;
+
+                    deleteBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Menghapus...';
+                    deleteBtn.disabled = true;
+
+                    fetch('process_book.php?action=delete', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/x-www-form-urlencoded',
+                            },
+                            body: 'id=' + id
+                        })
+                        .then(response => {
+                            if (!response.ok) {
+                                throw new Error('Network response was not ok');
+                            }
+                            return response.json();
+                        })
+                        .then(data => {
+                            if (data.success) {
+                                alert(data.message);
+                                deleteModal.style.display = 'none';
+                                window.location.reload();
+                            } else {
+                                throw new Error(data.message || 'Gagal menghapus buku');
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                            alert('Error: ' + error.message);
+                        })
+                        .finally(() => {
+                            deleteBtn.innerHTML = originalBtnText;
+                            deleteBtn.disabled = false;
+                        });
+                });
+            }
+
+            // ======================
+            // SEARCH & FILTER
+            // ======================
+
+            // Search functionality
+            if (searchInput) {
+                searchInput.addEventListener('keyup', function() {
+                    const searchTerm = this.value.toLowerCase();
+                    const rows = document.querySelectorAll('tbody tr');
+
+                    rows.forEach(row => {
+                        const title = row.querySelector('td:nth-child(3)').textContent.toLowerCase();
+                        const author = row.querySelector('td:nth-child(4)').textContent.toLowerCase();
+                        if (title.includes(searchTerm) || author.includes(searchTerm)) {
+                            row.style.display = '';
+                        } else {
+                            row.style.display = 'none';
+                        }
+                    });
+                });
+            }
+
+            // Filter by category
+            if (categoryFilter) {
+                categoryFilter.addEventListener('change', function() {
+                    const categoryId = this.value;
+                    const rows = document.querySelectorAll('tbody tr');
+
+                    rows.forEach(row => {
+                        if (categoryId === '') {
+                            row.style.display = '';
+                        } else {
+                            const rowCategory = row.querySelector('td:nth-child(5)').textContent;
+                            if (rowCategory === this.options[this.selectedIndex].text) {
+                                row.style.display = '';
+                            } else {
+                                row.style.display = 'none';
+                            }
+                        }
+                    });
+                });
+            }
+
+            // Filter by status
+            if (statusFilter) {
+                statusFilter.addEventListener('change', function() {
+                    const status = this.value;
+                    const rows = document.querySelectorAll('tbody tr');
+
+                    rows.forEach(row => {
+                        if (status === '') {
+                            row.style.display = '';
+                        } else {
+                            const rowStatus = row.querySelector('td:nth-child(7) span').textContent.toLowerCase();
+                            if (rowStatus === status.toLowerCase()) {
+                                row.style.display = '';
+                            } else {
+                                row.style.display = 'none';
+                            }
+                        }
+                    });
+                });
+            }
+
+            // Filter by access type
+            if (accessFilter) {
+                accessFilter.addEventListener('change', function() {
+                    const accessType = this.value;
+                    const rows = document.querySelectorAll('tbody tr');
+
+                    rows.forEach(row => {
+                        if (accessType === '') {
+                            row.style.display = '';
+                        } else {
+                            const rowAccess = row.querySelector('td:nth-child(6) span').textContent;
+                            if (rowAccess === accessType) {
+                                row.style.display = '';
+                            } else {
+                                row.style.display = 'none';
+                            }
+                        }
+                    });
+                });
+            }
         });
     </script>
 </body>
