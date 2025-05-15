@@ -20,3 +20,9 @@ define('BASE_URL', 'http://localhost/library');
 // Error reporting
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
+
+error_log("Accessed: " . $_SERVER['REQUEST_URI']);
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+error_log("Session status: " . json_encode($_SESSION));
