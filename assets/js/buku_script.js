@@ -27,6 +27,7 @@ document.addEventListener('DOMContentLoaded', function () {
             document.getElementById('bahasa').value = this.dataset.bahasa || 'Indonesia';
             document.getElementById('format').value = this.dataset.format || 'PDF';
             document.getElementById('status').value = this.dataset.status || 'Free';
+            document.getElementById('ukuran').value = this.dataset.ukuran || '';
 
             // Handle cover preview
             const coverPath = this.dataset.cover || '';
