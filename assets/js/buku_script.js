@@ -47,10 +47,10 @@ document.addEventListener('DOMContentLoaded', function () {
             document.getElementById('driveurl').value = btn.dataset.driveurl;
             document.getElementById('deskripsi').value = btn.dataset.deskripsi;
             document.getElementById('halaman').value = btn.dataset.halaman;
-            document.getElementById('bahasa').value = btn.dataset.bahasa;
+            document.getElementById('bahasa').value = btn.dataset.bahasa || 'Indonesia';
             document.getElementById('format').value = btn.dataset.format;
             document.getElementById('ukuran').value = btn.dataset.ukuran;
-            document.getElementById('status').value = btn.dataset.status;
+            document.getElementById('status').value = btn.dataset.status || 'Free';
             document.getElementById('cover').value = btn.dataset.cover;
 
             // Set rating
@@ -140,8 +140,9 @@ document.addEventListener('DOMContentLoaded', function () {
         const tahun = document.getElementById('tahun').value;
         const status = document.getElementById('status').value;
         const driveurl = document.getElementById('driveurl').value.trim();
+        const bahasa = document.getElementById('bahasa').value;
 
-        if (!judul || !penulis || !tahun || !status || !driveurl) {
+        if (!judul || !penulis || !tahun || !status || !driveurl || !bahasa) {
             e.preventDefault();
             alert('Field yang wajib diisi tidak boleh kosong!');
             return;

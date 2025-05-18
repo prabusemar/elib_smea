@@ -22,14 +22,17 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $deskripsi = mysqli_real_escape_string($conn, trim($_POST['deskripsi'] ?? ''));
         $halaman = !empty($_POST['halaman']) ? (int)$_POST['halaman'] : NULL;
         $bahasa = mysqli_real_escape_string($conn, trim($_POST['bahasa'] ?? 'Indonesia'));
+        // Pastikan nilai bahasa valid
+        $allowed_bahasa = ['Indonesia', 'Inggris', 'Arab', 'Lainnya'];
+        $bahasa_valid = in_array($bahasa, $allowed_bahasa) ? $bahasa : 'Indonesia';
         $format = mysqli_real_escape_string($conn, trim($_POST['format'] ?? 'PDF'));
         $ukuran = !empty($_POST['ukuran']) ? (float)$_POST['ukuran'] : NULL;
         $rating = !empty($_POST['rating']) ? (float)$_POST['rating'] : 0.0;
-        $status = mysqli_real_escape_string($conn, trim($_POST['status'] ?? 'free'));
+        $status = mysqli_real_escape_string($conn, trim($_POST['status'] ?? 'Free'));
         $cover = '';
 
         // Validasi input
-        if (empty($judul) || empty($penulis) || empty($tahun) || empty($status) || empty($driveurl)) {
+        if (empty($judul) || empty($penulis) || empty($tahun) || empty($status) || empty($driveurl) || empty($bahasa)) {
             $_SESSION['error'] = "Field yang wajib diisi tidak boleh kosong!";
             header("Location: buku_admin.php");
             exit;
@@ -80,17 +83,20 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             exit;
         }
 
+        // Debug: Tampilkan nilai sebelum di-bind
+        error_log("Bahasa value: " . $bahasa_valid);
+
         // Insert ke database
         $query = "INSERT INTO buku (
-                    Judul, Penulis, Penerbit, TahunTerbit, ISBN, KategoriID, 
-                    DriveURL, Deskripsi, JumlahHalaman, Bahasa, FormatEbook, 
-                    UkuranFile, Rating, Status, Cover
-                  ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                Judul, Penulis, Penerbit, TahunTerbit, ISBN, KategoriID, 
+                DriveURL, Deskripsi, JumlahHalaman, Bahasa, FormatEbook, 
+                UkuranFile, Rating, Status, Cover
+              ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
         $stmt = mysqli_prepare($conn, $query);
         mysqli_stmt_bind_param(
             $stmt,
-            "sssisisssisdiss",
+            "sssisisssssdiss", // Perhatikan jumlah 's' sesuai parameter
             $judul,
             $penulis,
             $penerbit,
@@ -100,14 +106,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $driveurl,
             $deskripsi,
             $halaman,
-            $bahasa,
+            $bahasa_valid,  // Gunakan yang sudah divalidasi
             $format,
             $ukuran,
             $rating,
             $status,
             $cover
         );
-
         if (mysqli_stmt_execute($stmt)) {
             $_SESSION['success'] = "Buku berhasil ditambahkan!";
         } else {
@@ -135,18 +140,21 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $deskripsi = mysqli_real_escape_string($conn, trim($_POST['deskripsi'] ?? ''));
         $halaman = !empty($_POST['halaman']) ? (int)$_POST['halaman'] : NULL;
         $bahasa = mysqli_real_escape_string($conn, trim($_POST['bahasa'] ?? 'Indonesia'));
+        $allowed_bahasa = ['Indonesia', 'Inggris', 'Arab', 'Lainnya'];
+        $bahasa_valid = in_array($bahasa, $allowed_bahasa) ? $bahasa : 'Indonesia';
         $format = mysqli_real_escape_string($conn, trim($_POST['format'] ?? 'PDF'));
         $ukuran = !empty($_POST['ukuran']) ? (float)$_POST['ukuran'] : NULL;
         $rating = !empty($_POST['rating']) ? (float)$_POST['rating'] : 0.0;
-        $status = mysqli_real_escape_string($conn, trim($_POST['status'] ?? 'free'));
+        $status = mysqli_real_escape_string($conn, trim($_POST['status'] ?? 'Free'));
         $cover = mysqli_real_escape_string($conn, trim($_POST['existing_cover'] ?? ''));
 
         // Validasi input
-        if (empty($judul) || empty($penulis) || empty($tahun) || empty($status) || empty($driveurl)) {
+        if (empty($judul) || empty($penulis) || empty($tahun) || empty($status) || empty($driveurl) || empty($bahasa)) {
             $_SESSION['error'] = "Field yang wajib diisi tidak boleh kosong!";
             header("Location: buku_admin.php");
             exit;
         }
+
 
         // Validasi URL Google Drive
         if (!filter_var($driveurl, FILTER_VALIDATE_URL) || strpos($driveurl, 'drive.google.com') === false) {
@@ -195,16 +203,16 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
         // Update database
         $query = "UPDATE buku SET 
-                  Judul = ?, Penulis = ?, Penerbit = ?, TahunTerbit = ?, ISBN = ?, 
-                  KategoriID = ?, DriveURL = ?, Deskripsi = ?, JumlahHalaman = ?, 
-                  Bahasa = ?, FormatEbook = ?, UkuranFile = ?, Rating = ?, Status = ?, 
-                  Cover = ?, UpdatedAt = CURRENT_TIMESTAMP
-                  WHERE BukuID = ?";
+              Judul = ?, Penulis = ?, Penerbit = ?, TahunTerbit = ?, ISBN = ?, 
+              KategoriID = ?, DriveURL = ?, Deskripsi = ?, JumlahHalaman = ?, 
+              Bahasa = ?, FormatEbook = ?, UkuranFile = ?, Rating = ?, Status = ?, 
+              Cover = ?, UpdatedAt = CURRENT_TIMESTAMP
+              WHERE BukuID = ?";
 
         $stmt = mysqli_prepare($conn, $query);
         mysqli_stmt_bind_param(
             $stmt,
-            "sssisisssisdissi",
+            "sssisisssssdissi", // Perhatikan jumlah 's' sesuai parameter
             $judul,
             $penulis,
             $penerbit,
@@ -214,13 +222,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $driveurl,
             $deskripsi,
             $halaman,
-            $bahasa,
+            $bahasa_valid,  // Gunakan yang sudah divalidasi
             $format,
             $ukuran,
             $rating,
             $status,
-            $cover,
-            $bukuID
+            $cover
         );
 
         if (mysqli_stmt_execute($stmt)) {

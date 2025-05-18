@@ -144,6 +144,7 @@ include '../../views/header.php';
             <input type="hidden" name="action" id="formAction" value="add_book">
             <input type="hidden" name="existing_cover" id="existing_cover">
 
+            <!-- Form Row 1 -->
             <div class="form-row">
                 <div class="form-group col-md-6">
                     <label for="judul">Judul Buku *</label>
@@ -155,6 +156,7 @@ include '../../views/header.php';
                 </div>
             </div>
 
+            <!-- Form Row 2 -->
             <div class="form-row">
                 <div class="form-group col-md-6">
                     <label for="penerbit">Penerbit</label>
@@ -170,6 +172,7 @@ include '../../views/header.php';
                 </div>
             </div>
 
+            <!-- Form Row 3 - Kategori, Bahasa, Status -->
             <div class="form-row">
                 <div class="form-group col-md-4">
                     <label for="kategori">Kategori</label>
@@ -181,23 +184,24 @@ include '../../views/header.php';
                     </select>
                 </div>
                 <div class="form-group col-md-4">
-                    <label for="bahasa">Bahasa</label>
-                    <select id="bahasa" name="bahasa" class="form-control">
+                    <label for="bahasa">Bahasa *</label>
+                    <select id="bahasa" name="bahasa" class="form-control" required>
                         <option value="Indonesia">Indonesia</option>
                         <option value="Inggris">Inggris</option>
+                        <option value="Arab">Arab</option>
                         <option value="Lainnya">Lainnya</option>
                     </select>
                 </div>
                 <div class="form-group col-md-4">
-                    <label for="status">Status *</label>
+                    <label for="status">Status Akses *</label>
                     <select id="status" name="status" class="form-control" required>
-                        <option value="Tersedia">Tersedia</option>
-                        <option value="Dipinjam">Dipinjam</option>
-                        <option value="Dalam Perbaikan">Dalam Perbaikan</option>
+                        <option value="Free">Free (Semua user)</option>
+                        <option value="Premium">Premium (User premium saja)</option>
                     </select>
                 </div>
             </div>
 
+            <!-- Form Row 4 - Halaman, Format, Ukuran, Rating -->
             <div class="form-row">
                 <div class="form-group col-md-3">
                     <label for="halaman">Jumlah Halaman</label>
@@ -229,22 +233,29 @@ include '../../views/header.php';
                 </div>
             </div>
 
+            <!-- Drive URL -->
             <div class="form-group">
                 <label for="driveurl">Google Drive URL *</label>
                 <input type="url" id="driveurl" name="driveurl" class="form-control" required placeholder="https://drive.google.com/...">
             </div>
 
+            <!-- Deskripsi -->
             <div class="form-group">
                 <label for="deskripsi">Deskripsi</label>
                 <textarea id="deskripsi" name="deskripsi" class="form-control" rows="3"></textarea>
             </div>
 
+            <!-- Cover -->
             <div class="form-group">
-                <label for="cover">Cover Buku (URL)</label>
-                <input type="url" id="cover" name="cover" class="form-control" placeholder="https://example.com/cover.jpg">
-                <small class="text-muted">Masukkan URL gambar cover buku</small>
+                <label for="cover">Cover Buku</label>
+                <input type="file" id="cover" name="cover" class="form-control" accept="image/*">
+                <div class="cover-preview-container mt-2">
+                    <img id="coverPreview" src="" alt="Preview Cover" style="max-width: 150px; max-height: 200px; display: none;">
+                </div>
+                <small class="text-muted">Format: JPG, PNG. Maksimal 2MB</small>
             </div>
 
+            <!-- Modal Footer -->
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary close-modal">Batal</button>
                 <button type="submit" class="btn btn-primary">Simpan</button>
@@ -326,9 +337,10 @@ include '../../views/header.php';
                 </div>
                 <div class="form-group col-md-4">
                     <label for="add_bahasa">Bahasa</label>
-                    <select id="add_bahasa" name="bahasa" class="form-control">
+                    <select id="bahasa" name="bahasa" class="form-control" required>
                         <option value="Indonesia">Indonesia</option>
                         <option value="Inggris">Inggris</option>
+                        <option value="Arab">Arab</option>
                         <option value="Lainnya">Lainnya</option>
                     </select>
                 </div>
@@ -545,6 +557,11 @@ include '../../views/header.php';
 
     .mt-2 {
         margin-top: 0.5rem;
+    }
+
+    .fa-trash,
+    .fa-edit {
+        margin-left: 10px;
     }
 </style>
 
