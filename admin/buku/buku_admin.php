@@ -9,24 +9,86 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
 }
 
 // Fungsi untuk mendapatkan semua buku
-function getAllBooks($conn)
+function getAllBooks($conn, $filters = [])
 {
     $query = "SELECT b.*, k.NamaKategori 
               FROM buku b
               LEFT JOIN kategori k ON b.KategoriID = k.KategoriID
-              WHERE b.DeletedAt IS NULL
-              ORDER BY b.Judul";
-    $result = mysqli_query($conn, $query);
+              WHERE b.DeletedAt IS NULL";
 
-    if (!$result) {
-        die("Error: " . mysqli_error($conn));
+    $conditions = [];
+    $params = [];
+    $types = '';
+
+    // Filter Judul
+    if (!empty($filters['judul'])) {
+        $conditions[] = "b.Judul LIKE ?";
+        $params[] = '%' . $filters['judul'] . '%';
+        $types .= 's';
     }
 
+    // Filter Penulis
+    if (!empty($filters['penulis'])) {
+        $conditions[] = "b.Penulis LIKE ?";
+        $params[] = '%' . $filters['penulis'] . '%';
+        $types .= 's';
+    }
+
+    // Filter Kategori
+    if (!empty($filters['kategori'])) {
+        $conditions[] = "b.KategoriID = ?";
+        $params[] = $filters['kategori'];
+        $types .= 'i';
+    }
+
+    // Filter Tahun
+    if (!empty($filters['tahun'])) {
+        $conditions[] = "b.TahunTerbit = ?";
+        $params[] = $filters['tahun'];
+        $types .= 'i';
+    }
+
+    // Filter Status
+    if (!empty($filters['status'])) {
+        $conditions[] = "b.Status = ?";
+        $params[] = $filters['status'];
+        $types .= 's';
+    }
+
+    if (!empty($conditions)) {
+        $query .= " AND " . implode(" AND ", $conditions);
+    }
+
+    $query .= " ORDER BY b.Judul";
+
+    $stmt = mysqli_prepare($conn, $query);
+    if (!$stmt) {
+        die("Error preparing statement: " . mysqli_error($conn));
+    }
+
+    if (!empty($params)) {
+        mysqli_stmt_bind_param($stmt, $types, ...$params);
+    }
+
+    if (!mysqli_stmt_execute($stmt)) {
+        die("Error executing statement: " . mysqli_stmt_error($stmt));
+    }
+
+    $result = mysqli_stmt_get_result($stmt);
     return mysqli_fetch_all($result, MYSQLI_ASSOC);
 }
 
-// Ambil data buku
-$books = getAllBooks($conn);
+// Ambil parameter filter
+$filters = [
+    'judul' => trim($_GET['judul'] ?? ''),
+    'penulis' => trim($_GET['penulis'] ?? ''),
+    'kategori' => trim($_GET['kategori'] ?? ''),
+    'tahun' => trim($_GET['tahun'] ?? ''),
+    'status' => trim($_GET['status'] ?? '')
+];
+
+// Ambil data buku dengan filter
+$books = getAllBooks($conn, $filters);
 
 // Ambil data kategori untuk dropdown
 $kategori_query = "SELECT * FROM kategori ORDER BY NamaKategori";
@@ -48,6 +110,73 @@ include '../../views/header.php';
     </div>
 
     <?php include '../../views/alert_messages.php'; ?>
+
+    <!-- Di dalam card-body, setelah alert messages -->
+    <form method="GET" action="" class="advanced-filter-form">
+        <div class="filter-grid">
+            <div class="filter-group">
+                <div class="input-icon">
+                    <i class="fas fa-book"></i>
+                    <input type="text" name="judul" class="form-control modern-input"
+                        placeholder="Cari Judul"
+                        value="<?= htmlspecialchars($_GET['judul'] ?? '') ?>">
+                </div>
+            </div>
+
+            <div class="filter-group">
+                <div class="input-icon">
+                    <i class="fas fa-user-edit"></i>
+                    <input type="text" name="penulis" class="form-control modern-input"
+                        placeholder="Nama Penulis"
+                        value="<?= htmlspecialchars($_GET['penulis'] ?? '') ?>">
+                </div>
+            </div>
+
+            <div class="filter-group">
+                <div class="select-wrapper">
+                    <i class="fas fa-tag"></i>
+                    <select name="kategori" class="form-control modern-select">
+                        <option value="">Semua Kategori</option>
+                        <?php foreach ($kategories as $kategori): ?>
+                            <option value="<?= $kategori['KategoriID'] ?>"
+                                <?= ($_GET['kategori'] ?? '') == $kategori['KategoriID'] ? 'selected' : '' ?>>
+                                <?= htmlspecialchars($kategori['NamaKategori']) ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+            </div>
+
+            <div class="filter-group">
+                <div class="input-icon">
+                    <i class="fas fa-calendar-alt"></i>
+                    <input type="number" name="tahun" class="form-control modern-input"
+                        placeholder="Tahun Terbit"
+                        value="<?= htmlspecialchars($_GET['tahun'] ?? '') ?>">
+                </div>
+            </div>
+
+            <div class="filter-group">
+                <div class="select-wrapper">
+                    <i class="fas fa-info-circle"></i>
+                    <select name="status" class="form-control modern-select">
+                        <option value="">Status Buku</option>
+                        <option value="Tersedia" <?= ($_GET['status'] ?? '') == 'Tersedia' ? 'selected' : '' ?>>Tersedia</option>
+                        <option value="Dipinjam" <?= ($_GET['status'] ?? '') == 'Dipinjam' ? 'selected' : '' ?>>Dipinjam</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="filter-actions">
+                <button type="submit" class="btn btn-filter">
+                    <i class="fas fa-filter"></i> Terapkan Filter
+                </button>
+                <a href="buku_admin.php" class="btn btn-reset">
+                    <i class="fas fa-sync-alt"></i> Reset
+                </a>
+            </div>
+        </div>
+    </form>
 
     <div class="card">
         <div class="card-body">
@@ -590,6 +719,136 @@ include '../../views/header.php';
         max-width: 800px;
         max-height: 90vh;
         overflow-y: auto;
+    }
+
+    /* Filter */
+    .advanced-filter-form {
+        background: #f8f9fa;
+        padding: 1.5rem;
+        border-radius: 10px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        margin-bottom: 2rem;
+    }
+
+    .filter-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        align-items: end;
+    }
+
+    .filter-group {
+        position: relative;
+    }
+
+    .input-icon {
+        position: relative;
+    }
+
+    .input-icon i {
+        position: absolute;
+        left: 15px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #6c757d;
+        z-index: 2;
+    }
+
+    .select-wrapper i {
+        position: absolute;
+        left: 15px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #6c757d;
+        z-index: 2;
+    }
+
+    .modern-input {
+        padding-left: 40px !important;
+        height: 45px;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+    }
+
+    .modern-input:focus {
+        border-color: #3a0ca3;
+        box-shadow: 0 0 0 3px rgba(58, 12, 163, 0.1);
+    }
+
+    .modern-select {
+        padding-left: 40px !important;
+        height: 45px;
+        border-radius: 8px;
+        appearance: none;
+        -webkit-appearance: none;
+    }
+
+    .select-wrapper::after {
+        content: "⌄";
+        position: absolute;
+        right: 15px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #6c757d;
+        pointer-events: none;
+    }
+
+    .filter-actions {
+        display: flex;
+        gap: 0.8rem;
+        grid-column: 1 / -1;
+        justify-content: flex-end;
+    }
+
+    .btn-filter {
+        background: #3a0ca3;
+        color: white;
+        padding: 0.8rem 1.5rem;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .btn-filter:hover {
+        background: #2e0a8a;
+        transform: translateY(-1px);
+    }
+
+    .btn-reset {
+        background: #f8f9fa;
+        color: #3a0ca3;
+        border: 1px solid #e2e8f0;
+        padding: 0.8rem 1.5rem;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .btn-reset:hover {
+        background: #fff;
+        border-color: #3a0ca3;
+        transform: translateY(-1px);
+    }
+
+    @media (max-width: 768px) {
+        .filter-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .filter-actions {
+            justify-content: stretch;
+        }
+
+        .btn-filter,
+        .btn-reset {
+            flex: 1;
+            justify-content: center;
+        }
     }
 </style>
 
