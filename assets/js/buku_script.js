@@ -1,117 +1,80 @@
 document.addEventListener('DOMContentLoaded', function () {
     // Modal elements
+    const editButtons = document.querySelectorAll('.edit-book');
+    const closeButtons = document.querySelectorAll('.close-modal');
     const bookModal = document.getElementById('bookModal');
+    const addBookModal = document.getElementById('addBookModal');
     const confirmModal = document.getElementById('confirmModal');
-    const addBtn = document.getElementById('addBookBtn');
-    const closeBtns = document.querySelectorAll('.close-modal');
 
-    // Form elements
-    const bookForm = document.getElementById('bookForm');
-    const formAction = document.getElementById('formAction');
-    const bukuIdInput = document.getElementById('buku_id');
-    const existingCoverInput = document.getElementById('existing_cover');
+    // Edit button click handler
+    editButtons.forEach(button => {
+        button.addEventListener('click', function (e) {
+            e.preventDefault();
+            console.log('Edit button clicked');
 
-    // Confirm modal elements
-    const confirmDeleteBtn = document.getElementById('confirmDelete');
-    let bookToDelete = null;
-
-    // Show modal for add
-    addBtn.addEventListener('click', () => {
-        document.getElementById('modalTitle').textContent = 'Tambah Buku Baru';
-        formAction.value = 'add_book';
-        bookForm.reset();
-        bukuIdInput.value = '';
-        existingCoverInput.value = '';
-        document.getElementById('cover').value = '';
-        document.getElementById('coverPreview').style.display = 'none';
-        document.getElementById('coverPreview').src = '';
-        bookModal.style.display = 'flex';
-    });
-
-    // Show modal for edit
-    document.addEventListener('click', function (e) {
-        if (e.target.closest('.edit-book')) {
-            const btn = e.target.closest('.edit-book');
-
-            document.getElementById('modalTitle').textContent = 'Edit Buku';
-            formAction.value = 'update_book';
-            bukuIdInput.value = btn.dataset.id;
-
-            // Fill form with existing data
-            document.getElementById('judul').value = btn.dataset.judul;
-            document.getElementById('penulis').value = btn.dataset.penulis;
-            document.getElementById('penerbit').value = btn.dataset.penerbit;
-            document.getElementById('tahun').value = btn.dataset.tahun;
-            document.getElementById('isbn').value = btn.dataset.isbn;
-            document.getElementById('kategori').value = btn.dataset.kategori;
-            document.getElementById('driveurl').value = btn.dataset.driveurl;
-            document.getElementById('deskripsi').value = btn.dataset.deskripsi;
-            document.getElementById('halaman').value = btn.dataset.halaman;
-            document.getElementById('bahasa').value = btn.dataset.bahasa || 'Indonesia';
-            document.getElementById('format').value = btn.dataset.format;
-            document.getElementById('ukuran').value = btn.dataset.ukuran;
-            document.getElementById('status').value = btn.dataset.status || 'Free';
-            document.getElementById('cover').value = btn.dataset.cover;
-
-            // Set rating
-            const rating = parseInt(btn.dataset.rating) || 0;
-            document.getElementById('rating').value = rating;
+            // Set form values
+            document.getElementById('formAction').value = 'update_book';
+            document.getElementById('buku_id').value = this.dataset.id;
+            document.getElementById('judul').value = this.dataset.judul || '';
+            document.getElementById('penulis').value = this.dataset.penulis || '';
+            document.getElementById('penerbit').value = this.dataset.penerbit || '';
+            document.getElementById('tahun').value = this.dataset.tahun || '';
+            document.getElementById('isbn').value = this.dataset.isbn || '';
+            document.getElementById('kategori').value = this.dataset.kategori || '';
+            document.getElementById('driveurl').value = this.dataset.driveurl || '';
+            document.getElementById('deskripsi').value = this.dataset.deskripsi || '';
+            document.getElementById('halaman').value = this.dataset.halaman || '';
+            document.getElementById('bahasa').value = this.dataset.bahasa || 'Indonesia';
+            document.getElementById('format').value = this.dataset.format || 'PDF';
+            document.getElementById('status').value = this.dataset.status || 'Free';
 
             // Handle cover preview
-            existingCoverInput.value = btn.dataset.cover;
-            if (btn.dataset.cover) {
-                document.getElementById('coverPreview').src = btn.dataset.cover;
-                document.getElementById('coverPreview').style.display = 'block';
-                document.getElementById('coverPreview').onerror = function () {
-                    this.style.display = 'none';
-                };
+            const coverPath = this.dataset.cover || '';
+            document.getElementById('existing_cover').value = coverPath;
+            const coverPreview = document.getElementById('coverPreview');
+
+            if (coverPath) {
+                coverPreview.src = '../../' + coverPath;
+                coverPreview.style.display = 'block';
             } else {
-                document.getElementById('coverPreview').style.display = 'none';
+                coverPreview.style.display = 'none';
             }
 
+            // Show modal
+            bookModal.classList.add('show');
             bookModal.style.display = 'flex';
-        }
-
-        // Handle delete button click
-        if (e.target.closest('.delete-book')) {
-            const btn = e.target.closest('.delete-book');
-            bookToDelete = {
-                id: btn.dataset.id,
-                judul: btn.dataset.judul
-            };
-
-            document.getElementById('confirmMessage').textContent =
-                `Apakah Anda yakin ingin menghapus buku "${btn.dataset.judul}"?`;
-            confirmModal.style.display = 'flex';
-        }
-    });
-
-    // Close modal
-    closeBtns.forEach(btn => {
-        btn.addEventListener('click', () => {
-            closeModal('bookModal');
-            closeModal('confirmModal');
-            closeModal('addBookModal');
         });
     });
 
-    // Preview cover when URL changes
-    document.getElementById('cover').addEventListener('input', function () {
-        if (this.value) {
-            document.getElementById('coverPreview').src = this.value;
-            document.getElementById('coverPreview').style.display = 'block';
-            document.getElementById('coverPreview').onerror = function () {
-                this.style.display = 'none';
-            };
-        } else {
-            document.getElementById('coverPreview').style.display = 'none';
-        }
+    // Close button handlers
+    closeButtons.forEach(button => {
+        button.addEventListener('click', function () {
+            const modal = this.closest('.modal');
+            if (modal) {
+                modal.classList.remove('show');
+                modal.style.display = 'none';
+            }
+        });
     });
 
-    // Confirm delete
-    confirmDeleteBtn.addEventListener('click', function () {
-        if (bookToDelete) {
-            // Create a form and submit it
+    // Delete button handler
+    const deleteButtons = document.querySelectorAll('.delete-book');
+    deleteButtons.forEach(button => {
+        button.addEventListener('click', function () {
+            const bookId = this.dataset.id;
+            const bookTitle = this.dataset.judul;
+            document.getElementById('confirmMessage').textContent =
+                `Apakah Anda yakin ingin menghapus buku "${bookTitle}"?`;
+            document.getElementById('confirmDelete').dataset.id = bookId;
+            confirmModal.classList.add('show');
+            confirmModal.style.display = 'flex';
+        });
+    });
+
+    // Confirm delete handler
+    document.getElementById('confirmDelete').addEventListener('click', function () {
+        const bookId = this.dataset.id;
+        if (bookId) {
             const form = document.createElement('form');
             form.method = 'POST';
             form.action = 'buku_handler.php';
@@ -120,59 +83,92 @@ document.addEventListener('DOMContentLoaded', function () {
             actionInput.type = 'hidden';
             actionInput.name = 'action';
             actionInput.value = 'delete_book';
-            form.appendChild(actionInput);
 
             const idInput = document.createElement('input');
             idInput.type = 'hidden';
             idInput.name = 'buku_id';
-            idInput.value = bookToDelete.id;
-            form.appendChild(idInput);
+            idInput.value = bookId;
 
+            form.appendChild(actionInput);
+            form.appendChild(idInput);
             document.body.appendChild(form);
             form.submit();
         }
     });
 
+    // Add book button handler
+    const addButton = document.getElementById('addBookBtn');
+    if (addButton) {
+        addButton.addEventListener('click', function () {
+            addBookModal.classList.add('show');
+            addBookModal.style.display = 'flex';
+        });
+    }
+
     // Form validation
-    bookForm.addEventListener('submit', function (e) {
-        const judul = document.getElementById('judul').value.trim();
-        const penulis = document.getElementById('penulis').value.trim();
-        const tahun = document.getElementById('tahun').value;
-        const status = document.getElementById('status').value;
-        const driveurl = document.getElementById('driveurl').value.trim();
-        const bahasa = document.getElementById('bahasa').value;
+    const bookForm = document.getElementById('bookForm');
+    if (bookForm) {
+        bookForm.addEventListener('submit', function (e) {
+            const requiredFields = ['judul', 'penulis', 'tahun', 'status', 'driveurl'];
+            let isValid = true;
 
-        if (!judul || !penulis || !tahun || !status || !driveurl || !bahasa) {
-            e.preventDefault();
-            alert('Field yang wajib diisi tidak boleh kosong!');
-            return;
-        }
+            requiredFields.forEach(field => {
+                const element = document.getElementById(field);
+                if (!element.value.trim()) {
+                    element.classList.add('is-invalid');
+                    isValid = false;
+                } else {
+                    element.classList.remove('is-invalid');
+                }
+            });
 
-        // Validate year
-        const currentYear = new Date().getFullYear();
-        if (tahun < 1900 || tahun > currentYear) {
-            e.preventDefault();
-            alert(`Tahun terbit harus antara 1900 dan ${currentYear}`);
-            return;
-        }
-
-        // Validate Google Drive URL
-        if (!driveurl.includes('drive.google.com')) {
-            e.preventDefault();
-            alert('URL harus berupa link Google Drive!');
-            return;
-        }
-
-        // Validate cover URL if provided
-        const coverUrl = document.getElementById('cover').value.trim();
-        if (coverUrl) {
-            try {
-                new URL(coverUrl);
-            } catch (_) {
+            if (!isValid) {
                 e.preventDefault();
-                alert('URL cover tidak valid!');
+                alert('Harap isi semua field yang wajib diisi');
                 return;
             }
+
+            // Validate year
+            const tahun = document.getElementById('tahun').value;
+            const currentYear = new Date().getFullYear();
+            if (tahun < 1900 || tahun > currentYear) {
+                e.preventDefault();
+                alert(`Tahun terbit harus antara 1900 dan ${currentYear}`);
+                return;
+            }
+
+            // Validate Google Drive URL
+            const driveurl = document.getElementById('driveurl').value;
+            if (!driveurl.includes('drive.google.com')) {
+                e.preventDefault();
+                alert('URL harus berupa link Google Drive');
+                return;
+            }
+
+            // Validate cover file if new one is uploaded
+            const coverFile = document.getElementById('cover').files[0];
+            if (coverFile) {
+                const validTypes = ['image/jpeg', 'image/png', 'image/gif'];
+                if (!validTypes.includes(coverFile.type)) {
+                    e.preventDefault();
+                    alert('Format file cover harus JPG, PNG, atau GIF');
+                    return;
+                }
+
+                if (coverFile.size > 2 * 1024 * 1024) {
+                    e.preventDefault();
+                    alert('Ukuran file cover terlalu besar (maks 2MB)');
+                    return;
+                }
+            }
+        });
+    }
+
+    // Click outside modal to close
+    window.addEventListener('click', function (e) {
+        if (e.target.classList.contains('modal')) {
+            e.target.classList.remove('show');
+            e.target.style.display = 'none';
         }
     });
 });
@@ -183,9 +179,6 @@ document.getElementById('addBookBtn').addEventListener('click', function () {
     document.getElementById('addBookForm').reset();
     document.getElementById('add_cover_preview').style.display = 'none';
 
-    // Prefill data jika ada di session (setelah validasi gagal)
-    // NOTE: To prefill form data from the session, inject a <script> block with the formData variable in your HTML/PHP file, like:
-    // <script>const formData = <?= json_encode($_SESSION['form_data']) ?>;</script>
     if (typeof formData !== 'undefined') {
         for (const key in formData) {
             const element = document.getElementById('add_' + key);

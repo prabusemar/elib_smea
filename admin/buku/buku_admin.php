@@ -107,6 +107,7 @@ include '../../views/header.php';
                                                 data-bahasa="<?= htmlspecialchars($book['Bahasa']) ?>"
                                                 data-format="<?= htmlspecialchars($book['FormatEbook']) ?>"
                                                 data-ukuran="<?= htmlspecialchars($book['UkuranFile']) ?>"
+                                                data-rating="<?= htmlspecialchars($book['Rating']) ?>"
                                                 data-status="<?= htmlspecialchars($book['Status']) ?>"
                                                 data-cover="<?= htmlspecialchars($book['Cover']) ?>">
                                                 <i class="fas fa-edit"></i>
@@ -132,11 +133,13 @@ include '../../views/header.php';
     </div>
 </div>
 
-<!-- Modal untuk Tambah/Edit Buku -->
+
+<!-- Modal Edit Buku -->
+<!-- Modal untuk Edit Buku -->
 <div class="modal" id="bookModal">
     <div class="modal-content">
         <div class="modal-header">
-            <h3 class="modal-title" id="modalTitle">Tambah Buku Baru</h3>
+            <h3 class="modal-title" id="modalTitle">Edit Buku</h3>
             <button class="close-modal">&times;</button>
         </div>
         <form id="bookForm" method="POST" enctype="multipart/form-data" action="buku_handler.php">
@@ -223,12 +226,9 @@ include '../../views/header.php';
                 <div class="form-group col-md-3">
                     <label for="rating">Rating</label>
                     <select id="rating" name="rating" class="form-control">
-                        <option value="0">0</option>
-                        <option value="1">1</option>
-                        <option value="2">2</option>
-                        <option value="3">3</option>
-                        <option value="4">4</option>
-                        <option value="5">5</option>
+                        <?php for ($i = 0; $i <= 5; $i++): ?>
+                            <option value="<?= $i ?>"><?= $i ?></option>
+                        <?php endfor; ?>
                     </select>
                 </div>
             </div>
@@ -498,11 +498,15 @@ include '../../views/header.php';
         top: 0;
         left: 0;
         width: 100%;
-        height: 100%;
-        background-color: rgba(0, 0, 0, 0.5);
-        z-index: 1000;
-        justify-content: center;
+        height: 100vh;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 9999;
+    }
+
+    .modal.show {
+        display: flex !important;
         align-items: center;
+        justify-content: center;
     }
 
     .modal-content {
@@ -562,6 +566,30 @@ include '../../views/header.php';
     .fa-trash,
     .fa-edit {
         margin-left: 10px;
+    }
+
+    /* Add this to your CSS */
+    .modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+        z-index: 1000;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .modal-content {
+        background: white;
+        padding: 20px;
+        border-radius: 5px;
+        width: 80%;
+        max-width: 800px;
+        max-height: 90vh;
+        overflow-y: auto;
     }
 </style>
 

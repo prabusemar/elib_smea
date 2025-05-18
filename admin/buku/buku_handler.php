@@ -147,14 +147,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $rating = !empty($_POST['rating']) ? (float)$_POST['rating'] : 0.0;
         $status = mysqli_real_escape_string($conn, trim($_POST['status'] ?? 'Free'));
         $cover = mysqli_real_escape_string($conn, trim($_POST['existing_cover'] ?? ''));
-
         // Validasi input
         if (empty($judul) || empty($penulis) || empty($tahun) || empty($status) || empty($driveurl) || empty($bahasa)) {
             $_SESSION['error'] = "Field yang wajib diisi tidak boleh kosong!";
             header("Location: buku_admin.php");
             exit;
         }
-
 
         // Validasi URL Google Drive
         if (!filter_var($driveurl, FILTER_VALIDATE_URL) || strpos($driveurl, 'drive.google.com') === false) {
@@ -203,16 +201,16 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
         // Update database
         $query = "UPDATE buku SET 
-              Judul = ?, Penulis = ?, Penerbit = ?, TahunTerbit = ?, ISBN = ?, 
-              KategoriID = ?, DriveURL = ?, Deskripsi = ?, JumlahHalaman = ?, 
-              Bahasa = ?, FormatEbook = ?, UkuranFile = ?, Rating = ?, Status = ?, 
-              Cover = ?, UpdatedAt = CURRENT_TIMESTAMP
-              WHERE BukuID = ?";
+          Judul = ?, Penulis = ?, Penerbit = ?, TahunTerbit = ?, ISBN = ?, 
+          KategoriID = ?, DriveURL = ?, Deskripsi = ?, JumlahHalaman = ?, 
+          Bahasa = ?, FormatEbook = ?, UkuranFile = ?, Rating = ?, Status = ?, 
+          Cover = ?, UpdatedAt = CURRENT_TIMESTAMP
+          WHERE BukuID = ?";
 
         $stmt = mysqli_prepare($conn, $query);
         mysqli_stmt_bind_param(
             $stmt,
-            "sssisisssssdissi", // Perhatikan jumlah 's' sesuai parameter
+            "sssisisssssdissi",
             $judul,
             $penulis,
             $penerbit,
@@ -222,12 +220,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $driveurl,
             $deskripsi,
             $halaman,
-            $bahasa_valid,  // Gunakan yang sudah divalidasi
+            $bahasa_valid,
             $format,
             $ukuran,
             $rating,
             $status,
-            $cover
+            $cover,
+            $bukuID
         );
 
         if (mysqli_stmt_execute($stmt)) {
