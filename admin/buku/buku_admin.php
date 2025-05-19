@@ -199,8 +199,8 @@ include '../../views/header.php';
                         <?php if (!empty($books)): ?>
                             <?php foreach ($books as $index => $book): ?>
                                 <tr>
-                                    <td><?= $index + 1 ?></td>
-                                    <td>
+                                    <td data-label="No"><?= $index + 1 ?></td>
+                                    <td data-label="Cover">
                                         <?php if (!empty($book['Cover'])): ?>
                                             <img src="<?= '../../' . htmlspecialchars($book['Cover']) ?>"
                                                 alt="Cover Buku" class="book-cover"
@@ -210,17 +210,17 @@ include '../../views/header.php';
                                                 alt="Cover Default" class="book-cover">
                                         <?php endif; ?>
                                     </td>
-                                    <td><?= htmlspecialchars($book['Judul']) ?></td>
-                                    <td><?= htmlspecialchars($book['Penulis']) ?></td>
-                                    <td><?= htmlspecialchars($book['Penerbit']) ?></td>
-                                    <td><?= htmlspecialchars($book['TahunTerbit']) ?></td>
-                                    <td><?= htmlspecialchars($book['NamaKategori'] ?? '-') ?></td>
-                                    <td>
+                                    <td data-label="Judul"><?= htmlspecialchars($book['Judul']) ?></td>
+                                    <td data-label="Penulis"><?= htmlspecialchars($book['Penulis']) ?></td>
+                                    <td data-label="Penerbit"><?= htmlspecialchars($book['Penerbit']) ?></td>
+                                    <td data-label="Tahun"><?= htmlspecialchars($book['TahunTerbit']) ?></td>
+                                    <td data-label="Kategori"><?= htmlspecialchars($book['NamaKategori'] ?? '-') ?></td>
+                                    <td data-label="Status">
                                         <span class="badge <?= $book['Status'] === 'Tersedia' ? 'bg-success' : ($book['Status'] === 'Dipinjam' ? 'bg-warning' : 'bg-secondary') ?>">
                                             <?= htmlspecialchars($book['Status']) ?>
                                         </span>
                                     </td>
-                                    <td>
+                                    <td data-label="Aksi">
                                         <div class="btn-group">
                                             <button class="btn btn-sm btn-edit edit-book"
                                                 data-id="<?= $book['BukuID'] ?>"
@@ -854,6 +854,286 @@ include '../../views/header.php';
     a {
         text-decoration: none;
         color: inherit;
+    }
+
+    /* Responsive Table Styles */
+    .table-responsive {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        margin-bottom: 1rem;
+    }
+
+    .table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 1rem;
+        background-color: transparent;
+    }
+
+    .table th {
+        background-color: #f8f9fa;
+        color: #495057;
+        vertical-align: bottom;
+        border-bottom: 2px solid #dee2e6;
+        padding: 12px 8px;
+        text-align: left;
+        font-weight: 600;
+    }
+
+    .table td {
+        padding: 12px 8px;
+        vertical-align: middle;
+        border-top: 1px solid #dee2e6;
+    }
+
+    /* Responsive table behavior */
+    @media (max-width: 768px) {
+
+        /* Make table behave like blocks */
+        .table {
+            display: block;
+        }
+
+        .table thead {
+            display: none;
+        }
+
+        .table tbody {
+            display: block;
+            width: 100%;
+        }
+
+        .table tr {
+            display: block;
+            margin-bottom: 15px;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 10px;
+            background: #fff;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        .table td {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 10px;
+            border: none;
+            border-bottom: 1px solid #f1f1f1;
+        }
+
+        .table td:last-child {
+            border-bottom: none;
+        }
+
+        /* Add data-label pseudo-elements */
+        .table td::before {
+            content: attr(data-label);
+            font-weight: 600;
+            color: #495057;
+            margin-right: 15px;
+            flex: 0 0 120px;
+        }
+
+        /* Add data labels to each cell */
+        .table td:nth-child(1) {
+            data-label: "No";
+        }
+
+        .table td:nth-child(2) {
+            data-label: "Cover";
+        }
+
+        .table td:nth-child(3) {
+            data-label: "Judul";
+        }
+
+        .table td:nth-child(4) {
+            data-label: "Penulis";
+        }
+
+        .table td:nth-child(5) {
+            data-label: "Penerbit";
+        }
+
+        .table td:nth-child(6) {
+            data-label: "Tahun";
+        }
+
+        .table td:nth-child(7) {
+            data-label: "Kategori";
+        }
+
+        .table td:nth-child(8) {
+            data-label: "Status";
+        }
+
+        .table td:nth-child(9) {
+            data-label: "Aksi";
+        }
+
+        /* Special styling for cover image */
+        .table td .book-cover {
+            width: 40px;
+            height: 60px;
+        }
+
+        /* Adjust action buttons */
+        .table td .btn-group {
+            justify-content: flex-end;
+            flex: 1;
+        }
+    }
+
+    /* For very small screens */
+    @media (max-width: 480px) {
+        .table td::before {
+            flex: 0 0 90px;
+        }
+
+        .table td {
+            font-size: 14px;
+        }
+    }
+
+    /* Responsive Table Styles */
+    .table-responsive {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        margin-bottom: 1rem;
+    }
+
+    .table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 1rem;
+        background-color: transparent;
+    }
+
+    .table th {
+        background-color: #f8f9fa;
+        color: #495057;
+        vertical-align: bottom;
+        border-bottom: 2px solid #dee2e6;
+        padding: 12px 8px;
+        text-align: left;
+        font-weight: 600;
+    }
+
+    .table td {
+        padding: 12px 8px;
+        vertical-align: middle;
+        border-top: 1px solid #dee2e6;
+    }
+
+    /* Responsive table behavior */
+    @media (max-width: 768px) {
+
+        /* Make table behave like blocks */
+        .table {
+            display: block;
+        }
+
+        .table thead {
+            display: none;
+        }
+
+        .table tbody {
+            display: block;
+            width: 100%;
+        }
+
+        .table tr {
+            display: block;
+            margin-bottom: 15px;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 10px;
+            background: #fff;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        .table td {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 10px;
+            border: none;
+            border-bottom: 1px solid #f1f1f1;
+        }
+
+        .table td:last-child {
+            border-bottom: none;
+        }
+
+        /* Add data-label pseudo-elements */
+        .table td::before {
+            content: attr(data-label);
+            font-weight: 600;
+            color: #495057;
+            margin-right: 15px;
+            flex: 0 0 120px;
+        }
+
+        /* Add data labels to each cell */
+        .table td:nth-child(1) {
+            data-label: "No";
+        }
+
+        .table td:nth-child(2) {
+            data-label: "Cover";
+        }
+
+        .table td:nth-child(3) {
+            data-label: "Judul";
+        }
+
+        .table td:nth-child(4) {
+            data-label: "Penulis";
+        }
+
+        .table td:nth-child(5) {
+            data-label: "Penerbit";
+        }
+
+        .table td:nth-child(6) {
+            data-label: "Tahun";
+        }
+
+        .table td:nth-child(7) {
+            data-label: "Kategori";
+        }
+
+        .table td:nth-child(8) {
+            data-label: "Status";
+        }
+
+        .table td:nth-child(9) {
+            data-label: "Aksi";
+        }
+
+        /* Special styling for cover image */
+        .table td .book-cover {
+            width: 40px;
+            height: 60px;
+        }
+
+        /* Adjust action buttons */
+        .table td .btn-group {
+            justify-content: flex-end;
+            flex: 1;
+        }
+    }
+
+    /* For very small screens */
+    @media (max-width: 480px) {
+        .table td::before {
+            flex: 0 0 90px;
+        }
+
+        .table td {
+            font-size: 14px;
+        }
     }
 </style>
 
