@@ -795,28 +795,63 @@
         }
 
         /* Responsive Design */
-        @media (max-width: 992px) {
+        @media (max-width: 1150px) {
             .nav-menu {
                 position: fixed;
                 top: 80px;
                 left: 0;
                 width: 100%;
-                background-color: white;
+                background-color: rgba(255, 255, 255, 0.7);
+                backdrop-filter: blur(12px);
+                -webkit-backdrop-filter: blur(12px);
                 flex-direction: column;
                 align-items: center;
-                padding: 2rem 0;
+                padding: 2rem 0 0 0;
                 box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
                 transform: translateY(-150%);
                 transition: transform 0.3s ease;
                 z-index: 999;
+                gap: 1.5rem;
+                display: none;
             }
 
             .nav-menu.active {
                 transform: translateY(0);
+                display: flex;
             }
 
             .mobile-menu-btn {
                 display: block;
+                z-index: 1001;
+            }
+
+            .nav-actions {
+                display: flex;
+                flex-direction: row;
+                justify-content: center;
+                gap: 1rem;
+                width: 100%;
+                margin: 1.5rem 0 1rem 0;
+                position: fixed;
+                left: 0;
+                background: white;
+                z-index: 999;
+                padding-bottom: 1.5rem;
+                transition: transform 0.3s ease;
+                transform: translateY(-150%);
+                box-shadow: 0 10px 15px rgba(0, 0, 0, 0.05);
+                background-color: rgba(255, 255, 255, 0.7);
+                backdrop-filter: blur(12px);
+                -webkit-backdrop-filter: blur(12px);
+            }
+
+            .nav-menu.active~.nav-actions {
+                transform: translateY(0);
+                display: flex;
+            }
+
+            header {
+                flex-wrap: wrap;
             }
 
             .hero h1 {
