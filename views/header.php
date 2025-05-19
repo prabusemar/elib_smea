@@ -17,6 +17,10 @@ $page_title = $page_title ?? "Perpustakaan Digital";
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <!-- Di bagian head -->
     <link rel="stylesheet" href="<?= BASE_URL ?>/assets/styles/kategori_admin.css">
+    <link rel="stylesheet" href="/library/assets/styles/sidebar_admin.css">
+    <style>
+        
+    </style>
 
 </head>
 
