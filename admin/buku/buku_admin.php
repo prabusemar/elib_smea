@@ -850,6 +850,11 @@ include '../../views/header.php';
             justify-content: center;
         }
     }
+
+    a {
+        text-decoration: none;
+        color: inherit;
+    }
 </style>
 
 <script src="../../assets/js/buku_script.js"></script>

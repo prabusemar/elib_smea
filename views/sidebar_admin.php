@@ -201,7 +201,7 @@ $current_page = basename($_SERVER['PHP_SELF']);
     </nav>
 
     <div class="logout-container">
-        <a href="/library/admin/proses_logout.php" class="logout-btn">
+        <a href="/library/auth/proses_logout.php" class="logout-btn">
             <div class="tooltip">
                 <i class="fas fa-sign-out-alt"></i>
                 <span>Keluar</span>
