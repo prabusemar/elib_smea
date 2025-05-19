@@ -161,8 +161,8 @@ include '../../views/header.php';
                     <i class="fas fa-info-circle"></i>
                     <select name="status" class="form-control modern-select">
                         <option value="">Status Buku</option>
-                        <option value="Tersedia" <?= ($_GET['status'] ?? '') == 'Tersedia' ? 'selected' : '' ?>>Tersedia</option>
-                        <option value="Dipinjam" <?= ($_GET['status'] ?? '') == 'Dipinjam' ? 'selected' : '' ?>>Dipinjam</option>
+                        <option value="Free" <?= ($_GET['status'] ?? '') == 'Free' ? 'selected' : '' ?>>Free</option>
+                        <option value="Premium" <?= ($_GET['status'] ?? '') == 'Premium' ? 'selected' : '' ?>>Premium</option>
                     </select>
                 </div>
             </div>
