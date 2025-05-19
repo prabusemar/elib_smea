@@ -168,42 +168,43 @@ include '../../views/header.php';
                         <?php if (!empty($anggota)): ?>
                             <?php foreach ($anggota as $a): ?>
                                 <tr>
-                                    <td><?= htmlspecialchars($a['MemberID']); ?></td>
-                                    <td>
+                                    <td data-label="ID"><?= htmlspecialchars($a['MemberID']); ?></td>
+                                    <td data-label="Foto">
                                         <img src="../../uploads/profiles/<?= htmlspecialchars($a['FotoProfil']); ?>"
                                             alt="Foto Profil" class="profile-img">
                                     </td>
-                                    <td><?= htmlspecialchars($a['Nama']); ?></td>
-                                    <td><?= htmlspecialchars($a['Email']); ?></td>
-                                    <td><?= date('d M Y', strtotime($a['TanggalBergabung'])); ?></td>
-                                    <td>
+                                    <td data-label="Nama"><?= htmlspecialchars($a['Nama']); ?></td>
+                                    <td data-label="Email"><?= htmlspecialchars($a['Email']); ?></td>
+                                    <td data-label="Bergabung"><?= date('d M Y', strtotime($a['TanggalBergabung'])); ?></td>
+                                    <td data-label="Login Terakhir">
                                         <?= $a['last_login'] ? date('d M Y H:i', strtotime($a['last_login'])) : 'Belum pernah'; ?>
                                     </td>
-                                    <td>
+                                    <td data-label="Jenis Akun">
                                         <span class="badge <?= $a['JenisAkun'] === 'Premium' ? 'bg-success' : 'bg-secondary'; ?>">
                                             <?= htmlspecialchars($a['JenisAkun']); ?>
                                         </span>
                                     </td>
-                                    <td>
+                                    <td data-label="Masa Berlaku">
                                         <?= $a['MasaBerlaku'] ? date('d M Y', strtotime($a['MasaBerlaku'])) : '-'; ?>
                                     </td>
-                                    <td>
+                                    <td data-label="Status">
                                         <form method="POST" class="status-form">
                                             <input type="hidden" name="action" value="update_status">
                                             <input type="hidden" name="member_id" value="<?= $a['MemberID']; ?>">
                                             <select name="status" class="status-select 
-                                                    <?= $a['Status'] === 'Active' ? 'bg-success-light' : ($a['Status'] === 'Suspended' ? 'bg-warning-light' : 'bg-danger-light'); ?>">
+                        <?= $a['Status'] === 'Active' ? 'bg-success-light' : ($a['Status'] === 'Suspended' ? 'bg-warning-light' : 'bg-danger-light'); ?>">
                                                 <option value="Active" <?= $a['Status'] === 'Active' ? 'selected' : ''; ?>>Active</option>
                                                 <option value="Suspended" <?= $a['Status'] === 'Suspended' ? 'selected' : ''; ?>>Suspended</option>
                                                 <option value="Banned" <?= $a['Status'] === 'Banned' ? 'selected' : ''; ?>>Banned</option>
                                             </select>
                                         </form>
                                     </td>
-                                    <td>
+                                    <td data-label="Aksi">
                                         <div class="btn-group">
                                             <a href="edit_anggota.php?id=<?= $a['MemberID']; ?>"
                                                 class="btn btn-info" title="Edit">
                                                 <i class="fas fa-edit"></i>
+                                                <span class="mobile-text">Edit</span>
                                             </a>
                                             <form method="POST" class="delete-form">
                                                 <input type="hidden" name="action" value="delete">
@@ -211,6 +212,7 @@ include '../../views/header.php';
                                                 <button type="submit" class="btn btn-danger"
                                                     title="Hapus" onclick="return confirm('Yakin ingin menghapus anggota ini?')">
                                                     <i class="fas fa-trash"></i>
+                                                    <span class="mobile-text">Hapus</span>
                                                 </button>
                                             </form>
                                         </div>
@@ -395,9 +397,49 @@ include '../../views/header.php';
         }
     }
 
-    .fa-edit,
-    .fa-trash {
-        margin-left: 10px;
+    @media (max-width: 768px) {
+
+        /* Hide table headers */
+        #anggotaTable thead {
+            display: none;
+        }
+
+        /* Make each row a card */
+        #anggotaTable tr {
+            display: block;
+            margin-bottom: 1rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        /* Display cells as flex with label */
+        #anggotaTable td {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.5rem 1rem;
+            border-bottom: 1px solid #eee;
+        }
+
+        /* Add labels before content */
+        #anggotaTable td::before {
+            content: attr(data-label);
+            font-weight: bold;
+            margin-right: 1rem;
+        }
+
+        /* Hide icons and show text on mobile */
+        .btn i {
+            display: none;
+        }
+
+        .mobile-text {
+            display: inline;
+        }
+
+        /* Make form elements full width */
+        .status-select {
+            width: 100%;
+        }
     }
 </style>
 
