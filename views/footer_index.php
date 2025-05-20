@@ -9,7 +9,7 @@ if (!defined('BASE_URL')) {
 <footer>
     <div class="footer-grid">
         <div class="footer-logo">
-            <img src="https://cdn-icons-png.flaticon.com/512/3565/3565418.png" alt="Logo Perpus">
+            <img src="<?= BASE_URL ?>/assets/logo/logo-smea.png" alt="Logo Perpus">
             <p>SMEA E-Lib adalah perpustakaan digital modern yang menyediakan akses ke ribuan buku berkualitas untuk semua kalangan.</p>
             <div class="social-links">
                 <a href="#"><i class="fab fa-facebook-f"></i></a>

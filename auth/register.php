@@ -8,7 +8,9 @@ if (isset($_SESSION['user_id'])) {
 // Display error if exists
 $error = isset($_SESSION['register_error']) ? $_SESSION['register_error'] : '';
 unset($_SESSION['register_error']);
+include_once '../config.php';
 ?>
+
 <!DOCTYPE html>
 <html lang="id">
 
@@ -342,7 +344,7 @@ unset($_SESSION['register_error']);
         <!-- Bagian Kiri (Gambar) -->
         <div class="register-image fade-in">
             <div class="register-logo">
-                <img src="https://cdn-icons-png.flaticon.com/512/3565/3565418.png" alt="Logo Perpus">
+                <img src="<?= BASE_URL ?>/assets/logo/logo-smea.png" alt="Logo Perpus">
                 <div class="logo-text">
                     <h1>SMEA E-Lib</h1>
                     <span>Perpustakaan Digital</span>
