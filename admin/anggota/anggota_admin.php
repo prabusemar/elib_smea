@@ -773,6 +773,10 @@ include '../../views/header.php';
         $('.status-select').change(function() {
             $(this).closest('form').submit();
         });
+        // Auto submit saat filter jenis akun diubah
+        $('select[name="jenis_akun"]').change(function() {
+            $(this).closest('form').submit();
+        });
     });
 </script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
