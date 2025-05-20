@@ -170,8 +170,12 @@ include '../../views/header.php';
                                 <tr>
                                     <td data-label="ID"><?= htmlspecialchars($a['MemberID']); ?></td>
                                     <td data-label="Foto">
-                                        <img src="../../uploads/profiles/<?= htmlspecialchars($a['FotoProfil']); ?>"
-                                            alt="Foto Profil" class="profile-img">
+                                        <?php
+                                        $fotoProfil = !empty($a['FotoProfil']) ? $a['FotoProfil'] : 'assets/profiles/default.jpg';
+                                        // Jika bukan default, pastikan path benar
+                                        $fotoPath = ($fotoProfil === 'assets/profiles/default.jpg') ? '../../assets/profiles/default.jpg' : '../../uploads/profiles/' . htmlspecialchars($fotoProfil);
+                                        ?>
+                                        <img src="<?= $fotoPath ?>" alt="Foto Profil" class="profile-img">
                                     </td>
                                     <td data-label="Nama"><?= htmlspecialchars($a['Nama']); ?></td>
                                     <td data-label="Email"><?= htmlspecialchars($a['Email']); ?></td>

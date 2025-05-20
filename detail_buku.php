@@ -77,7 +77,7 @@ $avgRating = $buku['Rating'];
             width: 100%;
             height: 100%;
             background: url('<?= BASE_URL ?>/assets/patterns/pattern-dots.svg') repeat;
-            opacity: 0.05;
+            opacity: 0.5;
             pointer-events: none;
         }
 
@@ -118,23 +118,6 @@ $avgRating = $buku['Rating'];
             box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
         }
 
-        .book-cover-badge {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            background: var(--secondary);
-            color: white;
-            padding: 0.5rem 1rem;
-            border-radius: 50px;
-            font-weight: 600;
-            font-size: 0.9rem;
-            box-shadow: var(--shadow-sm);
-            z-index: 3;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
         .book-info {
             display: flex;
             flex-direction: column;
@@ -152,6 +135,8 @@ $avgRating = $buku['Rating'];
             margin-bottom: 1.5rem;
             backdrop-filter: blur(5px);
             border: 1px solid rgba(255, 255, 255, 0.1);
+            max-width: max-content;
+            white-space: nowrap;
         }
 
         .book-title {
@@ -240,6 +225,20 @@ $avgRating = $buku['Rating'];
             flex-wrap: wrap;
         }
 
+        .btn {
+            padding: 0.8rem 1.5rem;
+            font-size: 1rem;
+            font-weight: 600;
+            border-radius: 50px;
+            text-decoration: none;
+            color: white;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: var(--shadow-sm);
+            transition: var(--transition);
+        }
+
         .btn-detail {
             padding: 0.9rem 1.8rem;
             display: flex;
@@ -248,6 +247,7 @@ $avgRating = $buku['Rating'];
             font-weight: 600;
             border-radius: 50px;
             transition: var(--transition);
+
         }
 
         .btn-primary {
@@ -545,10 +545,7 @@ $avgRating = $buku['Rating'];
                         alt="Cover Buku <?= htmlspecialchars($buku['Judul']) ?>"
                         class="book-cover-large animate__animated animate__fadeInLeft"
                         onerror="this.src='<?= BASE_URL ?>/assets/icon/default-book.png'">
-                    <div class="book-cover-badge animate__animated animate__fadeIn animate__delay-1s">
-                        <i class="fas fa-<?= $buku['Status'] === 'Premium' ? 'crown' : 'book-open' ?>"></i>
-                        <?= $buku['Status'] . "  To Read" ?>
-                    </div>
+
                 </div>
                 <div class="book-info animate__animated animate__fadeIn animate__delay-1s">
                     <span class="book-category"><?= htmlspecialchars($buku['NamaKategori'] ?? 'Umum') ?></span>
@@ -609,20 +606,37 @@ $avgRating = $buku['Rating'];
                 <?php while ($review = mysqli_fetch_assoc($ulasan)): ?>
                     <div class="review-card">
                         <div class="review-header">
-                            <img src="<?= BASE_URL . '/' . htmlspecialchars($review['FotoProfil'] ?? 'assets/icon/default-profile.png') ?>"
+                            <img src="<?php
+                                        $fotoProfil = !empty($review['FotoProfil']) ? $review['FotoProfil'] : 'assets/profiles/default.jpg';
+                                        $fotoPath = ($fotoProfil === 'assets/profiles/default.jpg') ? BASE_URL . '/assets/profiles/default.jpg' : BASE_URL . '/' . htmlspecialchars($fotoProfil);
+                                        echo $fotoPath;
+                                        ?>"
                                 alt="Foto Profil <?= htmlspecialchars($review['NamaAnggota']) ?>"
                                 class="review-avatar"
-                                onerror="this.src='<?= BASE_URL ?>/assets/icon/default-profile.png'">
+                                onerror="this.src='<?= BASE_URL ?>/assets/profiles/default.jpg'">
                             <div>
                                 <div class="review-user"><?= htmlspecialchars($review['NamaAnggota']) ?></div>
-                                <div class="review-date"><?= date('d F Y', strtotime($review['CreatedAt'])) ?></div>
+                                <div class="review-date"><?= date('d F Y', strtotime($review['TanggalUlas'])) ?></div>
                             </div>
                         </div>
                         <div class="review-rating">
-                            <?php for ($i = 1; $i <= 5; $i++): ?>
-                                <i class="fas fa-star<?= $i > $review['Rating'] ? '-half-alt' : '' ?>"></i>
-                            <?php endfor; ?>
-                            <span style="margin-left: 0.5rem;"><?= $review['Rating'] ?>.0</span>
+                            <?php
+                            // Tampilkan bintang rating sesuai nilai rating (bisa desimal)
+                            $rating = floatval($review['Rating']);
+                            for ($i = 1; $i <= 5; $i++) {
+                                if ($rating >= $i) {
+                                    // Full star
+                                    echo '<i class="fas fa-star"></i>';
+                                } elseif ($rating >= ($i - 0.5)) {
+                                    // Half star
+                                    echo '<i class="fas fa-star-half-alt"></i>';
+                                } else {
+                                    // Empty star
+                                    echo '<i class="far fa-star"></i>';
+                                }
+                            }
+                            ?>
+                            <span style="margin-left: 0.5rem;"><?= $review['Rating'] ?></span>
                         </div>
                         <div class="review-content">
                             <?= nl2br(htmlspecialchars($review['Komentar'])) ?>
