@@ -122,7 +122,7 @@ require_once '../../views/header.php';
 </div>
 
 <style>
-    /* Search Container - Style 2 */
+    /* Search Container*/
     .search-container {
         margin-bottom: 2rem;
         padding: 0 1.5rem;
@@ -245,6 +245,8 @@ require_once '../../views/header.php';
         }
     }
 </style>
+
+
 
 <?php include 'modal_kategori.php'; ?>
 <?php include '../../views/footer.php'; ?>
