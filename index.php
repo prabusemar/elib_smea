@@ -205,7 +205,7 @@ include 'views/header_index.php';
             </div>
 
             <div class="view-all fade-in">
-                <a href="collection.php" class="btn btn-outline">Lihat Semua Buku</a>
+                <a href="semua_buku.php" class="btn btn-outline">Lihat Semua Buku</a>
             </div>
         </div>
     </section>
