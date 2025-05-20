@@ -24,6 +24,7 @@
         line-height: 1.6;
         background-color: #f9f9f9;
         overflow-x: hidden;
+        scroll-behavior: smooth;
     }
 
     a {

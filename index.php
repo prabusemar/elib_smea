@@ -1,15 +1,18 @@
+<?php
+$page_title = "Perpustakaan Digital - SMEA E-Lib";
+$page_description = "Jelajahi ribuan buku digital dengan akses tanpa batas. Bergabunglah dengan komunitas pembaca kami dan nikmati pengalaman membaca yang tak tertandingi.";
+$page_keywords = "perpustakaan digital, buku online, baca buku, ebook, SMEA E-Lib, koleksi buku, langganan buku, komunitas pembaca";
+$page_author = "SMEA E-Lib";
+include 'config.php';
+
+
+?>
 <!DOCTYPE html>
 <html lang="id">
 
-<head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Perpustakaan Digital - SMEA E-Lib</title>
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" />
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
-    <?php include 'config.php'; ?>
-    <link rel="stylesheet" href="<?= BASE_URL ?>/assets/styles/style.css" />
-</head>
+<?php
+include 'views/header_index.php';
+?>
 
 <body>
     <?php include 'views/navbar_index.php'; ?>
@@ -202,7 +205,7 @@
             </div>
 
             <div class="view-all fade-in">
-                <a href="#" class="btn btn-outline">Lihat Semua Buku</a>
+                <a href="collection.php" class="btn btn-outline">Lihat Semua Buku</a>
             </div>
         </div>
     </section>
