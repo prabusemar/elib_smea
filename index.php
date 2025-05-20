@@ -111,98 +111,89 @@ include 'views/header_index.php';
             <div class="collections-header fade-in">
                 <h2>Koleksi Buku Terbaru</h2>
                 <div class="collection-tabs">
-                    <button class="tab-btn active">Semua</button>
-                    <button class="tab-btn">Fiksi</button>
-                    <button class="tab-btn">Non-Fiksi</button>
-                    <button class="tab-btn">Edukasi</button>
+                    <button class="tab-btn active" data-kategori="all">Semua</button>
+                    <?php
+                    // Ambil kategori dari database
+                    $kategori_query = "SELECT KategoriID, NamaKategori FROM kategori ORDER BY NamaKategori";
+                    $kategori_result = mysqli_query($conn, $kategori_query);
+                    while ($kat = mysqli_fetch_assoc($kategori_result)): ?>
+                        <button class="tab-btn" data-kategori="<?= $kat['KategoriID'] ?>">
+                            <?= htmlspecialchars($kat['NamaKategori']) ?>
+                        </button>
+                    <?php endwhile; ?>
                 </div>
             </div>
 
-            <div class="books-grid">
-                <!-- Book 1 -->
-                <div class="book-card fade-in delay-1" style="display: flex; flex-direction: column; height: 100%;">
-                    <img src="https://cdn.gramedia.com/uploads/items/9786020398440_Seni-Hidup-Mi.jpg" alt="Book Cover" class="book-cover">
-                    <span class="book-badge">Free</span>
+            <div class="books-grid" id="booksGrid">
+                <?php
+                // Ambil 8 buku terbaru dari database
+                $buku_query = "SELECT b.*, k.NamaKategori 
+                               FROM buku b
+                               LEFT JOIN kategori k ON b.KategoriID = k.KategoriID
+                               WHERE b.DeletedAt IS NULL
+                               ORDER BY b.BukuID DESC
+                               LIMIT 8";
+                $buku_result = mysqli_query($conn, $buku_query);
+                $delay = 1;
+                while ($buku = mysqli_fetch_assoc($buku_result)):
+                    // Cover
+                    $cover = !empty($buku['Cover']) ? htmlspecialchars($buku['Cover']) : 'assets/icon/default-book.png';
+                    // Status badge
+                    $isPremium = strtolower($buku['Status']) === 'premium';
+                    $badgeClass = $isPremium ? 'book-badge premium' : 'book-badge';
+                    $badgeText = $isPremium ? 'Premium' : 'Free';
+                    // Rating
+                    $rating = is_numeric($buku['Rating']) ? number_format($buku['Rating'], 1) : '-';
+                    // Tahun
+                    $tahun = htmlspecialchars($buku['TahunTerbit']);
+                    // Penulis
+                    $penulis = htmlspecialchars($buku['Penulis']);
+                    // Judul
+                    $judul = htmlspecialchars($buku['Judul']);
+                    // Kategori
+                    $kategori = htmlspecialchars($buku['NamaKategori']);
+                    // Link detail
+                    $detail_link = "detail_buku.php?id=" . $buku['BukuID'];
+                ?>
+                <div class="book-card fade-in delay-<?= $delay ?>" data-kategori="<?= $buku['KategoriID'] ?>" style="display: flex; flex-direction: column; height: 100%;">
+                    <img src="<?= $cover ?>" alt="Book Cover" class="book-cover"
+                        onerror="this.src='assets/icon/default-book.png'">
+                    <span class="<?= $badgeClass ?>"><?= $badgeText ?></span>
                     <div class="book-details" style="flex: 1 1 auto; display: flex; flex-direction: column;">
-                        <h3 style="font-size: 1rem; white-space: normal; word-break: break-word;">Seni Hidup Minimalis</h3>
-                        <p class="author">oleh Jane Doe</p>
+                        <h3 style="font-size: 1rem; white-space: normal; word-break: break-word;"><?= $judul ?></h3>
+                        <p class="author">oleh <?= $penulis ?></p>
                         <div class="book-meta">
                             <span class="book-rating">
-                                <i class="fas fa-star"></i> 4.5
+                                <i class="fas fa-star"></i> <?= $rating ?>
                             </span>
-                            <span>2023</span>
+                            <span><?= $tahun ?></span>
                         </div>
                         <div style="flex:1"></div>
                         <div class="book-actions" style="margin-top: auto;">
-                            <a href="#" class="btn btn-outline"><i class="fas fa-info-circle"></i> Detail</a>
-                            <a href="#" class="btn btn-primary"><i class="fas fa-book-reader"></i> Baca</a>
+                            <a href="<?= $detail_link ?>" class="btn btn-outline"><i class="fas fa-info-circle"></i> Detail</a>
+                            <a href="<?= $detail_link ?>" class="btn btn-primary"><i class="fas fa-book-reader"></i> Baca</a>
                         </div>
                     </div>
                 </div>
-
-                <!-- Book 2 -->
-                <div class="book-card fade-in delay-2" style="display: flex; flex-direction: column; height: 100%;">
-                    <img src="https://kitamenulis.id/wp-content/uploads/2023/08/Cover-Depan-17-scaled.jpg" alt="Book Cover" class="book-cover">
-                    <span class="book-badge premium">Premium</span>
-                    <div class="book-details" style="flex: 1 1 auto; display: flex; flex-direction: column;">
-                        <h3 style="font-size: 1rem; white-space: normal; word-break: break-word;">Panduan Lengkap Pemrograman Web</h3>
-                        <p class="author">oleh John Smith</p>
-                        <div class="book-meta">
-                            <span class="book-rating">
-                                <i class="fas fa-star"></i> 4.8
-                            </span>
-                            <span>2023</span>
-                        </div>
-                        <div style="flex:1"></div>
-                        <div class="book-actions" style="margin-top: auto;">
-                            <a href="#" class="btn btn-outline"><i class="fas fa-info-circle"></i> Detail</a>
-                            <a href="#" class="btn btn-primary"><i class="fas fa-book-reader"></i> Baca</a>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Book 3 -->
-                <div class="book-card fade-in delay-3" style="display: flex; flex-direction: column; height: 100%;">
-                    <img src="https://ebooks.gramedia.com/ebook-covers/59589/image_highres/du1bcl6j12d20h709idvvfqae8j9ja.jpg" alt="Book Cover" class="book-cover">
-                    <span class="book-badge">Free</span>
-                    <div class="book-details" style="flex: 1 1 auto; display: flex; flex-direction: column;">
-                        <h3 style="font-size: 1rem; white-space: normal; word-break: break-word;">Petualangan di Hutan Amazon</h3>
-                        <p class="author">oleh Michael Brown</p>
-                        <div class="book-meta">
-                            <span class="book-rating">
-                                <i class="fas fa-star"></i> 4.2
-                            </span>
-                            <span>2022</span>
-                        </div>
-                        <div style="flex:1"></div>
-                        <div class="book-actions" style="margin-top: auto;">
-                            <a href="#" class="btn btn-outline"><i class="fas fa-info-circle"></i> Detail</a>
-                            <a href="#" class="btn btn-primary"><i class="fas fa-book-reader"></i> Baca</a>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Book 4 -->
-                <div class="book-card fade-in delay-4" style="display: flex; flex-direction: column; height: 100%;">
-                    <img src="https://cdn.gramedia.com/uploads/product-metas/s8atcazs-c.jpg" alt="Book Cover" class="book-cover">
-                    <span class="book-badge premium">Premium</span>
-                    <div class="book-details" style="flex: 1 1 auto; display: flex; flex-direction: column;">
-                        <h3 style="font-size: 1rem; white-space: normal; word-break: break-word;">Mastering Data Science</h3>
-                        <p class="author">oleh Sarah Johnson</p>
-                        <div class="book-meta">
-                            <span class="book-rating">
-                                <i class="fas fa-star"></i> 4.7
-                            </span>
-                            <span>2023</span>
-                        </div>
-                        <div style="flex:1"></div>
-                        <div class="book-actions" style="margin-top: auto;">
-                            <a href="#" class="btn btn-outline"><i class="fas fa-info-circle"></i> Detail</a>
-                            <a href="#" class="btn btn-primary"><i class="fas fa-book-reader"></i> Baca</a>
-                        </div>
-                    </div>
-                </div>
+                <?php $delay = $delay < 4 ? $delay + 1 : 1; endwhile; ?>
             </div>
+            <script>
+            // Simple JS filter for tabs (client-side, for demo only)
+            document.querySelectorAll('.collection-tabs .tab-btn').forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    document.querySelectorAll('.collection-tabs .tab-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    var kategori = btn.getAttribute('data-kategori');
+                    document.querySelectorAll('#booksGrid .book-card').forEach(function(card) {
+                        if (kategori === 'all' || card.getAttribute('data-kategori') === kategori) {
+                            card.style.display = 'flex';
+                        } else {
+                            card.style.display = 'none';
+                        }
+                    });
+                });
+            });
+            </script>
 
             <div class="view-all fade-in">
                 <a href="semua_buku.php" class="btn btn-outline">Lihat Semua Buku</a>
