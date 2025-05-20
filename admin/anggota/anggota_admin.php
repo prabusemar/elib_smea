@@ -9,19 +9,42 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
 }
 
 // Fungsi untuk mendapatkan semua anggota
-function getAllAnggota($conn)
+function getAllAnggota($conn, $search = null, $jenisAkun = null, $limit = 10, $offset = 0)
 {
     $sql = "SELECT m.*, u.username, u.role, u.last_login 
             FROM anggota m
             JOIN users u ON m.Email = u.username
             WHERE u.role = 'member'";
+    if ($search) {
+        $search = mysqli_real_escape_string($conn, $search);
+        $sql .= " AND (m.Nama LIKE '%$search%' OR m.Email LIKE '%$search%' OR u.username LIKE '%$search%')";
+    }
+    if ($jenisAkun && in_array($jenisAkun, ['Free', 'Premium'])) {
+        $jenisAkun = mysqli_real_escape_string($conn, $jenisAkun);
+        $sql .= " AND m.JenisAkun = '$jenisAkun'";
+    }
+    $sql .= " ORDER BY m.TanggalBergabung DESC LIMIT $limit OFFSET $offset";
     $result = mysqli_query($conn, $sql);
-
     if (!$result) {
         die("Error: " . mysqli_error($conn));
     }
-
     return mysqli_fetch_all($result, MYSQLI_ASSOC);
+}
+
+function getTotalAnggota($conn, $search = null, $jenisAkun = null)
+{
+    $sql = "SELECT COUNT(*) as total FROM anggota m JOIN users u ON m.Email = u.username WHERE u.role = 'member'";
+    if ($search) {
+        $search = mysqli_real_escape_string($conn, $search);
+        $sql .= " AND (m.Nama LIKE '%$search%' OR m.Email LIKE '%$search%' OR u.username LIKE '%$search%')";
+    }
+    if ($jenisAkun && in_array($jenisAkun, ['Free', 'Premium'])) {
+        $jenisAkun = mysqli_real_escape_string($conn, $jenisAkun);
+        $sql .= " AND m.JenisAkun = '$jenisAkun'";
+    }
+    $result = mysqli_query($conn, $sql);
+    $row = mysqli_fetch_assoc($result);
+    return $row['total'];
 }
 
 // Fungsi untuk mengubah status anggota
@@ -137,7 +160,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 // Ambil data anggota
-$anggota = getAllAnggota($conn);
+$search = isset($_GET['search']) ? $_GET['search'] : null;
+$jenisAkun = isset($_GET['jenis_akun']) ? $_GET['jenis_akun'] : null;
+$page = isset($_GET['page']) ? max(1, intval($_GET['page'])) : 1;
+$limit = 10;
+$offset = ($page - 1) * $limit;
+$totalAnggota = getTotalAnggota($conn, $search, $jenisAkun);
+$totalPages = ceil($totalAnggota / $limit);
+$anggota = getAllAnggota($conn, $search, $jenisAkun, $limit, $offset);
 
 ?>
 
@@ -155,6 +185,19 @@ include '../../views/header.php';
             </a>
         </div>
     </div>
+    <form method="GET" class="search-filter-form">
+        <div class="input-group" style="flex:2;">
+            <input type="text" name="search" class="form-control" placeholder="Cari nama, email, atau username..." value="<?= htmlspecialchars($search ?? '') ?>">
+            <div class="input-group-append">
+                <button class="btn btn-primary" type="submit"><i class="fas fa-search"></i> Cari</button>
+            </div>
+        </div>
+        <select name="jenis_akun" class="form-control" style="flex:1;max-width:180px;">
+            <option value="">Semua Akun</option>
+            <option value="Free" <?= ($jenisAkun === 'Free') ? 'selected' : '' ?>>Free</option>
+            <option value="Premium" <?= ($jenisAkun === 'Premium') ? 'selected' : '' ?>>Premium</option>
+        </select>
+    </form>
 
     <?php if (isset($_SESSION['success'])): ?>
         <div class="alert alert-success alert-dismissible">
@@ -259,6 +302,19 @@ include '../../views/header.php';
             </div>
         </div>
     </div>
+    <?php if ($totalPages > 1): ?>
+        <nav aria-label="Page navigation">
+            <ul class="pagination">
+                <?php for ($i = 1; $i <= $totalPages; $i++): ?>
+                    <li class="page-item <?= ($i == $page) ? 'active' : '' ?>">
+                        <a class="page-link" href="?search=<?= urlencode($search) ?>&jenis_akun=<?= urlencode($jenisAkun) ?>&page=<?= $i ?>">
+                            <?= $i ?>
+                        </a>
+                    </li>
+                <?php endfor; ?>
+            </ul>
+        </nav>
+    <?php endif; ?>
 </div>
 
 <!-- Modal Edit Anggota -->
@@ -326,6 +382,121 @@ include '../../views/header.php';
 
 
 <style>
+    /* Search & Filter Form */
+    .search-filter-form {
+        display: flex;
+        gap: 12px;
+        align-items: stretch;
+        /* Memastikan tinggi elemen sama */
+        margin-bottom: 2rem;
+    }
+
+    .input-group {
+        flex: 1;
+        display: flex;
+        align-items: stretch;
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .form-control[name="search"] {
+        flex: 1;
+        height: 48px;
+        border: none;
+        padding: 0 20px;
+        font-size: 1rem;
+        border-radius: 8px 0 0 8px;
+    }
+
+    .input-group-append {
+        display: flex;
+    }
+
+    .btn-primary[type="submit"] {
+        height: 48px;
+        border-radius: 0 8px 8px 0;
+        padding: 0 25px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        white-space: nowrap;
+    }
+
+    select[name="jenis_akun"] {
+        height: 48px;
+        min-width: 180px;
+        border: none;
+        border-radius: 8px;
+        padding: 0 20px;
+        appearance: none;
+        background: white url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%236c5ce7' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3e%3c/svg%3e") no-repeat right 15px center/12px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    /* Style untuk pagination */
+    .pagination {
+        margin-top: 2rem;
+        justify-content: center;
+    }
+
+    .page-item {
+        margin: 0 3px;
+    }
+
+    .page-link {
+        color: var(--primary);
+        border: 1px solid #dee2e6;
+        border-radius: 6px !important;
+        padding: 0.5rem 0.9rem;
+        min-width: 40px;
+        text-align: center;
+        transition: all 0.2s ease;
+    }
+
+    .page-link:hover {
+        background-color: #f8f9fa;
+        color: #2e0a8a;
+        border-color: #dee2e6;
+        transform: translateY(-2px);
+    }
+
+    .page-item.active .page-link {
+        background-color: var(--primary);
+        border-color: var(--primary);
+        color: white;
+        box-shadow: 0 2px 4px rgba(94, 114, 228, 0.2);
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+        form[method="GET"] {
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .input-group,
+        select[name="jenis_akun"] {
+            width: 100%;
+            max-width: none;
+        }
+
+        .pagination {
+            flex-wrap: wrap;
+            gap: 5px;
+        }
+
+        .page-item {
+            margin: 2px;
+        }
+
+        .page-link {
+            min-width: 36px;
+            padding: 0.4rem 0.7rem;
+            font-size: 0.9rem;
+        }
+    }
+
     .table-responsive {
         overflow-x: auto;
     }
