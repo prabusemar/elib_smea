@@ -225,7 +225,7 @@ $kategories = mysqli_query($conn, "SELECT * FROM kategori ORDER BY NamaKategori"
                         </div>
 
                         <div class="book-actions" style="margin-top: 1.5rem;">
-                            <a href="#" class="btn btn-outline" style="flex: 1;">
+                            <a href="detail_buku.php?id=<?= $book['BukuID'] ?>" class="btn btn-outline" style="flex: 1;">
                                 <i class="fas fa-info-circle"></i> Detail
                             </a>
                             <a href="<?= $book['Status'] === 'Premium' ? '#' : $book['DriveURL'] ?>"
