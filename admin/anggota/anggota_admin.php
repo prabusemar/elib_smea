@@ -300,23 +300,36 @@ include '../../views/header.php';
                     </tbody>
                 </table>
             </div>
+
+            <?php if ($totalPages > 1): ?>
+                <nav aria-label="Page navigation">
+                    <ul class="pagination">
+                        <li class="page-item <?= ($page <= 1) ? 'disabled' : '' ?>">
+                            <a class="page-link"
+                                href="?search=<?= urlencode($search ?? '') ?>&jenis_akun=<?= urlencode($jenisAkun ?? '') ?>&page=<?= $page - 1 ?>">
+                                Previous
+                            </a>
+                        </li>
+                        <?php for ($i = 1; $i <= $totalPages; $i++): ?>
+                            <li class="page-item <?= ($i == $page) ? 'active' : '' ?>">
+                                <a class="page-link"
+                                    href="?search=<?= urlencode($search ?? '') ?>&jenis_akun=<?= urlencode($jenisAkun ?? '') ?>&page=<?= $i ?>">
+                                    <?= $i ?>
+                                </a>
+                            </li>
+                        <?php endfor; ?>
+                        <li class="page-item <?= ($page >= $totalPages) ? 'disabled' : '' ?>">
+                            <a class="page-link"
+                                href="?search=<?= urlencode($search ?? '') ?>&jenis_akun=<?= urlencode($jenisAkun ?? '') ?>&page=<?= $page + 1 ?>">
+                                Next
+                            </a>
+                        </li>
+                    </ul>
+                </nav>
+            <?php endif; ?>
         </div>
     </div>
-    <?php if ($totalPages > 1): ?>
-        <nav aria-label="Page navigation">
-            <ul class="pagination">
-                <?php for ($i = 1; $i <= $totalPages; $i++): ?>
-                    <li class="page-item <?= ($i == $page) ? 'active' : '' ?>">
-                        <a class="page-link" href="?search=<?= urlencode($search) ?>&jenis_akun=<?= urlencode($jenisAkun) ?>&page=<?= $i ?>">
-                            <?= $i ?>
-                        </a>
-                    </li>
-                <?php endfor; ?>
-            </ul>
-        </nav>
-    <?php endif; ?>
 </div>
-
 <!-- Modal Edit Anggota -->
 <div class="modal fade" id="editAnggotaModal" tabindex="-1" aria-labelledby="editAnggotaModalLabel" aria-hidden="true">
     <div class="modal-dialog">
@@ -432,69 +445,6 @@ include '../../views/header.php';
         appearance: none;
         background: white url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%236c5ce7' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3e%3c/svg%3e") no-repeat right 15px center/12px;
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    }
-
-    /* Style untuk pagination */
-    .pagination {
-        margin-top: 2rem;
-        justify-content: center;
-    }
-
-    .page-item {
-        margin: 0 3px;
-    }
-
-    .page-link {
-        color: var(--primary);
-        border: 1px solid #dee2e6;
-        border-radius: 6px !important;
-        padding: 0.5rem 0.9rem;
-        min-width: 40px;
-        text-align: center;
-        transition: all 0.2s ease;
-    }
-
-    .page-link:hover {
-        background-color: #f8f9fa;
-        color: #2e0a8a;
-        border-color: #dee2e6;
-        transform: translateY(-2px);
-    }
-
-    .page-item.active .page-link {
-        background-color: var(--primary);
-        border-color: var(--primary);
-        color: white;
-        box-shadow: 0 2px 4px rgba(94, 114, 228, 0.2);
-    }
-
-    /* Responsive Design */
-    @media (max-width: 768px) {
-        form[method="GET"] {
-            flex-direction: column;
-            gap: 10px;
-        }
-
-        .input-group,
-        select[name="jenis_akun"] {
-            width: 100%;
-            max-width: none;
-        }
-
-        .pagination {
-            flex-wrap: wrap;
-            gap: 5px;
-        }
-
-        .page-item {
-            margin: 2px;
-        }
-
-        .page-link {
-            min-width: 36px;
-            padding: 0.4rem 0.7rem;
-            font-size: 0.9rem;
-        }
     }
 
     .table-responsive {
@@ -758,6 +708,184 @@ include '../../views/header.php';
             gap: 0;
         }
     }
+
+    /* Tambahan CSS agar card dan card-body tidak membatasi overflow */
+    .card,
+    .card-body {
+        overflow: visible !important;
+    }
+
+    /* Tambahkan CSS berikut */
+    .table-responsive {
+        width: 100%;
+        margin: 1rem 0;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+    }
+
+    #anggotaTable {
+        min-width: 1000px;
+        /* Minimum width untuk desktop */
+    }
+
+    @media (max-width: 768px) {
+        .table-responsive {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        #anggotaTable {
+            min-width: 100%;
+        }
+
+        /* Perbaikan tampilan mobile */
+        #anggotaTable td {
+            flex-direction: column;
+            align-items: flex-start;
+            padding: 1rem;
+        }
+
+        #anggotaTable td::before {
+            content: attr(data-label);
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+            color: #6c5ce7;
+        }
+
+        .btn-group {
+            flex-direction: column;
+            width: 100%;
+        }
+
+        .btn {
+            width: 100%;
+            justify-content: center;
+            margin: 0.25rem 0;
+        }
+    }
+
+    /* Pagination Modern */
+    .pagination {
+        display: flex;
+        gap: 8px;
+        list-style: none;
+        padding: 0;
+        margin: 2rem 0;
+        justify-content: center;
+    }
+
+    .page-item {
+        transition: transform 0.2s ease;
+    }
+
+    .page-item:hover {
+        transform: translateY(-2px);
+    }
+
+    .page-link {
+        display: block;
+        padding: 10px 18px;
+        text-decoration: none;
+        border-radius: 8px;
+        background: #f8f9fa;
+        color: var(--primary);
+        border: 1px solid #e9ecef;
+        transition: all 0.3s ease;
+        font-weight: 500;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    }
+
+    .page-link:hover {
+        background: var(--primary);
+        color: white;
+        border-color: var(--primary);
+        box-shadow: 0 4px 8px rgba(108, 92, 231, 0.2);
+    }
+
+    .page-item.active .page-link {
+        background: var(--primary);
+        border-color: var(--primary);
+        color: white;
+        box-shadow: 0 4px 12px rgba(108, 92, 231, 0.3);
+    }
+
+    .page-item.disabled .page-link {
+        background: #f8f9fa;
+        color: #adb5bd;
+        cursor: not-allowed;
+        opacity: 0.7;
+    }
+
+    /* Mobile View */
+    @media (max-width: 768px) {
+        .pagination {
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        .page-link {
+            padding: 8px 14px;
+            font-size: 0.9rem;
+            min-width: 36px;
+            text-align: center;
+        }
+    }
+
+    /* Search & Filter Nav */
+    .search-filter-form {
+        display: flex;
+        gap: 12px;
+        margin-bottom: 2rem;
+        background: white;
+        padding: 20px;
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    }
+
+    .input-group {
+        flex: 1;
+        border-radius: 8px;
+        overflow: hidden;
+        transition: box-shadow 0.3s ease;
+    }
+
+    .input-group:focus-within {
+        box-shadow: 0 0 0 3px rgba(108, 92, 231, 0.2);
+    }
+
+    .form-control[name="search"] {
+        border: none;
+        padding: 14px 20px;
+        font-size: 1rem;
+        background: #f8f9fa;
+    }
+
+    .form-control[name="search"]::placeholder {
+        color: #868e96;
+    }
+
+    .btn-primary[type="submit"] {
+        background: var(--primary);
+        border: none;
+        padding: 0 28px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    select[name="jenis_akun"] {
+        background: #f8f9fa;
+        border: none;
+        padding: 14px 20px;
+        font-size: 1rem;
+        border-radius: 8px;
+        cursor: pointer;
+        appearance: none;
+        background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236c5ce7' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+        background-repeat: no-repeat;
+        background-position: right 15px center;
+        background-size: 18px;
+        padding-right: 45px;
+    }
 </style>
 
 <!-- JavaScript -->
@@ -841,6 +969,22 @@ include '../../views/header.php';
             };
             return bulanMap[bulan] || '01';
         }
+    });
+
+    // Tambahkan ini di bagian akhir file
+    $(document).ready(function() {
+        // Reset ke halaman 1 saat melakukan search atau filter
+        $('form.search-filter-form').on('submit', function() {
+            $(this).append('<input type="hidden" name="page" value="1">');
+        });
+
+        // Pastikan semua link pagination memiliki parameter yang benar
+        $('.pagination a').each(function() {
+            const url = new URL(this.href);
+            url.searchParams.set('search', '<?= $search ?>');
+            url.searchParams.set('jenis_akun', '<?= $jenisAkun ?>');
+            this.href = url.toString();
+        });
     });
 </script>
 </body>
