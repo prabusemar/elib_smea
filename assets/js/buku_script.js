@@ -391,3 +391,23 @@ function closeModal(modalId) {
         modal.style.display = 'none';
     }
 }
+
+// Function pagination
+$(document).ready(function () {
+    // Reset ke halaman 1 saat melakukan search atau filter
+    $('form.advanced-filter-form').on('submit', function () {
+        $(this).append('<input type="hidden" name="page" value="1">');
+    });
+
+    // Pastikan semua link pagination memiliki parameter yang benar
+    $('.pagination a').each(function () {
+        const url = new URL(this.href);
+        // Replace the following values with actual JavaScript variables or values as needed
+        url.searchParams.set('judul', filters.judul || '');
+        url.searchParams.set('penulis', filters.penulis || '');
+        url.searchParams.set('kategori', filters.kategori || '');
+        url.searchParams.set('tahun', filters.tahun || '');
+        url.searchParams.set('status', filters.status || '');
+        this.href = url.toString();
+    });
+})

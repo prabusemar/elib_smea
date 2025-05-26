@@ -9,7 +9,8 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
 }
 
 // Fungsi untuk mendapatkan semua buku
-function getAllBooks($conn, $filters = [])
+// Fungsi untuk mendapatkan semua buku dengan pagination
+function getAllBooks($conn, $filters = [], $limit = 10, $offset = 0)
 {
     $query = "SELECT b.*, k.NamaKategori 
               FROM buku b
@@ -59,7 +60,10 @@ function getAllBooks($conn, $filters = [])
         $query .= " AND " . implode(" AND ", $conditions);
     }
 
-    $query .= " ORDER BY b.Judul";
+    $query .= " ORDER BY b.Judul LIMIT ? OFFSET ?";
+    $params[] = $limit;
+    $params[] = $offset;
+    $types .= 'ii';
 
     $stmt = mysqli_prepare($conn, $query);
     if (!$stmt) {
@@ -78,6 +82,72 @@ function getAllBooks($conn, $filters = [])
     return mysqli_fetch_all($result, MYSQLI_ASSOC);
 }
 
+// Fungsi untuk mendapatkan total buku
+function getTotalBooks($conn, $filters = [])
+{
+    $query = "SELECT COUNT(*) as total FROM buku b WHERE b.DeletedAt IS NULL";
+
+    $conditions = [];
+    $params = [];
+    $types = '';
+
+    // Filter Judul
+    if (!empty($filters['judul'])) {
+        $conditions[] = "b.Judul LIKE ?";
+        $params[] = '%' . $filters['judul'] . '%';
+        $types .= 's';
+    }
+
+    // Filter Penulis
+    if (!empty($filters['penulis'])) {
+        $conditions[] = "b.Penulis LIKE ?";
+        $params[] = '%' . $filters['penulis'] . '%';
+        $types .= 's';
+    }
+
+    // Filter Kategori
+    if (!empty($filters['kategori'])) {
+        $conditions[] = "b.KategoriID = ?";
+        $params[] = $filters['kategori'];
+        $types .= 'i';
+    }
+
+    // Filter Tahun
+    if (!empty($filters['tahun'])) {
+        $conditions[] = "b.TahunTerbit = ?";
+        $params[] = $filters['tahun'];
+        $types .= 'i';
+    }
+
+    // Filter Status
+    if (!empty($filters['status'])) {
+        $conditions[] = "b.Status = ?";
+        $params[] = $filters['status'];
+        $types .= 's';
+    }
+
+    if (!empty($conditions)) {
+        $query .= " AND " . implode(" AND ", $conditions);
+    }
+
+    $stmt = mysqli_prepare($conn, $query);
+    if (!$stmt) {
+        die("Error preparing statement: " . mysqli_error($conn));
+    }
+
+    if (!empty($params)) {
+        mysqli_stmt_bind_param($stmt, $types, ...$params);
+    }
+
+    if (!mysqli_stmt_execute($stmt)) {
+        die("Error executing statement: " . mysqli_stmt_error($stmt));
+    }
+
+    $result = mysqli_stmt_get_result($stmt);
+    $row = mysqli_fetch_assoc($result);
+    return $row['total'];
+}
+
 // Ambil parameter filter
 $filters = [
     'judul' => trim($_GET['judul'] ?? ''),
@@ -87,8 +157,15 @@ $filters = [
     'status' => trim($_GET['status'] ?? '')
 ];
 
-// Ambil data buku dengan filter
-$books = getAllBooks($conn, $filters);
+// Set pagination parameters
+$page = isset($_GET['page']) ? max(1, intval($_GET['page'])) : 1;
+$limit = 5;
+$offset = ($page - 1) * $limit;
+$totalBooks = getTotalBooks($conn, $filters);
+$totalPages = ceil($totalBooks / $limit);
+
+// Ambil data buku dengan filter dan pagination
+$books = getAllBooks($conn, $filters, $limit, $offset);
 
 // Ambil data kategori untuk dropdown
 $kategori_query = "SELECT * FROM kategori ORDER BY NamaKategori";
@@ -128,6 +205,7 @@ include '../../views/header.php';
                     <i class="fas fa-user-edit"></i>
                     <input type="text" name="penulis" class="form-control modern-input"
                         placeholder="Nama Penulis"
+                        style="padding-left: calc(2.2em + 10px);"
                         value="<?= htmlspecialchars($_GET['penulis'] ?? '') ?>">
                 </div>
             </div>
@@ -258,12 +336,36 @@ include '../../views/header.php';
                     </tbody>
                 </table>
             </div>
+            <?php if ($totalPages > 1): ?>
+                <nav aria-label="Page navigation">
+                    <ul class="pagination">
+                        <li class="page-item <?= ($page <= 1) ? 'disabled' : '' ?>">
+                            <a class="page-link"
+                                href="?judul=<?= urlencode($filters['judul']) ?>&penulis=<?= urlencode($filters['penulis']) ?>&kategori=<?= urlencode($filters['kategori']) ?>&tahun=<?= urlencode($filters['tahun']) ?>&status=<?= urlencode($filters['status']) ?>&page=<?= $page - 1 ?>">
+                                Previous
+                            </a>
+                        </li>
+                        <?php for ($i = 1; $i <= $totalPages; $i++): ?>
+                            <li class="page-item <?= ($i == $page) ? 'active' : '' ?>">
+                                <a class="page-link"
+                                    href="?judul=<?= urlencode($filters['judul']) ?>&penulis=<?= urlencode($filters['penulis']) ?>&kategori=<?= urlencode($filters['kategori']) ?>&tahun=<?= urlencode($filters['tahun']) ?>&status=<?= urlencode($filters['status']) ?>&page=<?= $i ?>">
+                                    <?= $i ?>
+                                </a>
+                            </li>
+                        <?php endfor; ?>
+                        <li class="page-item <?= ($page >= $totalPages) ? 'disabled' : '' ?>">
+                            <a class="page-link"
+                                href="?judul=<?= urlencode($filters['judul']) ?>&penulis=<?= urlencode($filters['penulis']) ?>&kategori=<?= urlencode($filters['kategori']) ?>&tahun=<?= urlencode($filters['tahun']) ?>&status=<?= urlencode($filters['status']) ?>&page=<?= $page + 1 ?>">
+                                Next
+                            </a>
+                        </li>
+                    </ul>
+                </nav>
+            <?php endif; ?>
         </div>
     </div>
 </div>
 
-
-<!-- Modal Edit Buku -->
 <!-- Modal untuk Edit Buku -->
 <div class="modal" id="bookModal">
     <div class="modal-content">
@@ -731,116 +833,108 @@ include '../../views/header.php';
     }
 
     .filter-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        display: flex;
+        flex-wrap: wrap;
         gap: 1rem;
-        align-items: end;
+        align-items: flex-end;
     }
 
     .filter-group {
+        flex: 1 1 180px;
+        min-width: 180px;
         position: relative;
-    }
-
-    .input-icon {
-        position: relative;
-    }
-
-    .input-icon i {
-        position: absolute;
-        left: 15px;
-        top: 50%;
-        transform: translateY(-50%);
-        color: #6c757d;
-        z-index: 2;
-    }
-
-    .select-wrapper i {
-        position: absolute;
-        left: 15px;
-        top: 50%;
-        transform: translateY(-50%);
-        color: #6c757d;
-        z-index: 2;
-    }
-
-    .modern-input {
-        padding-left: 40px !important;
-        height: 45px;
-        border: 1px solid #e2e8f0;
-        border-radius: 8px;
-        transition: all 0.3s ease;
-    }
-
-    .modern-input:focus {
-        border-color: #3a0ca3;
-        box-shadow: 0 0 0 3px rgba(58, 12, 163, 0.1);
-    }
-
-    .modern-select {
-        padding-left: 40px !important;
-        height: 45px;
-        border-radius: 8px;
-        appearance: none;
-        -webkit-appearance: none;
-    }
-
-    .select-wrapper::after {
-        content: "⌄";
-        position: absolute;
-        right: 15px;
-        top: 50%;
-        transform: translateY(-50%);
-        color: #6c757d;
-        pointer-events: none;
     }
 
     .filter-actions {
         display: flex;
         gap: 0.8rem;
-        grid-column: 1 / -1;
-        justify-content: flex-end;
+        align-items: flex-end;
+        margin-left: auto;
     }
 
+    /* Tombol Filter dan Reset */
     .btn-filter {
         background: #3a0ca3;
-        color: white;
-        padding: 0.8rem 1.5rem;
-        border-radius: 8px;
-        transition: all 0.3s ease;
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
+        color: #fff;
+        border: none;
+        border-radius: 6px;
+        font-weight: 600;
+        transition: background 0.2s, color 0.2s;
+        box-shadow: 0 2px 6px rgba(58, 12, 163, 0.08);
     }
 
-    .btn-filter:hover {
-        background: #2e0a8a;
-        transform: translateY(-1px);
+    .btn-filter:hover,
+    .btn-filter:focus {
+        background: #5f37ef;
+        color: #fff;
     }
 
     .btn-reset {
-        background: #f8f9fa;
+        background: #f1f3f5;
         color: #3a0ca3;
-        border: 1px solid #e2e8f0;
-        padding: 0.8rem 1.5rem;
-        border-radius: 8px;
-        transition: all 0.3s ease;
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
+        border: none;
+        border-radius: 6px;
+        font-weight: 600;
+        transition: background 0.2s, color 0.2s;
+        box-shadow: 0 2px 6px rgba(58, 12, 163, 0.05);
     }
 
-    .btn-reset:hover {
-        background: #fff;
-        border-color: #3a0ca3;
-        transform: translateY(-1px);
+    .btn-reset:hover,
+    .btn-reset:focus {
+        background: #e0e0e0;
+        color: #3a0ca3;
     }
 
-    @media (max-width: 768px) {
+    /* Input icon inside input box */
+    .input-icon {
+        position: relative;
+        width: 100%;
+    }
+
+    .input-icon i {
+        position: absolute;
+        left: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #888;
+        font-size: 1rem;
+        pointer-events: none;
+        z-index: 2;
+    }
+
+    .input-icon .form-control.modern-input {
+        padding-left: 2.2em;
+    }
+
+    .select-wrapper {
+        position: relative;
+        width: 100%;
+    }
+
+    .select-wrapper i {
+        position: absolute;
+        left: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #888;
+        font-size: 1rem;
+        pointer-events: none;
+        z-index: 2;
+    }
+
+    .select-wrapper select.modern-select {
+        padding-left: 2.2em;
+    }
+
+    @media (max-width: 900px) {
         .filter-grid {
-            grid-template-columns: 1fr;
+            flex-direction: column;
+            gap: 1rem;
         }
 
         .filter-actions {
+            margin-left: 0;
+            width: 100%;
             justify-content: stretch;
         }
 
@@ -996,7 +1090,7 @@ include '../../views/header.php';
         }
     }
 
-    /* Responsive Table Styles */
+    /*Responsive Table Styles*/
     .table-responsive {
         overflow-x: auto;
         -webkit-overflow-scrolling: touch;
@@ -1134,6 +1228,135 @@ include '../../views/header.php';
         .table td {
             font-size: 14px;
         }
+    }
+
+    /*Pagination*/
+    /* Pagination Modern */
+    .pagination {
+        display: flex;
+        gap: 8px;
+        list-style: none;
+        padding: 0;
+        margin: 2rem 0;
+        justify-content: center;
+    }
+
+    .page-item {
+        transition: transform 0.2s ease;
+    }
+
+    .page-item:hover {
+        transform: translateY(-2px);
+    }
+
+    .page-link {
+        display: block;
+        padding: 10px 18px;
+        text-decoration: none;
+        border-radius: 8px;
+        background: #f8f9fa;
+        color: var(--primary);
+        border: 1px solid #e9ecef;
+        transition: all 0.3s ease;
+        font-weight: 500;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    }
+
+    .page-link:hover {
+        background: var(--primary);
+        color: white;
+        border-color: var(--primary);
+        box-shadow: 0 4px 8px rgba(108, 92, 231, 0.2);
+    }
+
+    .page-item.active .page-link {
+        background: var(--primary);
+        border-color: var(--primary);
+        color: white;
+        box-shadow: 0 4px 12px rgba(108, 92, 231, 0.3);
+    }
+
+    .page-item.disabled .page-link {
+        background: #f8f9fa;
+        color: #adb5bd;
+        cursor: not-allowed;
+        opacity: 0.7;
+    }
+
+    /* Mobile View */
+    @media (max-width: 768px) {
+        .pagination {
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        .page-link {
+            padding: 8px 14px;
+            font-size: 0.9rem;
+            min-width: 36px;
+            text-align: center;
+        }
+    }
+
+    /* Search & Filter Nav */
+    .search-filter-form {
+        display: flex;
+        gap: 12px;
+        margin-bottom: 2rem;
+        background: white;
+        padding: 20px;
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    }
+
+    .input-group {
+        flex: 1;
+        border-radius: 8px;
+        overflow: hidden;
+        transition: box-shadow 0.3s ease;
+    }
+
+    .input-group:focus-within {
+        box-shadow: 0 0 0 3px rgba(108, 92, 231, 0.2);
+    }
+
+    .form-control[name="search"] {
+        border: none;
+        padding: 14px 20px;
+        font-size: 1rem;
+        background: #f8f9fa;
+    }
+
+    .form-control[name="search"]::placeholder {
+        color: #868e96;
+    }
+
+    .btn-primary[type="submit"] {
+        background: var(--primary);
+        border: none;
+        padding: 0 28px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    select[name="jenis_akun"] {
+        background: #f8f9fa;
+        border: none;
+        padding: 14px 20px;
+        font-size: 1rem;
+        border-radius: 8px;
+        cursor: pointer;
+        appearance: none;
+        background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236c5ce7' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+        background-repeat: no-repeat;
+        background-position: right 15px center;
+        background-size: 18px;
+        padding-right: 45px;
+    }
+
+    .fa-user-edit {
+        margin-right: 15px;
     }
 </style>
 
