@@ -2,7 +2,7 @@
 session_start();
 require_once '../../config.php';
 
-// Pastikan hanya admin yang bisa mengakses
+// Ensure only admin can access
 if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
     header("Location: ../../auth/login.php");
     exit;
@@ -11,53 +11,71 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
 $error = '';
 $success = '';
 
-// Proses form tambah anggota
+// Process form submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $nama = mysqli_real_escape_string($conn, $_POST['nama']);
     $email = mysqli_real_escape_string($conn, $_POST['email']);
     $password = mysqli_real_escape_string($conn, $_POST['password']);
     $jenis_akun = mysqli_real_escape_string($conn, $_POST['jenis_akun']);
     $masa_berlaku = !empty($_POST['masa_berlaku']) ? mysqli_real_escape_string($conn, $_POST['masa_berlaku']) : null;
+    $foto_profil = 'default.jpg';
 
-    // Validasi input
+    // Validate input
     if (empty($nama) || empty($email) || empty($password)) {
         $error = 'Nama, email, dan password wajib diisi!';
     } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
         $error = 'Format email tidak valid!';
     } else {
-        // Cek apakah email sudah terdaftar
         $check = mysqli_query($conn, "SELECT * FROM anggota WHERE Email = '$email'");
         if (mysqli_num_rows($check) > 0) {
             $error = 'Email sudah terdaftar!';
         } else {
-            // Hash password
-            $hashed_password = password_hash($password, PASSWORD_DEFAULT);
+            // File upload handling
+            if (isset($_FILES['foto_profil']) && $_FILES['foto_profil']['error'] === UPLOAD_ERR_OK) {
+                $uploadDir = '../../uploads/profiles/';
+                if (!is_dir($uploadDir)) mkdir($uploadDir, 0755, true);
 
-            // Mulai transaksi
-            mysqli_begin_transaction($conn);
+                $fileExt = strtolower(pathinfo($_FILES['foto_profil']['name'], PATHINFO_EXTENSION));
+                $allowedTypes = ['jpg', 'jpeg', 'png', 'gif'];
 
-            try {
-                // Insert ke tabel anggota
-                $sql_anggota = "INSERT INTO anggota (Nama, Email, Password, FotoProfil, TanggalBergabung, Status, JenisAkun, MasaBerlaku) 
-                               VALUES (?, ?, ?, 'default.jpg', CURDATE(), 'Active', ?, ?)";
-                $stmt = mysqli_prepare($conn, $sql_anggota);
-                mysqli_stmt_bind_param($stmt, "sssss", $nama, $email, $hashed_password, $jenis_akun, $masa_berlaku);
-                mysqli_stmt_execute($stmt);
+                if (in_array($fileExt, $allowedTypes)) {
+                    $fileName = uniqid('profile_') . '.' . $fileExt;
+                    if (move_uploaded_file($_FILES['foto_profil']['tmp_name'], $uploadDir . $fileName)) {
+                        $foto_profil = $fileName;
+                    } else {
+                        $error = 'Gagal mengunggah foto profil.';
+                    }
+                } else {
+                    $error = 'Format file tidak didukung. Gunakan JPG, PNG, atau GIF.';
+                }
+            }
 
-                // Insert ke tabel users
-                $sql_users = "INSERT INTO users (username, password, role) VALUES (?, ?, 'member')";
-                $stmt = mysqli_prepare($conn, $sql_users);
-                mysqli_stmt_bind_param($stmt, "ss", $email, $hashed_password);
-                mysqli_stmt_execute($stmt);
+            if (empty($error)) {
+                $hashed_password = password_hash($password, PASSWORD_DEFAULT);
+                mysqli_begin_transaction($conn);
 
-                // Commit transaksi
-                mysqli_commit($conn);
+                try {
+                    $sql_anggota = "INSERT INTO anggota (Nama, Email, Password, FotoProfil, TanggalBergabung, Status, JenisAkun, MasaBerlaku) 
+                                   VALUES (?, ?, ?, ?, CURDATE(), 'Active', ?, ?)";
+                    $stmt = mysqli_prepare($conn, $sql_anggota);
+                    mysqli_stmt_bind_param($stmt, "ssssss", $nama, $email, $hashed_password, $foto_profil, $jenis_akun, $masa_berlaku);
+                    mysqli_stmt_execute($stmt);
 
-                $success = 'Anggota berhasil ditambahkan!';
-                $_POST = array(); // Clear form
-            } catch (Exception $e) {
-                mysqli_rollback($conn);
-                $error = 'Gagal menambahkan anggota: ' . $e->getMessage();
+                    $sql_users = "INSERT INTO users (username, password, role) VALUES (?, ?, 'member')";
+                    $stmt = mysqli_prepare($conn, $sql_users);
+                    mysqli_stmt_bind_param($stmt, "ss", $email, $hashed_password);
+                    mysqli_stmt_execute($stmt);
+
+                    mysqli_commit($conn);
+                    $success = 'Anggota berhasil ditambahkan!';
+                    $_POST = array();
+                } catch (Exception $e) {
+                    mysqli_rollback($conn);
+                    $error = 'Gagal menambahkan anggota: ' . $e->getMessage();
+                    if ($foto_profil !== 'default.jpg' && file_exists($uploadDir . $foto_profil)) {
+                        unlink($uploadDir . $foto_profil);
+                    }
+                }
             }
         }
     }
@@ -66,184 +84,464 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 <?php include '../../views/header.php'; ?>
 
-
-<div class="content-wrapper">
-    <div class="page-header">
-        <h1>Tambah Anggota Baru</h1>
-        <div class="header-actions">
-            <a href="../anggota_admin.php" class="btn btn-primary">
-                <i class="fas fa-arrow-left"></i> Kembali
-            </a>
-        </div>
+<div class="form-container">
+    <div class="form-header">
+        <h1><i class="fas fa-user-plus"></i> Tambah Anggota Baru</h1>
+        <a href="../anggota_admin.php" class="back-button">
+            <i class="fas fa-arrow-left"></i> Kembali
+        </a>
     </div>
 
-    <div class="card">
-        <div class="card-body">
-            <?php if ($error): ?>
-                <div class="alert alert-danger">
-                    <?= $error; ?>
-                </div>
-            <?php endif; ?>
-
-            <?php if ($success): ?>
-                <div class="alert alert-success">
-                    <?= $success; ?>
-                </div>
-            <?php endif; ?>
-
-            <form method="POST" enctype="multipart/form-data">
-                <div class="form-group">
-                    <label for="nama">Nama Lengkap</label>
-                    <input type="text" id="nama" name="nama" class="form-control"
-                        value="<?= isset($_POST['nama']) ? htmlspecialchars($_POST['nama']) : '' ?>" required>
-                </div>
-
-                <div class="form-group">
-                    <label for="email">Email</label>
-                    <input type="email" id="email" name="email" class="form-control"
-                        value="<?= isset($_POST['email']) ? htmlspecialchars($_POST['email']) : '' ?>" required>
-                </div>
-
-                <div class="form-group">
-                    <label for="password">Password</label>
-                    <input type="password" id="password" name="password" class="form-control" required>
-                </div>
-
-                <div class="form-group">
-                    <label for="jenis_akun">Jenis Akun</label>
-                    <select id="jenis_akun" name="jenis_akun" class="form-control" required>
-                        <option value="Free" <?= (isset($_POST['jenis_akun']) && $_POST['jenis_akun'] === 'Free') ? 'selected' : '' ?>>Free</option>
-                        <option value="Premium" <?= (isset($_POST['jenis_akun']) && $_POST['jenis_akun'] === 'Premium') ? 'selected' : '' ?>>Premium</option>
-                    </select>
-                </div>
-
-                <div class="form-group">
-                    <label for="masa_berlaku">Masa Berlaku (untuk Premium)</label>
-                    <input type="date" id="masa_berlaku" name="masa_berlaku" class="form-control"
-                        value="<?= isset($_POST['masa_berlaku']) ? htmlspecialchars($_POST['masa_berlaku']) : '' ?>">
-                    <small class="text-muted">Biarkan kosong untuk akun Free</small>
-                </div>
-
-                <div class="form-group">
-                    <button type="submit" class="btn btn-primary">
-                        <i class="fas fa-save"></i> Simpan
-                    </button>
-                    <button type="reset" class="btn btn-secondary">
-                        <i class="fas fa-undo"></i> Reset
-                    </button>
-                </div>
-            </form>
+    <?php if ($error): ?>
+        <div class="alert error">
+            <i class="fas fa-exclamation-circle"></i> <?= $error ?>
         </div>
-    </div>
+    <?php endif; ?>
+
+    <?php if ($success): ?>
+        <div class="alert success">
+            <i class="fas fa-check-circle"></i> <?= $success ?>
+        </div>
+    <?php endif; ?>
+
+    <form method="POST" enctype="multipart/form-data" class="member-form">
+        <div class="form-grid">
+            <div class="form-column">
+                <div class="form-group">
+                    <label for="nama">Nama Lengkap <span class="required">*</span></label>
+                    <input type="text" id="nama" name="nama" value="<?= htmlspecialchars($_POST['nama'] ?? '') ?>" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="email">Email <span class="required">*</span></label>
+                    <input type="email" id="email" name="email" value="<?= htmlspecialchars($_POST['email'] ?? '') ?>" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="password">Password <span class="required">*</span></label>
+                    <div class="password-wrapper">
+                        <input type="password" id="password" name="password" required>
+                        <button type="button" class="toggle-password" aria-label="Toggle password visibility">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </div>
+                    <small class="hint">Minimal 8 karakter</small>
+                </div>
+            </div>
+
+            <div class="form-column">
+                <div class="form-group">
+                    <label for="foto_profil">Foto Profil</label>
+                    <div class="file-upload">
+                        <label class="file-label">
+                            <input type="file" id="foto_profil" name="foto_profil" accept="image/*">
+                            <span class="file-button"><i class="fas fa-upload"></i> Pilih File</span>
+                            <span class="file-name">Belum ada file dipilih</span>
+                        </label>
+                        <small class="hint">Format: JPG, PNG, GIF (Maks. 2MB)</small>
+                    </div>
+                    <div class="image-preview">
+                        <img id="previewFoto" src="../../uploads/profiles/default.jpg" alt="Preview Foto Profil">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label for="jenis_akun">Jenis Akun <span class="required">*</span></label>
+                <select id="jenis_akun" name="jenis_akun" required>
+                    <option value="Free" <?= ($_POST['jenis_akun'] ?? '') === 'Free' ? 'selected' : '' ?>>Free</option>
+                    <option value="Premium" <?= ($_POST['jenis_akun'] ?? '') === 'Premium' ? 'selected' : '' ?>>Premium</option>
+                </select>
+            </div>
+
+            <div class="form-group" id="masa_berlaku_group">
+                <label for="masa_berlaku">Masa Berlaku</label>
+                <input type="date" id="masa_berlaku" name="masa_berlaku" value="<?= htmlspecialchars($_POST['masa_berlaku'] ?? '') ?>">
+                <small class="hint">Hanya untuk akun Premium</small>
+            </div>
+        </div>
+
+        <div class="form-actions">
+            <button type="reset" class="reset-button">
+                <i class="fas fa-undo"></i> Reset
+            </button>
+            <button type="submit" class="submit-button">
+                <i class="fas fa-save"></i> Simpan Anggota
+            </button>
+        </div>
+    </form>
 </div>
 
 <?php include '../../views/footer.php'; ?>
 
 <style>
-    .form-group {
-        margin-bottom: 1.5rem;
+    /* Base Styles */
+    :root {
+        --primary: #4361ee;
+        --primary-dark: #3a0ca3;
+        --secondary: #f72585;
+        --success: #4cc9f0;
+        --danger: #f72585;
+        --light: #f8f9fa;
+        --dark: #212529;
+        --gray: #6c757d;
+        --border: #dee2e6;
+        --border-radius: 8px;
+        --box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        --transition: all 0.3s ease;
     }
 
-    label {
-        display: block;
-        margin-bottom: 0.5rem;
-        font-weight: 600;
+    * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
     }
 
-    .form-control {
-        width: 100%;
-        padding: 0.75rem;
-        border: 1px solid #ddd;
-        border-radius: 4px;
-        font-size: 1rem;
-        transition: border-color 0.3s ease;
+    body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        line-height: 1.6;
+        color: var(--dark);
+        background-color: #f5f7fa;
+
     }
 
-    .form-control:focus {
-        border-color: var(--primary);
-        outline: none;
-        box-shadow: 0 0 0 2px rgba(58, 12, 163, 0.2);
+    /* Form Container */
+    .form-container {
+        max-width: 1000px;
+        margin: 0 auto;
+        background: white;
+        border-radius: var(--border-radius);
+        box-shadow: var(--box-shadow);
+        padding: 30px;
     }
 
-    select.form-control {
-        height: auto;
-        padding: 0.75rem;
+    .form-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 30px;
+        padding-bottom: 15px;
+        border-bottom: 1px solid var(--border);
     }
 
-    .btn {
-        padding: 0.75rem 1.5rem;
-        border-radius: 4px;
-        font-weight: 600;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        border: none;
+    .form-header h1 {
+        font-size: 24px;
+        color: var(--primary-dark);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .back-button {
         display: inline-flex;
         align-items: center;
-        gap: 0.5rem;
+        gap: 8px;
+        padding: 8px 15px;
+        background-color: var(--light);
+        color: var(--dark);
+        text-decoration: none;
+        border-radius: var(--border-radius);
+        transition: var(--transition);
+        border: 1px solid var(--border);
     }
 
-    .btn-primary {
+    .back-button:hover {
+        background-color: var(--border);
+        color: var(--dark);
+    }
+
+    /* Alert Messages */
+    .alert {
+        padding: 15px;
+        margin-bottom: 25px;
+        border-radius: var(--border-radius);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .alert.error {
+        background-color: #fee2e2;
+        color: #b91c1c;
+        border-left: 4px solid #dc2626;
+    }
+
+    .alert.success {
+        background-color: #dcfce7;
+        color: #166534;
+        border-left: 4px solid #22c55e;
+    }
+
+    .alert i {
+        font-size: 20px;
+    }
+
+    /* Form Layout */
+    .member-form {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+    }
+
+    .form-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 25px;
+    }
+
+    .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 25px;
+    }
+
+    @media (max-width: 768px) {
+
+        .form-grid,
+        .form-row {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    /* Form Groups */
+    .form-group {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .form-group label {
+        font-weight: 600;
+        color: var(--dark);
+        font-size: 14px;
+    }
+
+    .required {
+        color: var(--danger);
+    }
+
+    .hint {
+        color: var(--gray);
+        font-size: 12px;
+        font-style: italic;
+    }
+
+    /* Form Controls */
+    input[type="text"],
+    input[type="email"],
+    input[type="password"],
+    input[type="date"],
+    select {
+        width: 100%;
+        padding: 12px 15px;
+        border: 1px solid var(--border);
+        border-radius: var(--border-radius);
+        font-size: 14px;
+        transition: var(--transition);
+        background-color: white;
+    }
+
+    input[type="text"]:focus,
+    input[type="email"]:focus,
+    input[type="password"]:focus,
+    input[type="date"]:focus,
+    select:focus {
+        outline: none;
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.2);
+    }
+
+    /* Password Input */
+    .password-wrapper {
+        position: relative;
+    }
+
+    .password-wrapper input {
+        padding-right: 40px;
+    }
+
+    .toggle-password {
+        position: absolute;
+        right: 10px;
+        top: 50%;
+        transform: translateY(-50%);
+        background: none;
+        border: none;
+        color: var(--gray);
+        cursor: pointer;
+        padding: 5px;
+    }
+
+    .toggle-password:hover {
+        color: var(--primary);
+    }
+
+    /* File Upload */
+    .file-upload {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+    }
+
+    .file-label {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+        cursor: pointer;
+    }
+
+    .file-button {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 15px;
+        background-color: var(--primary);
+        color: white;
+        border-radius: var(--border-radius);
+        transition: var(--transition);
+        text-align: center;
+        justify-content: center;
+        font-size: 14px;
+    }
+
+    .file-button:hover {
+        background-color: var(--primary-dark);
+    }
+
+    .file-name {
+        font-size: 13px;
+        color: var(--gray);
+        padding: 5px 0;
+    }
+
+    input[type="file"] {
+        display: none;
+    }
+
+    /* Image Preview */
+    .image-preview {
+        margin-top: 15px;
+        text-align: center;
+    }
+
+    .image-preview img {
+        width: 120px;
+        height: 120px;
+        object-fit: cover;
+        border-radius: 50%;
+        border: 3px solid var(--border);
+        transition: var(--transition);
+    }
+
+    .image-preview img:hover {
+        border-color: var(--primary);
+    }
+
+    /* Form Actions */
+    .form-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 15px;
+        margin-top: 20px;
+        padding-top: 20px;
+        border-top: 1px solid var(--border);
+    }
+
+    .submit-button,
+    .reset-button {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 12px 20px;
+        border-radius: var(--border-radius);
+        font-weight: 600;
+        cursor: pointer;
+        transition: var(--transition);
+        border: none;
+        font-size: 14px;
+    }
+
+    .submit-button {
         background-color: var(--primary);
         color: white;
     }
 
-    .btn-primary:hover {
-        background-color: #2e0a8a;
+    .submit-button:hover {
+        background-color: var(--primary-dark);
         transform: translateY(-2px);
     }
 
-    .btn-secondary {
-        background-color: #6c757d;
-        color: white;
+    .reset-button {
+        background-color: var(--light);
+        color: var(--dark);
+        border: 1px solid var(--border);
     }
 
-    .btn-secondary:hover {
-        background-color: #5a6268;
+    .reset-button:hover {
+        background-color: var(--border);
         transform: translateY(-2px);
     }
 
-    .text-muted {
-        color: #6c757d;
-        font-size: 0.875rem;
+    /* Hide masa berlaku for Free accounts */
+    #masa_berlaku_group {
+        display: none;
     }
 
-    .alert {
-        padding: 1rem;
-        margin-bottom: 1.5rem;
-        border-radius: 4px;
-    }
-
-    .alert-danger {
-        background-color: #f8d7da;
-        color: #721c24;
-        border: 1px solid #f5c6cb;
-    }
-
-    .alert-success {
-        background-color: #d4edda;
-        color: #155724;
-        border: 1px solid #c3e6cb;
+    #jenis_akun[value="Premium"]~#masa_berlaku_group {
+        display: block;
     }
 </style>
 
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        const jenisAkunSelect = document.getElementById('jenis_akun');
-        const masaBerlakuInput = document.getElementById('masa_berlaku');
+        // Toggle password visibility
+        const togglePassword = document.querySelector('.toggle-password');
+        const passwordInput = document.getElementById('password');
 
-        // Update masa berlaku required status based on account type
-        function updateMasaBerlakuRequired() {
-            if (jenisAkunSelect.value === 'Premium') {
-                masaBerlakuInput.required = true;
+        togglePassword.addEventListener('click', function() {
+            const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+            passwordInput.setAttribute('type', type);
+            this.querySelector('i').classList.toggle('fa-eye-slash');
+        });
+
+        // Preview image before upload
+        const fileInput = document.getElementById('foto_profil');
+        const previewImg = document.getElementById('previewFoto');
+        const fileNameDisplay = document.querySelector('.file-name');
+
+        fileInput.addEventListener('change', function() {
+            const file = this.files[0];
+            if (file) {
+                fileNameDisplay.textContent = file.name;
+
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    previewImg.src = e.target.result;
+                }
+                reader.readAsDataURL(file);
             } else {
-                masaBerlakuInput.required = false;
+                fileNameDisplay.textContent = 'Belum ada file dipilih';
+                previewImg.src = '../../uploads/profiles/default.jpg';
             }
-        }
+        });
 
-        // Initial check
-        updateMasaBerlakuRequired();
+        // Show/hide masa berlaku based on account type
+        const accountType = document.getElementById('jenis_akun');
+        const masaBerlakuGroup = document.getElementById('masa_berlaku_group');
 
-        // Add event listener
-        jenisAkunSelect.addEventListener('change', updateMasaBerlakuRequired);
+        accountType.addEventListener('change', function() {
+            if (this.value === 'Premium') {
+                masaBerlakuGroup.style.display = 'flex';
+                document.getElementById('masa_berlaku').setAttribute('required', 'required');
+            } else {
+                masaBerlakuGroup.style.display = 'none';
+                document.getElementById('masa_berlaku').removeAttribute('required');
+            }
+        });
+
+        // Trigger change event on page load
+        accountType.dispatchEvent(new Event('change'));
     });
 </script>
