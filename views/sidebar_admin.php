@@ -87,7 +87,7 @@ $current_page = basename($_SERVER['PHP_SELF']);
                     <span class="tooltiptext">Anggota</span>
                 </div>
             </a>
-            <a href="/library/admin/staff.php" class="nav-item <?php echo ($current_page == 'staff.php') ? 'active' : ''; ?>">
+            <a href="/library/admin/staff/staff_admin.php" class="nav-item <?php echo ($current_page == 'staff.php') ? 'active' : ''; ?>">
                 <div class="tooltip">
                     <i class="fas fa-user-shield"></i>
                     <span>Staff</span>
@@ -713,7 +713,7 @@ $current_page = basename($_SERVER['PHP_SELF']);
             background-color: var(--tooltip-bg);
             backdrop-filter: blur(2px);
             max-width: 200px;
-            padding: 8px 100px 8px 12px;
+            padding: 8px 120px 8px 12px;
             border-radius: 6px;
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
         `;

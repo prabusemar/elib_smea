@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:3306
--- Generation Time: May 20, 2025 at 05:39 AM
+-- Generation Time: May 26, 2025 at 10:08 AM
 -- Server version: 5.7.39
 -- PHP Version: 8.1.10
 
@@ -45,7 +45,23 @@ CREATE TABLE `anggota` (
 --
 
 INSERT INTO `anggota` (`MemberID`, `Nama`, `Email`, `Password`, `FotoProfil`, `TanggalBergabung`, `Status`, `MasaBerlaku`, `JenisAkun`, `TerakhirLogin`) VALUES
-(1, 'Musa Pribadi Alfaruq', 'musaalfaruq@gmail.com', '$2y$10$Dxys74PkWgM17RA4y2OJnOk723jmugJUIC2Q4Ri271hO0v6HAjP.2', 'default.jpg', '2025-05-05', 'Active', '2026-12-02', 'Premium', NULL);
+(1, 'Musa Pribadi Alfaruq', 'musaalfaruq@gmail.com', '$2y$10$Dxys74PkWgM17RA4y2OJnOk723jmugJUIC2Q4Ri271hO0v6HAjP.2', 'default.jpg', '2025-05-05', 'Active', '2026-12-25', 'Premium', NULL),
+(17, 'Budi Santoso', 'budi.santoso@mail.com', '$2y$10$TKh8H1.PfQx37YgCzwiKb.KjNyWgaHb9cbcoQgdIVFlYg7B77UdFm', 'default.jpg', '2023-02-10', 'Active', NULL, 'Free', NULL),
+(18, 'Siti Rahayu', 'siti.rahayu@mail.com', '$2y$10$TKh8H1.PfQx37YgCzwiKb.KjNyWgaHb9cbcoQgdIVFlYg7B77UdFm', 'default.jpg', '2023-03-25', 'Active', '2025-03-25', 'Premium', NULL),
+(19, 'Agus Wijaya', 'agus.wijaya@mail.com', '$2y$10$TKh8H1.PfQx37YgCzwiKb.KjNyWgaHb9cbcoQgdIVFlYg7B77UdFm', 'default.jpg', '2023-05-12', 'Active', NULL, 'Free', NULL),
+(20, 'Dewi Lestari', 'dewi.lestari@mail.com', '$2y$10$TKh8H1.PfQx37YgCzwiKb.KjNyWgaHb9cbcoQgdIVFlYg7B77UdFm', 'default.jpg', '2023-07-18', 'Active', '2026-07-18', 'Premium', NULL),
+(21, 'Rudi Hermawan', 'rudi.hermawan@mail.com', '$2y$10$TKh8H1.PfQx37YgCzwiKb.KjNyWgaHb9cbcoQgdIVFlYg7B77UdFm', 'default.jpg', '2023-09-05', 'Active', NULL, 'Free', NULL),
+(22, 'Anita Putri', 'anita.putri@mail.com', '$2y$10$TKh8H1.PfQx37YgCzwiKb.KjNyWgaHb9cbcoQgdIVFlYg7B77UdFm', 'default.jpg', '2024-01-20', 'Active', NULL, 'Free', NULL),
+(23, 'Fajar Pratama', 'fajar.pratama@mail.com', '$2y$10$TKh8H1.PfQx37YgCzwiKb.KjNyWgaHb9cbcoQgdIVFlYg7B77UdFm', 'default.jpg', '2024-04-15', 'Active', '2026-04-15', 'Premium', NULL),
+(24, 'Lina Marlina', 'lina.marlina@mail.com', '$2y$10$TKh8H1.PfQx37YgCzwiKb.KjNyWgaHb9cbcoQgdIVFlYg7B77UdFm', 'default.jpg', '2024-06-30', 'Suspended', NULL, 'Free', NULL),
+(25, 'Hendra Kurniawan', 'hendra.k@mail.com', '$2y$10$TKh8H1.PfQx37YgCzwiKb.KjNyWgaHb9cbcoQgdIVFlYg7B77UdFm', 'default.jpg', '2024-08-22', 'Active', '2025-08-22', 'Premium', NULL),
+(26, 'Maya Indah', 'maya.indah@mail.com', '$2y$10$TKh8H1.PfQx37YgCzwiKb.KjNyWgaHb9cbcoQgdIVFlYg7B77UdFm', 'default.jpg', '2025-01-05', 'Active', NULL, 'Free', NULL),
+(27, 'Irfan Syah', 'irfan.syah@mail.com', '$2y$10$TKh8H1.PfQx37YgCzwiKb.KjNyWgaHb9cbcoQgdIVFlYg7B77UdFm', 'default.jpg', '2025-02-14', 'Active', NULL, 'Free', NULL),
+(28, 'Rina Permata', 'rina.permata@mail.com', '$2y$10$TKh8H1.PfQx37YgCzwiKb.KjNyWgaHb9cbcoQgdIVFlYg7B77UdFm', 'default.jpg', '2025-03-10', 'Active', '2027-03-10', 'Premium', NULL),
+(29, 'Adi Nugroho', 'adi.nugroho@mail.com', '$2y$10$TKh8H1.PfQx37YgCzwiKb.KjNyWgaHb9cbcoQgdIVFlYg7B77UdFm', 'default.jpg', '2025-04-01', 'Suspended', NULL, 'Free', NULL),
+(30, 'Citra Dewi', 'citra.dewi@mail.com', '$2y$10$TKh8H1.PfQx37YgCzwiKb.KjNyWgaHb9cbcoQgdIVFlYg7B77UdFm', 'default.jpg', '2025-05-01', 'Banned', NULL, 'Free', NULL),
+(31, 'Eko Prasetyo', 'eko.prasetyo@mail.com', '$2y$10$TKh8H1.PfQx37YgCzwiKb.KjNyWgaHb9cbcoQgdIVFlYg7B77UdFm', 'default.jpg', '2025-05-15', 'Active', '2026-05-15', 'Premium', NULL),
+(32, 'Yuyun Arrining', 'yuyun.aj@gmail.com', '$2y$10$nvUHiDpAyMsM2r9y4Z6B0udcy6l/1InAj1kAEyMwkh3hbDlqcZbju', 'default.jpg', '2025-05-26', 'Active', '2030-12-25', 'Premium', NULL);
 
 -- --------------------------------------------------------
 
@@ -128,10 +144,10 @@ CREATE TABLE `buku` (
 
 INSERT INTO `buku` (`BukuID`, `Judul`, `Penulis`, `Penerbit`, `TahunTerbit`, `ISBN`, `KategoriID`, `Cover`, `DriveURL`, `Deskripsi`, `Bahasa`, `JumlahHalaman`, `FormatEbook`, `UkuranFile`, `TanggalUpload`, `Rating`, `JumlahBaca`, `Status`, `CreatedAt`, `UpdatedAt`, `DeletedAt`) VALUES
 (18, 'A Conjuring of Light', 'V.E. Schwab', 'Tor Books', 2017, '0765387476', 9, 'uploads/covers/682a1623ad717.jpg', 'https://drive.google.com/file/d/1Ncau7i9vhfzYiCXKz_KwYjM2Y8LJ3fQy/view?usp=drive_link', 'A Conjuring of Light picks up directly where A Gathering of Shadows left off. The precarious balance between the four Londons is breaking. Darkness is spreading through the Maresh Empire in Red London, threatening to consume its magic.', 'Indonesia', 766, 'PDF', 3, '2025-05-18 17:16:20', '0.0', 0, 'Free', '2025-05-19 00:16:20', '2025-05-19 21:36:16', NULL),
-(19, 'Twilight', 'Stephenie Meyer', 'PT Gramedia Pustaka Utama', 2009, '9786020327389', 9, 'uploads/covers/682c0dfc766fb.jpg', 'https://drive.google.com/file/d/1McaBmzTtVxRHkFwKb5bqIiDVsNG6QAtS/view?usp=drive_link', 'Bella Swan, seorang gadis remaja penyendiri dan canggung, pindah dari Phoenix yang cerah ke kota Forks yang selalu hujan untuk tinggal bersama ayahnya. Ia tidak berharap banyak dari kehidupan barunya, namun semuanya berubah ketika ia bertemu dengan Edward Cullen, seorang siswa laki-laki yang misterius dan mempesona.\\r\\n\\r\\nKetertarikan Bella pada Edward begitu kuat dan tak tertahankan, meskipun ia merasakan ada sesuatu yang berbeda dan tersembunyi darinya. Seiring berjalannya waktu, Bella mengungkap rahasia gelap Edward: ia adalah seorang vampir.\\r\\n\\r\\nMeskipun menyadari bahaya yang mengintai, Bella tidak dapat menjauhi Edward. Mereka terjerat dalam hubungan yang penuh gairah namun juga berbahaya, di mana cinta dan ancaman kematian berjalan berdampingan. Bella harus menghadapi dunia supernatural yang selama ini tidak pernah ia bayangkan, termasuk konfrontasi dengan vampir lain yang mengancam nyawanya dan orang-orang yang ia cintai.\\r\\n\\r\\nTwilight adalah kisah tentang cinta pertama yang intens, pengorbanan, dan perjuangan antara keinginan dan kewajiban di tengah dunia fantasi yang gelap dan memikat. Novel ini mengeksplorasi tema-tema universal tentang identitas, keluarga, dan pilihan yang membentuk hidup seseorang.', 'Indonesia', 524, 'PDF', 3, '2025-05-20 05:07:08', '0.0', 0, 'Free', '2025-05-20 12:07:08', '2025-05-20 12:07:08', NULL),
+(19, 'Twilight', 'Stephenie Meyer', 'PT Gramedia Pustaka Utama', 2009, '9786020327389', 9, 'uploads/covers/682c0dfc766fb.jpg', 'https://drive.google.com/file/d/1McaBmzTtVxRHkFwKb5bqIiDVsNG6QAtS/view?usp=drive_link', 'Bella Swan, seorang gadis remaja penyendiri dan canggung, pindah dari Phoenix yang cerah ke kota Forks yang selalu hujan untuk tinggal bersama ayahnya. Ia tidak berharap banyak dari kehidupan barunya, namun semuanya berubah ketika ia bertemu dengan Edward Cullen, seorang siswa laki-laki yang misterius dan mempesona. Ketertarikan Bella pada Edward begitu kuat dan tak tertahankan, meskipun ia merasakan ada sesuatu yang berbeda dan tersembunyi darinya. Seiring berjalannya waktu, Bella mengungkap rahasia gelap Edward: ia adalah seorang vampir. Meskipun menyadari bahaya yang mengintai, Bella tidak dapat menjauhi Edward. Mereka terjerat dalam hubungan yang penuh gairah namun juga berbahaya, di mana cinta dan ancaman kematian berjalan berdampingan. Bella harus menghadapi dunia supernatural yang selama ini tidak pernah ia bayangkan, termasuk konfrontasi dengan vampir lain yang mengancam nyawanya dan orang-orang yang ia cintai. Twilight adalah kisah tentang cinta pertama yang intens, pengorbanan, dan perjuangan antara keinginan dan kewajiban di tengah dunia fantasi yang gelap dan memikat. Novel ini mengeksplorasi tema-tema universal tentang identitas, keluarga, dan pilihan yang membentuk hidup seseorang.', 'Indonesia', 524, 'PDF', 3, '2025-05-20 05:07:08', '4.0', 0, 'Free', '2025-05-20 12:07:08', '2025-05-20 19:23:18', NULL),
 (20, 'New Moon', 'Stephenie Meyer', 'PT Gramedia Pustaka Utama', 2009, '9786020327396', 9, 'uploads/covers/682c10da3ef4a.jpg', 'https://drive.google.com/file/d/1BL8gGEi_1YJuw2HpAhPIEExj3ddbx3AG/view?usp=drive_link', 'Setelah mengalami cinta yang intens namun berbahaya dengan vampir Edward Cullen, Bella Swan kembali menghadapi kehampaan yang mendalam ketika Edward dan keluarganya tiba-tiba meninggalkan Forks. Patah hati dan merasa kehilangan separuh jiwanya, Bella menarik diri dari semua orang dan terperangkap dalam kesedihan yang melumpuhkan.\\r\\n\\r\\nDalam kesendiriannya, Bella menemukan kenyamanan yang tak terduga dalam persahabatannya dengan Jacob Black, seorang pemuda suku Quileute yang penuh semangat dan menyimpan rahasianya sendiri. Seiring berjalannya waktu, ikatan antara Bella dan Jacob semakin kuat, membantunya perlahan-lahan bangkit dari keterpurukan.\\r\\n\\r\\nNamun, dunia supernatural tidak pernah benar-benar meninggalkan Bella. Ketika ia secara tidak sengaja menemukan bahwa melakukan tindakan berbahaya dapat memunculkan \\\"hantu\\\" Edward, ia mulai mencari sensasi yang mengancam nyawanya. Di tengah kebingungannya, Bella terjebak di antara dua cinta yang berbeda namun sama kuatnya: cintanya pada Edward yang abadi namun penuh bahaya, dan perasaannya yang tumbuh untuk Jacob yang hangat dan nyata.\\r\\n\\r\\nLebih jauh lagi, Bella menyadari bahwa Jacob dan kaumnya menyimpan rahasia kuno dan kuat, yang membawanya lebih dalam ke dalam dunia makhluk supernatural yang penuh dengan persaingan dan ancaman baru. New Moon adalah kisah tentang kehilangan, penyembuhan, persahabatan, dan cinta segitiga yang rumit di tengah bayang-bayang dunia vampir dan manusia serigala.', 'Indonesia', 603, 'PDF', 2, '2025-05-20 05:19:22', '0.0', 0, 'Free', '2025-05-20 12:19:22', '2025-05-20 12:19:22', NULL),
 (21, 'Eclipse', 'Stephenie Meyer', 'PT Gramedia Pustaka Utama', 2010, '9786020327402', 9, 'uploads/covers/682c12535d752.jpg', 'https://drive.google.com/file/d/135_efQZ5PVsml5IzXRVnWN_qb_Zl_VUS/view?usp=drive_link', 'Bella Swan kembali dihadapkan pada pilihan yang sulit. Meskipun cintanya pada vampir Edward Cullen semakin dalam, ia juga merasakan ikatan yang kuat dengan sahabatnya, manusia serigala Jacob Black. Kehadiran Jacob semakin rumit karena Bella tahu bahwa dunia vampir dan manusia serigala adalah musuh bebuyutan.\\r\\n\\r\\nKetegangan di Forks meningkat dengan munculnya vampir \\\"baru lahir\\\" yang misterius dan haus darah. Kekuatan mereka jauh lebih besar dan mereka menimbulkan ancaman serius bagi Bella dan keluarga Cullen. Untuk melindungi Bella, keluarga Cullen dan kawanan serigala Quileute harus mengesampingkan permusuhan mereka dan bekerja sama.\\r\\n\\r\\nDi tengah persiapan pertempuran yang menegangkan, Bella harus membuat keputusan akhir antara cintanya pada Edward dan persahabatannya dengan Jacob. Ia menyadari bahwa keputusannya tidak hanya akan memengaruhi hatinya, tetapi juga masa depan kedua komunitas supernatural tersebut.\\r\\n\\r\\nEclipse adalah kisah tentang pengorbanan, kesetiaan, dan pilihan yang menentukan di tengah konflik yang semakin memanas. Bella harus menghadapi konsekuensi dari perasaannya dan memahami arti sebenarnya dari cinta dan pengorbanan demi orang-orang yang dicintainya. Ancaman eksternal memaksa karakter-karakter untuk tumbuh dan membuat aliansi yang tidak terduga.', 'Indonesia', 692, 'PDF', 2, '2025-05-20 05:25:39', '0.0', 0, 'Premium', '2025-05-20 12:25:39', '2025-05-20 12:25:39', NULL),
-(22, 'Breaking Dawn', 'Stephenie Meyer', 'PT Gramedia Pustaka Utama', 2011, '9786020327419', 9, 'uploads/covers/682c1403bce1f.jpg', 'https://drive.google.com/file/d/1mkx6L-HrJzgK3QiUB7V0vn3lpJuzqy8Q/view?usp=drive_link', 'Setelah melalui berbagai rintangan dan pilihan yang sulit, Bella Swan akhirnya menikah dengan cinta sejatinya, Edward Cullen. Pernikahan impian mereka diikuti dengan bulan madu romantis yang tak terlupakan. Namun, kebahagiaan mereka segera diwarnai dengan kejadian yang tak terduga: Bella hamil.\\r\\n\\r\\nKehamilan Bella membawa konsekuensi yang berbahaya dan mengancam nyawanya, karena bayi yang dikandungnya adalah setengah vampir dan tumbuh dengan kecepatan yang luar biasa. Keluarga Cullen berusaha sekuat tenaga untuk menjaga Bella tetap hidup hingga kelahiran bayinya.\\r\\n\\r\\nKelahiran Renesmee, putri Bella dan Edward, membawa kebahagiaan sekaligus masalah baru. Keberadaan Renesmee, seorang anak setengah manusia dan setengah vampir, menjadi ancaman bagi keberadaan komunitas vampir karena melanggar hukum kuno mereka. Kabar tentang Renesmee sampai ke telinga Volturi, para pemimpin dunia vampir yang sangat berkuasa, dan mereka menganggapnya sebagai ancaman yang harus dieliminasi.\\r\\n\\r\\nUntuk melindungi putri mereka, keluarga Cullen mengumpulkan sekutu dari seluruh dunia vampir untuk bersaksi tentang keberadaan Renesmee yang tidak berbahaya. Bella, yang kini juga telah menjadi vampir, harus menggunakan kekuatan barunya untuk melindungi keluarganya dari ancaman yang datang.\\r\\n\\r\\nBreaking Dawn adalah puncak dari kisah cinta Bella dan Edward, yang diwarnai dengan pernikahan, kelahiran, pengorbanan, dan pertempuran terakhir untuk melindungi keluarga mereka. Buku ini mengeksplorasi tema tentang keluarga, identitas, dan batas-batas cinta yang abadi.', 'Indonesia', 866, 'PDF', 6, '2025-05-20 05:32:51', '0.0', 0, 'Premium', '2025-05-20 12:32:51', '2025-05-20 12:32:51', NULL),
+(22, 'Breaking Dawn', 'Stephenie Meyer', 'PT Gramedia Pustaka Utama', 2011, '9786020327419', 9, 'uploads/covers/682c1403bce1f.jpg', 'https://drive.google.com/file/d/1mkx6L-HrJzgK3QiUB7V0vn3lpJuzqy8Q/view?usp=drive_link', 'Setelah melalui berbagai rintangan dan pilihan yang sulit, Bella Swan akhirnya menikah dengan cinta sejatinya, Edward Cullen. Pernikahan impian mereka diikuti dengan bulan madu romantis yang tak terlupakan. Namun, kebahagiaan mereka segera diwarnai dengan kejadian yang tak terduga: Bella hamil. Kehamilan Bella membawa konsekuensi yang berbahaya dan mengancam nyawanya, karena bayi yang dikandungnya adalah setengah vampir dan tumbuh dengan kecepatan yang luar biasa. Keluarga Cullen berusaha sekuat tenaga untuk menjaga Bella tetap hidup hingga kelahiran bayinya. Kelahiran Renesmee, putri Bella dan Edward, membawa kebahagiaan sekaligus masalah baru. Keberadaan Renesmee, seorang anak setengah manusia dan setengah vampir, menjadi ancaman bagi keberadaan komunitas vampir karena melanggar hukum kuno mereka. Kabar tentang Renesmee sampai ke telinga Volturi, para pemimpin dunia vampir yang sangat berkuasa, dan mereka menganggapnya sebagai ancaman yang harus dieliminasi. Untuk melindungi putri mereka, keluarga Cullen mengumpulkan sekutu dari seluruh dunia vampir untuk bersaksi tentang keberadaan Renesmee yang tidak berbahaya. Bella, yang kini juga telah menjadi vampir, harus menggunakan kekuatan barunya untuk melindungi keluarganya dari ancaman yang datang. Breaking Dawn adalah puncak dari kisah cinta Bella dan Edward, yang diwarnai dengan pernikahan, kelahiran, pengorbanan, dan pertempuran terakhir untuk melindungi keluarga mereka. Buku ini mengeksplorasi tema tentang keluarga, identitas, dan batas-batas cinta yang abadi.', 'Indonesia', 866, 'PDF', 6, '2025-05-20 05:32:51', '0.0', 0, 'Premium', '2025-05-20 12:32:51', '2025-05-20 14:20:09', NULL),
 (23, 'Midnight Sun', 'Stephenie Meyer', 'PT Gramedia Pustaka Utama', 2020, '9786020648683', 9, 'uploads/covers/682c152365708.jpg', 'https://drive.google.com/file/d/1H61fKJbyycS8hx3QZf9GBEhXDwH5-6vi/view?usp=drive_link', 'Untuk pertama kalinya, pembaca dapat mengalami kisah Twilight yang ikonik melalui mata Edward Cullen. Diceritakan dari sudut pandangnya, Midnight Sun membawa perspektif baru yang gelap dan penuh kejutan pada kisah cinta antara Bella dan Edward.\\r\\n\\r\\nMelalui pikiran Edward, kita dibawa masuk ke dalam benaknya yang kompleks, di mana ia bergumul dengan daya tarik yang tak tertahankan terhadap Bella, sekaligus menyadari bahaya yang ditimbulkannya bagi gadis manusia itu. Kita menyaksikan kecemasannya yang mendalam, konflik internalnya sebagai vampir yang berusaha menahan diri, dan pemahamannya yang semakin dalam tentang jiwa Bella yang unik dan memikat.\\r\\n\\r\\nMidnight Sun memberikan wawasan yang lebih kaya tentang pertemuan pertama mereka, perkembangan hubungan mereka, dan tantangan-tantangan yang mereka hadapi dari sudut pandang Edward. Pembaca akan mendapatkan pemahaman yang lebih mendalam tentang masa lalu Edward, pemikirannya, dan perasaannya yang sebenarnya terhadap Bella, keluarganya, dan dunia vampir.\\r\\n\\r\\nBuku ini menawarkan pengalaman yang segar dan menarik bagi para penggemar Twilight, memungkinkan mereka untuk menghidupkan kembali kisah yang mereka cintai dari perspektif karakter pria misterius yang selama ini menyimpan banyak rahasia.', 'Indonesia', 1019, 'PDF', 3, '2025-05-20 05:37:39', '0.0', 0, 'Premium', '2025-05-20 12:37:39', '2025-05-20 12:37:39', NULL);
 
 -- --------------------------------------------------------
@@ -383,6 +399,69 @@ CREATE TABLE `ulasan` (
   `Likes` int(11) DEFAULT '0'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+--
+-- Dumping data for table `ulasan`
+--
+
+INSERT INTO `ulasan` (`UlasanID`, `MemberID`, `BukuID`, `Rating`, `Komentar`, `TanggalUlas`, `Likes`) VALUES
+(3, 1, 19, '4.0', 'Buku yang sangat bagus, karakter utama sangat menarik dan alur ceritanya mengalir dengan baik.', '2025-05-20 12:22:56', 0);
+
+--
+-- Triggers `ulasan`
+--
+DELIMITER $$
+CREATE TRIGGER `after_ulasan_delete` AFTER DELETE ON `ulasan` FOR EACH ROW BEGIN
+    UPDATE buku 
+    SET Rating = (
+        SELECT IFNULL(AVG(Rating), 0.0)
+        FROM ulasan 
+        WHERE BukuID = OLD.BukuID
+    )
+    WHERE BukuID = OLD.BukuID;
+END
+$$
+DELIMITER ;
+DELIMITER $$
+CREATE TRIGGER `after_ulasan_insert` AFTER INSERT ON `ulasan` FOR EACH ROW BEGIN
+    UPDATE buku 
+    SET Rating = (
+        SELECT AVG(Rating) 
+        FROM ulasan 
+        WHERE BukuID = NEW.BukuID
+    )
+    WHERE BukuID = NEW.BukuID;
+END
+$$
+DELIMITER ;
+DELIMITER $$
+CREATE TRIGGER `after_ulasan_update` AFTER UPDATE ON `ulasan` FOR EACH ROW BEGIN
+    UPDATE buku 
+    SET Rating = (
+        SELECT AVG(Rating) 
+        FROM ulasan 
+        WHERE BukuID = NEW.BukuID
+    )
+    WHERE BukuID = NEW.BukuID;
+END
+$$
+DELIMITER ;
+DELIMITER $$
+CREATE TRIGGER `update_book_rating` AFTER INSERT ON `ulasan` FOR EACH ROW BEGIN
+    DECLARE avg_rating DECIMAL(3,1);
+    
+    -- Hitung rata-rata rating baru
+    SELECT AVG(Rating) INTO avg_rating 
+    FROM ulasan 
+    WHERE BukuID = NEW.BukuID;
+    
+    -- Update rating di tabel buku
+    UPDATE buku 
+    SET Rating = avg_rating 
+    WHERE BukuID = NEW.BukuID;
+END
+$$
+DELIMITER ;
+
 -- --------------------------------------------------------
 
 --
@@ -407,7 +486,23 @@ INSERT INTO `users` (`id`, `username`, `password`, `role`, `last_login`, `create
 (1, 'pribadi', '1sampai8', 'admin', NULL, '2025-04-29 18:27:51', '2025-04-29 18:28:11'),
 (2, 'galuh', '123456789', 'staff', NULL, '2025-04-29 18:27:51', '2025-04-29 18:28:17'),
 (3, 'prabusemar', '$2y$10$bcgB/Daenrjdc0Rv79xbKecBEUL0Pw6V.R5vlEOXAa2.QdcqKyNqa', 'admin', NULL, '2025-04-29 18:27:51', '2025-04-29 18:28:25'),
-(4, 'musaalfaruq@gmail.com', '$2y$10$Dxys74PkWgM17RA4y2OJnOk723jmugJUIC2Q4Ri271hO0v6HAjP.2', 'member', NULL, '2025-05-04 17:07:42', '2025-05-04 17:07:42');
+(4, 'musaalfaruq@gmail.com', '$2y$10$Dxys74PkWgM17RA4y2OJnOk723jmugJUIC2Q4Ri271hO0v6HAjP.2', 'member', NULL, '2025-05-04 17:07:42', '2025-05-04 17:07:42'),
+(5, 'budi.santoso@mail.com', '$2y$10$TKh8H1.PfQx37YgCzwiKb.KjNyWgaHb9cbcoQgdIVFlYg7B77UdFm', 'member', NULL, '2025-05-20 16:58:04', '2025-05-20 16:58:04'),
+(6, 'siti.rahayu@mail.com', '$2y$10$TKh8H1.PfQx37YgCzwiKb.KjNyWgaHb9cbcoQgdIVFlYg7B77UdFm', 'member', NULL, '2025-05-20 16:58:04', '2025-05-20 16:58:04'),
+(7, 'agus.wijaya@mail.com', '$2y$10$TKh8H1.PfQx37YgCzwiKb.KjNyWgaHb9cbcoQgdIVFlYg7B77UdFm', 'member', NULL, '2025-05-20 16:58:04', '2025-05-20 16:58:04'),
+(8, 'dewi.lestari@mail.com', '$2y$10$TKh8H1.PfQx37YgCzwiKb.KjNyWgaHb9cbcoQgdIVFlYg7B77UdFm', 'member', NULL, '2025-05-20 16:58:04', '2025-05-20 16:58:04'),
+(9, 'rudi.hermawan@mail.com', '$2y$10$TKh8H1.PfQx37YgCzwiKb.KjNyWgaHb9cbcoQgdIVFlYg7B77UdFm', 'member', NULL, '2025-05-20 16:58:04', '2025-05-20 16:58:04'),
+(10, 'anita.putri@mail.com', '$2y$10$TKh8H1.PfQx37YgCzwiKb.KjNyWgaHb9cbcoQgdIVFlYg7B77UdFm', 'member', NULL, '2025-05-20 16:58:04', '2025-05-20 16:58:04'),
+(11, 'fajar.pratama@mail.com', '$2y$10$TKh8H1.PfQx37YgCzwiKb.KjNyWgaHb9cbcoQgdIVFlYg7B77UdFm', 'member', NULL, '2025-05-20 16:58:04', '2025-05-20 16:58:04'),
+(12, 'lina.marlina@mail.com', '$2y$10$TKh8H1.PfQx37YgCzwiKb.KjNyWgaHb9cbcoQgdIVFlYg7B77UdFm', 'member', NULL, '2025-05-20 16:58:04', '2025-05-20 16:58:04'),
+(13, 'hendra.k@mail.com', '$2y$10$TKh8H1.PfQx37YgCzwiKb.KjNyWgaHb9cbcoQgdIVFlYg7B77UdFm', 'member', NULL, '2025-05-20 16:58:04', '2025-05-20 16:58:04'),
+(14, 'maya.indah@mail.com', '$2y$10$TKh8H1.PfQx37YgCzwiKb.KjNyWgaHb9cbcoQgdIVFlYg7B77UdFm', 'member', NULL, '2025-05-20 16:58:04', '2025-05-20 16:58:04'),
+(15, 'irfan.syah@mail.com', '$2y$10$TKh8H1.PfQx37YgCzwiKb.KjNyWgaHb9cbcoQgdIVFlYg7B77UdFm', 'member', NULL, '2025-05-20 16:58:04', '2025-05-20 16:58:04'),
+(16, 'rina.permata@mail.com', '$2y$10$TKh8H1.PfQx37YgCzwiKb.KjNyWgaHb9cbcoQgdIVFlYg7B77UdFm', 'member', NULL, '2025-05-20 16:58:04', '2025-05-20 16:58:04'),
+(17, 'adi.nugroho@mail.com', '$2y$10$TKh8H1.PfQx37YgCzwiKb.KjNyWgaHb9cbcoQgdIVFlYg7B77UdFm', 'member', NULL, '2025-05-20 16:58:04', '2025-05-20 16:58:04'),
+(18, 'citra.dewi@mail.com', '$2y$10$TKh8H1.PfQx37YgCzwiKb.KjNyWgaHb9cbcoQgdIVFlYg7B77UdFm', 'member', NULL, '2025-05-20 16:58:04', '2025-05-20 16:58:04'),
+(19, 'eko.prasetyo@mail.com', '$2y$10$TKh8H1.PfQx37YgCzwiKb.KjNyWgaHb9cbcoQgdIVFlYg7B77UdFm', 'member', NULL, '2025-05-20 16:58:04', '2025-05-20 16:58:04'),
+(20, 'yuyun.aj@gmail.com', '$2y$10$nvUHiDpAyMsM2r9y4Z6B0udcy6l/1InAj1kAEyMwkh3hbDlqcZbju', 'member', NULL, '2025-05-26 06:53:37', '2025-05-26 06:53:37');
 
 --
 -- Indexes for dumped tables
@@ -587,7 +682,7 @@ ALTER TABLE `users`
 -- AUTO_INCREMENT for table `anggota`
 --
 ALTER TABLE `anggota`
-  MODIFY `MemberID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `MemberID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=33;
 
 --
 -- AUTO_INCREMENT for table `anotasi`
@@ -701,13 +796,13 @@ ALTER TABLE `statistik_membaca`
 -- AUTO_INCREMENT for table `ulasan`
 --
 ALTER TABLE `ulasan`
-  MODIFY `UlasanID` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `UlasanID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT for table `users`
 --
 ALTER TABLE `users`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=21;
 
 --
 -- Constraints for dumped tables
