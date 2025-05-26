@@ -179,7 +179,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <style>
     /* Base Styles */
     :root {
-        --primary: #4361ee;
+        --primary: #3a0ca3;
         --primary-dark: #3a0ca3;
         --secondary: #f72585;
         --success: #4cc9f0;
