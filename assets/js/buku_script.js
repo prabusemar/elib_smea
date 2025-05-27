@@ -35,7 +35,8 @@ document.addEventListener('DOMContentLoaded', function () {
             const coverPreview = document.getElementById('coverPreview');
 
             if (coverPath) {
-                coverPreview.src = '../../' + coverPath;
+                // Ensure BASE_URL_JS is defined (it should be from buku_admin.php)
+                coverPreview.src = (typeof BASE_URL_JS !== 'undefined' ? BASE_URL_JS : '../..') + '/' + coverPath;
                 coverPreview.style.display = 'block';
             } else {
                 coverPreview.style.display = 'none';
@@ -90,8 +91,14 @@ document.addEventListener('DOMContentLoaded', function () {
             idInput.name = 'buku_id';
             idInput.value = bookId;
 
+            const csrfInput = document.createElement('input');
+            csrfInput.type = 'hidden';
+            csrfInput.name = 'csrf_token';
+            csrfInput.value = CSRF_TOKEN; // Use the global variable
+
             form.appendChild(actionInput);
             form.appendChild(idInput);
+            form.appendChild(csrfInput);
             document.body.appendChild(form);
             form.submit();
         }
@@ -199,70 +206,6 @@ document.getElementById('addBookBtn').addEventListener('click', function () {
     document.getElementById('addBookModal').style.display = 'flex';
 });
 
-// Preview cover saat URL diubah
-document.getElementById('add_cover').addEventListener('input', function () {
-    const preview = document.getElementById('add_cover_preview');
-    if (this.value) {
-        preview.src = this.value;
-        preview.style.display = 'block';
-        preview.onerror = function () {
-            this.style.display = 'none';
-        };
-    } else {
-        preview.style.display = 'none';
-    }
-});
-
-// Validasi form tambah buku
-document.getElementById('addBookForm').addEventListener('submit', function (e) {
-    const requiredFields = [
-        'judul', 'penulis', 'tahun', 'status', 'driveurl'
-    ];
-
-    let isValid = true;
-
-    requiredFields.forEach(field => {
-        const element = document.getElementById('add_' + field);
-        if (!element.value.trim()) {
-            element.classList.add('is-invalid');
-            isValid = false;
-        } else {
-            element.classList.remove('is-invalid');
-        }
-    });
-
-    // Validasi tahun
-    const tahun = document.getElementById('add_tahun').value;
-    const currentYear = new Date().getFullYear();
-    if (tahun < 1900 || tahun > currentYear) {
-        document.getElementById('add_tahun').classList.add('is-invalid');
-        isValid = false;
-    }
-
-    // Validasi Google Drive URL
-    const driveUrl = document.getElementById('add_driveurl').value;
-    if (!driveUrl.includes('drive.google.com')) {
-        document.getElementById('add_driveurl').classList.add('is-invalid');
-        isValid = false;
-    }
-
-    // Validasi cover URL jika diisi
-    const coverUrl = document.getElementById('add_cover').value;
-    if (coverUrl) {
-        try {
-            new URL(coverUrl);
-        } catch (_) {
-            document.getElementById('add_cover').classList.add('is-invalid');
-            isValid = false;
-        }
-    }
-
-    if (!isValid) {
-        e.preventDefault();
-        alert('Harap periksa kembali form Anda. Beberapa field tidak valid.');
-    }
-});
-
 // Preview cover saat file dipilih
 document.getElementById('add_cover').addEventListener('change', function (e) {
     const file = e.target.files[0];
@@ -327,87 +270,94 @@ document.getElementById('btnGetFileInfo').addEventListener('click', function () 
     }, 1500);
 });
 
-// Validasi form tambah buku
-document.getElementById('addBookForm').addEventListener('submit', function (e) {
-    const requiredFields = [
-        'judul', 'penulis', 'tahun', 'status', 'driveurl', 'cover'
-    ];
+// TODO: Future improvement - replace alert() with inline error messages next to form fields for better UX.
+// Consolidated validation for add book form
+const addBookForm = document.getElementById('addBookForm');
+if (addBookForm) {
+    addBookForm.addEventListener('submit', function (e) {
+        let isValid = true;
+        let firstErrorMessage = null;
 
-    let isValid = true;
-
-    requiredFields.forEach(field => {
-        const element = document.getElementById('add_' + field);
-        if (!element.value.trim()) {
+        // Helper to set error and capture first message
+        const setError = (element, message) => {
             element.classList.add('is-invalid');
             isValid = false;
-        } else {
+            if (!firstErrorMessage) {
+                firstErrorMessage = message;
+            }
+        };
+
+        // Helper to clear error
+        const clearError = (element) => {
             element.classList.remove('is-invalid');
+        };
+
+        // Required fields check
+        const requiredFields = ['judul', 'penulis', 'tahun', 'status', 'driveurl', 'cover'];
+        requiredFields.forEach(fieldId => {
+            const element = addBookForm.querySelector('#add_' + fieldId); // Use querySelector for robustness
+            if (element) {
+                let value = element.value.trim();
+                if (element.type === 'file') {
+                    value = element.files.length > 0 ? element.files[0].name : '';
+                }
+                if (!value) {
+                    setError(element, `Field ${fieldId.replace('_', ' ')} wajib diisi.`);
+                } else {
+                    clearError(element);
+                }
+            }
+        });
+
+        // Validate year
+        const tahunElement = addBookForm.querySelector('#add_tahun');
+        if (tahunElement && tahunElement.value.trim() !== '') { // Only validate if not empty (required check handles empty)
+            const tahun = parseInt(tahunElement.value, 10);
+            const currentYear = new Date().getFullYear();
+            if (isNaN(tahun) || tahun < 1900 || tahun > currentYear) {
+                setError(tahunElement, `Tahun terbit harus antara 1900 dan ${currentYear}.`);
+            } else {
+                clearError(tahunElement);
+            }
+        }
+
+        // Validate Google Drive URL
+        const driveUrlElement = addBookForm.querySelector('#add_driveurl');
+        if (driveUrlElement && driveUrlElement.value.trim() !== '') {
+            if (!driveUrlElement.value.includes('drive.google.com')) {
+                setError(driveUrlElement, 'URL Google Drive tidak valid (harus mengandung drive.google.com).');
+            } else {
+                clearError(driveUrlElement);
+            }
+        }
+
+        // Validate cover file
+        const coverFileElement = addBookForm.querySelector('#add_cover');
+        if (coverFileElement && coverFileElement.files.length > 0) {
+            const coverFile = coverFileElement.files[0];
+            const validTypes = ['image/jpeg', 'image/png', 'image/gif'];
+            if (!validTypes.includes(coverFile.type)) {
+                setError(coverFileElement, 'Format file cover harus JPG, PNG, atau GIF.');
+            } else {
+                clearError(coverFileElement); // Clear type error if type is valid
+            }
+
+            if (coverFile.size > 2 * 1024 * 1024) { // 2MB
+                setError(coverFileElement, 'Ukuran file cover terlalu besar (maksimal 2MB).');
+            } else {
+                // If type was valid and size is valid, clear error. 
+                // Need to be careful not to clear an error if type was invalid but size is ok.
+                if (validTypes.includes(coverFile.type)) clearError(coverFileElement);
+            }
+        } else if (coverFileElement && requiredFields.includes('cover')) { // If cover is required and no file
+             // This case is handled by the requiredFields check above, but good to be explicit if logic changes
+            // setError(coverFileElement, 'Cover buku wajib diupload.');
+        }
+
+
+        if (!isValid) {
+            e.preventDefault();
+            alert(firstErrorMessage || 'Harap periksa kembali form Anda. Beberapa field tidak valid atau kosong.');
         }
     });
-
-    // Validasi tahun
-    const tahun = document.getElementById('add_tahun').value;
-    const currentYear = new Date().getFullYear();
-    if (tahun < 1900 || tahun > currentYear) {
-        document.getElementById('add_tahun').classList.add('is-invalid');
-        isValid = false;
-    }
-
-    // Validasi Google Drive URL
-    const driveUrl = document.getElementById('add_driveurl').value;
-    if (!driveUrl.includes('drive.google.com')) {
-        document.getElementById('add_driveurl').classList.add('is-invalid');
-        isValid = false;
-    }
-
-    // Validasi file cover
-    const coverFile = document.getElementById('add_cover').files[0];
-    if (!coverFile) {
-        document.getElementById('add_cover').classList.add('is-invalid');
-        isValid = false;
-    } else {
-        // Validasi tipe file
-        const validTypes = ['image/jpeg', 'image/png', 'image/gif'];
-        if (!validTypes.includes(coverFile.type)) {
-            alert('Format file cover harus JPG, PNG, atau GIF');
-            isValid = false;
-        }
-
-        // Validasi ukuran file (max 2MB)
-        if (coverFile.size > 2 * 1024 * 1024) {
-            alert('Ukuran file cover terlalu besar (maksimal 2MB)');
-            isValid = false;
-        }
-    }
-
-    if (!isValid) {
-        e.preventDefault();
-        alert('Harap periksa kembali form Anda. Beberapa field tidak valid.');
-    }
-});
-function closeModal(modalId) {
-    const modal = document.getElementById(modalId);
-    if (modal) {
-        modal.style.display = 'none';
-    }
 }
-
-// Function pagination
-$(document).ready(function () {
-    // Reset ke halaman 1 saat melakukan search atau filter
-    $('form.advanced-filter-form').on('submit', function () {
-        $(this).append('<input type="hidden" name="page" value="1">');
-    });
-
-    // Pastikan semua link pagination memiliki parameter yang benar
-    $('.pagination a').each(function () {
-        const url = new URL(this.href);
-        // Replace the following values with actual JavaScript variables or values as needed
-        url.searchParams.set('judul', filters.judul || '');
-        url.searchParams.set('penulis', filters.penulis || '');
-        url.searchParams.set('kategori', filters.kategori || '');
-        url.searchParams.set('tahun', filters.tahun || '');
-        url.searchParams.set('status', filters.status || '');
-        this.href = url.toString();
-    });
-})

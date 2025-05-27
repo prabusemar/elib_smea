@@ -12,6 +12,12 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     // Tambah Buku
     if (isset($_POST['action']) && $_POST['action'] == 'add_book') {
+        $submitted_token = $_POST['csrf_token'] ?? '';
+        if (!verify_csrf_token($submitted_token)) {
+            $_SESSION['error'] = "Invalid or expired request (add_book). Please try again.";
+            header("Location: buku_admin.php");
+            exit;
+        }
         $judul = mysqli_real_escape_string($conn, trim($_POST['judul']));
         $penulis = mysqli_real_escape_string($conn, trim($_POST['penulis']));
         $penerbit = mysqli_real_escape_string($conn, trim($_POST['penerbit'] ?? ''));
@@ -129,6 +135,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     }
     // Edit Buku
     elseif (isset($_POST['action']) && $_POST['action'] == 'update_book') {
+        $submitted_token = $_POST['csrf_token'] ?? '';
+        if (!verify_csrf_token($submitted_token)) {
+            $_SESSION['error'] = "Invalid or expired request (update_book). Please try again.";
+            header("Location: buku_admin.php");
+            exit;
+        }
         $bukuID = (int)$_POST['buku_id'];
         $judul = mysqli_real_escape_string($conn, trim($_POST['judul']));
         $penulis = mysqli_real_escape_string($conn, trim($_POST['penulis']));
@@ -241,6 +253,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     }
     // Hapus Buku (Soft Delete)
     elseif (isset($_POST['action']) && $_POST['action'] == 'delete_book') {
+        $submitted_token = $_POST['csrf_token'] ?? '';
+        if (!verify_csrf_token($submitted_token)) {
+            $_SESSION['error'] = "Invalid or expired request (delete_book). Please try again.";
+            header("Location: buku_admin.php");
+            exit;
+        }
         $bukuID = (int)$_POST['buku_id'];
 
         // Dapatkan path cover untuk dihapus

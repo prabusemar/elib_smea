@@ -1,6 +1,21 @@
 <?php
-session_start();
+session_start(); // Ensure session is started before using $_SESSION
 include '../config.php';
+
+// CSRF Token Verification
+$submitted_token = $_POST['csrf_token'] ?? '';
+if (!verify_csrf_token($submitted_token)) {
+    // Before calling displayError, ensure the session is truly active
+    // as verify_csrf_token might unset session variables on failure.
+    // displayError itself relies on $_SESSION.
+    // A simple way is to restart session if not active, though config.php should handle this.
+    if (session_status() === PHP_SESSION_NONE) {
+        session_start();
+    }
+    $_SESSION['login_error'] = "Invalid or expired request. Please try again.";
+    header("Location: login.php");
+    exit;
+}
 
 function displayError($message)
 {
