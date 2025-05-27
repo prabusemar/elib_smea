@@ -1,6 +1,7 @@
 <?php
 
 include_once '../config.php';
+generate_csrf_token(); // Generate CSRF token if not set or expired
 ?>
 <!DOCTYPE html>
 <html lang="id">
@@ -441,6 +442,7 @@ include_once '../config.php';
             </div>
 
             <form action="proses_login.php" method="post" class="fade-in delay-2">
+                <input type="hidden" name="csrf_token" value="<?= htmlspecialchars(get_csrf_token() ?? ''); ?>">
                 <div class="form-group">
                     <label for="username">Username</label>
                     <i class="fas fa-user input-icon"></i>
