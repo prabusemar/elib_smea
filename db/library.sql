@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:3306
--- Generation Time: May 26, 2025 at 10:08 AM
+-- Generation Time: Jun 11, 2025 at 03:05 AM
 -- Server version: 5.7.39
 -- PHP Version: 8.1.10
 
@@ -370,6 +370,33 @@ CREATE TABLE `sinkronisasi` (
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `staff`
+--
+
+CREATE TABLE `staff` (
+  `StaffID` int(11) NOT NULL,
+  `Nama` varchar(100) NOT NULL,
+  `Email` varchar(100) NOT NULL,
+  `Password` varchar(255) NOT NULL,
+  `FotoProfil` varchar(255) DEFAULT 'default.jpg',
+  `TanggalBergabung` date NOT NULL,
+  `Jabatan` enum('Librarian','Manager','IT Support') DEFAULT 'Librarian',
+  `Status` enum('Active','Suspended','Banned') DEFAULT 'Active',
+  `TerakhirLogin` datetime DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+--
+-- Dumping data for table `staff`
+--
+
+INSERT INTO `staff` (`StaffID`, `Nama`, `Email`, `Password`, `FotoProfil`, `TanggalBergabung`, `Jabatan`, `Status`, `TerakhirLogin`) VALUES
+(1, 'Admin Utama', 'admin@perpustakaan.com', '$2y$10$Dxys74PkWgM17RA4y2OJnOk723jmugJUIC2Q4Ri271hO0v6HAjP.2', 'default.jpg', '2025-01-01', 'Manager', 'Active', NULL),
+(2, 'Petugas Perpustakaan', 'staff1@perpustakaan.com', '$2y$10$Dxys74PkWgM17RA4y2OJnOk723jmugJUIC2Q4Ri271hO0v6HAjP.2', 'default.jpg', '2025-02-15', 'Librarian', 'Active', NULL),
+(3, 'Teknisi IT', 'it@perpustakaan.com', '$2y$10$Dxys74PkWgM17RA4y2OJnOk723jmugJUIC2Q4Ri271hO0v6HAjP.2', 'default.jpg', '2025-03-10', 'IT Support', 'Active', NULL);
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `statistik_membaca`
 --
 
@@ -484,7 +511,6 @@ CREATE TABLE `users` (
 
 INSERT INTO `users` (`id`, `username`, `password`, `role`, `last_login`, `created_at`, `updated_at`) VALUES
 (1, 'pribadi', '1sampai8', 'admin', NULL, '2025-04-29 18:27:51', '2025-04-29 18:28:11'),
-(2, 'galuh', '123456789', 'staff', NULL, '2025-04-29 18:27:51', '2025-04-29 18:28:17'),
 (3, 'prabusemar', '$2y$10$bcgB/Daenrjdc0Rv79xbKecBEUL0Pw6V.R5vlEOXAa2.QdcqKyNqa', 'admin', NULL, '2025-04-29 18:27:51', '2025-04-29 18:28:25'),
 (4, 'musaalfaruq@gmail.com', '$2y$10$Dxys74PkWgM17RA4y2OJnOk723jmugJUIC2Q4Ri271hO0v6HAjP.2', 'member', NULL, '2025-05-04 17:07:42', '2025-05-04 17:07:42'),
 (5, 'budi.santoso@mail.com', '$2y$10$TKh8H1.PfQx37YgCzwiKb.KjNyWgaHb9cbcoQgdIVFlYg7B77UdFm', 'member', NULL, '2025-05-20 16:58:04', '2025-05-20 16:58:04'),
@@ -652,6 +678,13 @@ ALTER TABLE `sinkronisasi`
   ADD UNIQUE KEY `uniq_device` (`MemberID`,`DeviceID`);
 
 --
+-- Indexes for table `staff`
+--
+ALTER TABLE `staff`
+  ADD PRIMARY KEY (`StaffID`),
+  ADD UNIQUE KEY `Email` (`Email`);
+
+--
 -- Indexes for table `statistik_membaca`
 --
 ALTER TABLE `statistik_membaca`
@@ -785,6 +818,12 @@ ALTER TABLE `riwayat_baca`
 --
 ALTER TABLE `sinkronisasi`
   MODIFY `SinkronID` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `staff`
+--
+ALTER TABLE `staff`
+  MODIFY `StaffID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT for table `statistik_membaca`

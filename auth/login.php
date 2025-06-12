@@ -46,7 +46,10 @@ include_once '../config.php';
             display: flex;
             width: 900px;
             max-width: 90%;
-            height: 600px;
+            /* height: 600px; */
+            min-height: 600px;
+            padding: 0px 0;
+            /* Tambahkan padding atas & bawah */
             border-radius: 20px;
             overflow: hidden;
             box-shadow: var(--shadow);
@@ -343,6 +346,8 @@ include_once '../config.php';
             .login-wrapper {
                 flex-direction: column;
                 height: auto;
+                min-height: unset;
+                padding: 16px 0;
             }
 
             .login-image {

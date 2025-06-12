@@ -112,7 +112,7 @@ $current_page = basename($_SERVER['PHP_SELF']);
                     <span class="tooltiptext">Transaksi</span>
                 </div>
             </div>
-            <a href="/library/admin/peminjaman.php" class="nav-item <?php echo ($current_page == 'peminjaman.php') ? 'active' : ''; ?>">
+            <a href="/library/admin/peminjaman/peminjaman_admin.php" class="nav-item <?php echo ($current_page == 'peminjaman.php') ? 'active' : ''; ?>">
                 <div class="tooltip">
                     <i class="fas fa-book-reader"></i>
                     <span>Peminjaman</span>

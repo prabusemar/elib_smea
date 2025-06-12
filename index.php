@@ -33,16 +33,29 @@ include 'views/header_index.php';
             </div>
 
             <div class="hero-stats">
+                <?php
+                // Ambil jumlah buku
+                $count_buku = mysqli_query($conn, "SELECT COUNT(*) AS total FROM buku WHERE DeletedAt IS NULL");
+                $total_buku = mysqli_fetch_assoc($count_buku)['total'];
+
+                // Ambil jumlah penulis unik
+                $count_penulis = mysqli_query($conn, "SELECT COUNT(DISTINCT Penulis) AS total FROM buku WHERE DeletedAt IS NULL");
+                $total_penulis = mysqli_fetch_assoc($count_penulis)['total'];
+
+                // Ambil jumlah kategori
+                $count_kategori = mysqli_query($conn, "SELECT COUNT(*) AS total FROM kategori");
+                $total_kategori = mysqli_fetch_assoc($count_kategori)['total'];
+                ?>
                 <div class="stat-item">
-                    <div class="stat-number">10,000+</div>
+                    <div class="stat-number"><?= number_format($total_buku) ?></div>
                     <div class="stat-label">Buku Digital</div>
                 </div>
                 <div class="stat-item">
-                    <div class="stat-number">500+</div>
+                    <div class="stat-number"><?= number_format($total_penulis) ?></div>
                     <div class="stat-label">Penulis</div>
                 </div>
                 <div class="stat-item">
-                    <div class="stat-number">50+</div>
+                    <div class="stat-number"><?= number_format($total_kategori) ?></div>
                     <div class="stat-label">Kategori</div>
                 </div>
             </div>
