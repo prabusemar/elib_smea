@@ -199,7 +199,8 @@ include '../../views/header.php';
                                     <td>
                                         <div class="d-flex align-items-center">
                                             <div class="avatar avatar-sm me-3">
-                                                <span class="avatar-title rounded-circle bg-primary text-white">
+                                                <span class="avatar-title rounded-circle"
+                                                    style="display: inline-flex; align-items: center; justify-content: center; width: 2rem; height: 2rem; background: #3a0ca3; color: #fff; font-weight: 500; font-size: 0.875rem ;border-radius:50%;">
                                                     <?= strtoupper(substr($row['NamaAnggota'], 0, 1)) ?>
                                                 </span>
                                             </div>
@@ -222,7 +223,7 @@ include '../../views/header.php';
                                             </div>
                                             <div>
                                                 <h6 class="mb-0 fw-semibold"><?= htmlspecialchars($row['Judul']) ?></h6>
-                                                <small class="text-muted">ID: <?= $row['BukuID'] ?></small>
+
                                             </div>
                                         </div>
                                     </td>
@@ -237,19 +238,18 @@ include '../../views/header.php';
                                         </span>
                                     </td>
                                     <td>
-                                        <div class="d-flex">
+                                        <div class="d-flex gap-2">
                                             <?php if ($row['Status'] === 'Active' || $row['Status'] === 'Expired'): ?>
-                                                <button type="button" class="btn btn-sm btn-success me-1"
+                                                <button type="button" class="btn btn-sm btn-success me-1 return-btn"
                                                     data-bs-toggle="modal" data-bs-target="#returnModal<?= $row['PeminjamanID'] ?>">
-                                                    <i class="fas fa-undo"></i>
+                                                    <i class="fas fa-undo fa-fw"></i>
                                                 </button>
                                             <?php endif; ?>
-                                            <button type="button" class="btn btn-sm btn-danger"
+                                            <button type="button" class="btn btn-sm btn-danger delete-btn"
                                                 data-bs-toggle="modal" data-bs-target="#deleteModal<?= $row['PeminjamanID'] ?>">
-                                                <i class="fas fa-trash"></i>
+                                                <i class="fas fa-trash fa-fw"></i>
                                             </button>
                                         </div>
-
                                         <!-- Return Modal -->
                                         <div class="modal fade" id="returnModal<?= $row['PeminjamanID'] ?>" tabindex="-1" role="dialog">
                                             <div class="modal-dialog" role="document">
@@ -668,6 +668,50 @@ include '../../views/header.php';
         .table td {
             padding: 0.75rem;
         }
+    }
+
+    /* Action Buttons */
+    .return-btn,
+    .delete-btn {
+        width: 32px;
+        height: 32px;
+        padding: 0;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 6px;
+        transition: all 0.2s ease;
+    }
+
+    .return-btn {
+        background-color: #38b000;
+        border-color: #38b000;
+    }
+
+    .return-btn:hover {
+        background-color: #2d8c00;
+        border-color: #2d8c00;
+    }
+
+    .delete-btn {
+        background-color: #ef233c;
+        border-color: #ef233c;
+    }
+
+    .delete-btn:hover {
+        background-color: #d90429;
+        border-color: #d90429;
+    }
+
+    /* Center icons perfectly */
+    .btn-sm i {
+        line-height: 1;
+        font-size: 0.875rem;
+    }
+
+    .fa-trash,
+    .fa-undo {
+        margin-left: 10px;
     }
 </style>
 
