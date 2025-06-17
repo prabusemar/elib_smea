@@ -7,7 +7,7 @@ if (isset($_GET['ajax'])) {
     $term = mysqli_real_escape_string($conn, $_GET['term'] ?? '');
 
     if ($_GET['ajax'] === 'anggota') {
-        $sql = "SELECT MemberID, Nama, Email FROM anggota WHERE Status = 'Active' AND (Nama LIKE ? OR Email LIKE ?) LIMIT 20";
+        $sql = "SELECT MemberID, Nama, Email, Status FROM anggota WHERE (Status = 'Active' OR Status = 'Suspended' OR Status = 'Banned') AND (Nama LIKE ? OR Email LIKE ?) LIMIT 20";
         $stmt = mysqli_prepare($conn, $sql);
         $searchTerm = "%$term%";
         mysqli_stmt_bind_param($stmt, 'ss', $searchTerm, $searchTerm);
@@ -16,10 +16,12 @@ if (isset($_GET['ajax'])) {
 
         $data = [];
         while ($row = mysqli_fetch_assoc($result)) {
+            $disabled = ($row['Status'] !== 'Active') ? ' (Status: ' . $row['Status'] . ')' : '';
             $data[] = [
                 'id' => $row['MemberID'],
-                'label' => $row['Nama'] . ' (' . $row['Email'] . ')',
-                'value' => $row['Nama'] . ' (' . $row['Email'] . ')'
+                'label' => $row['Nama'] . ' (' . $row['Email'] . ')' . $disabled,
+                'value' => $row['Nama'] . ' (' . $row['Email'] . ')',
+                'status' => $row['Status']
             ];
         }
         echo json_encode($data);
@@ -41,6 +43,17 @@ if (isset($_GET['ajax'])) {
             ];
         }
         echo json_encode($data);
+        exit;
+    } elseif ($_GET['ajax'] === 'check_status') {
+        $memberId = mysqli_real_escape_string($conn, $_GET['member_id']);
+        $sql = "SELECT Status FROM anggota WHERE MemberID = ?";
+        $stmt = mysqli_prepare($conn, $sql);
+        mysqli_stmt_bind_param($stmt, 'i', $memberId);
+        mysqli_stmt_execute($stmt);
+        $result = mysqli_stmt_get_result($stmt);
+        $row = mysqli_fetch_assoc($result);
+
+        echo json_encode(['status' => $row['Status'] ?? 'Unknown']);
         exit;
     }
 }
@@ -66,6 +79,7 @@ include '../../views/header.php';
             <input type="hidden" name="member_id" id="member_id" required>
             <div id="anggota_suggestions" class="suggestions-dropdown"></div>
             <div id="selected_anggota"></div>
+            <div id="status-warning" class="alert" style="display:none;"></div>
         </div>
 
         <div>
@@ -88,10 +102,11 @@ include '../../views/header.php';
 
         <div class="form-actions">
             <a href="peminjaman_admin.php" class="btn-back">Kembali</a>
-            <button type="submit">Simpan</button>
+            <button type="submit" id="submit-btn">Simpan</button>
         </div>
     </form>
 </div>
+
 <script>
     $(function() {
         function setupAutocomplete(inputSelector, hiddenSelector, resultSelector, ajaxType) {
@@ -116,14 +131,23 @@ include '../../views/header.php';
                         suggestions.empty();
                         if (data.length > 0) {
                             data.forEach(item => {
-                                $('<div class="suggestion-item">')
+                                const suggestionItem = $('<div class="suggestion-item">')
                                     .text(item.label)
                                     .on('click', function() {
-                                        input.val(item.label);
+                                        input.val(item.value);
                                         hidden.val(item.id);
                                         suggestions.hide();
-                                    })
-                                    .appendTo(suggestions);
+
+                                        if (ajaxType === 'anggota') {
+                                            checkMemberStatus(item.status);
+                                        }
+                                    });
+
+                                if (ajaxType === 'anggota' && item.status !== 'Active') {
+                                    suggestionItem.css('color', '#dc3545');
+                                }
+
+                                suggestionItem.appendTo(suggestions);
                             });
                             suggestions.show();
                         } else {
@@ -140,12 +164,51 @@ include '../../views/header.php';
 
         setupAutocomplete('#anggota_search', '#member_id', '#anggota_suggestions', 'anggota');
         setupAutocomplete('#buku_search', '#buku_id', '#buku_suggestions', 'buku');
-    });
 
-    $(document).ready(function() {
+        function checkMemberStatus(status = null) {
+            if (status) {
+                handleStatusResponse({
+                    status: status
+                });
+                return;
+            }
+
+            const memberId = $('#member_id').val();
+            if (!memberId) return;
+
+            $.get(window.location.pathname, {
+                ajax: 'check_status',
+                member_id: memberId
+            }, handleStatusResponse);
+        }
+
+        function handleStatusResponse(response) {
+            const warning = $('#status-warning');
+            const submitBtn = $('#submit-btn');
+
+            if (response.status !== 'Active') {
+                warning.removeClass('alert-success')
+                    .addClass('alert-warning')
+                    .text('Anggota ini memiliki status: ' + response.status + '. Tidak dapat melakukan peminjaman.')
+                    .show();
+
+                submitBtn.prop('disabled', true)
+                    .css('opacity', '0.6')
+                    .css('cursor', 'not-allowed');
+            } else {
+                warning.removeClass('alert-warning')
+                    .addClass('alert-success')
+                    .text('Anggota aktif. Dapat melakukan peminjaman.')
+                    .show();
+
+                submitBtn.prop('disabled', false)
+                    .css('opacity', '1')
+                    .css('cursor', 'pointer');
+            }
+        }
+
         // Set default pinjam date to now
         const now = new Date();
-        // Format as YYYY-MM-DDTHH:MM (datetime-local format)
         const today = new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
         document.getElementById('tanggal_pinjam').value = today;
 
@@ -167,7 +230,6 @@ include '../../views/header.php';
 
             $('#tanggal_kembali').attr('min', formattedMinDate);
 
-            // If current kembali value is before new min date, reset it
             if ($('#tanggal_kembali').val() && new Date($('#tanggal_kembali').val()) < minKembaliDate) {
                 $('#tanggal_kembali').val(formattedMinDate);
             }
@@ -260,19 +322,27 @@ include '../../views/header.php';
 
     .suggestion-item:hover {
         background-color: #f8f9fa;
-        color: #3498db;
     }
 
-    /* Selected Items Display */
-    #selected_anggota,
-    #selected_buku {
-        margin-top: 10px;
-        padding: 10px;
-        background: #f8f9fa;
+    /* Status Warning Styles */
+    .alert {
+        padding: 12px 15px;
         border-radius: 6px;
+        margin-top: 10px;
         font-size: 14px;
-        color: #2c3e50;
         display: none;
+    }
+
+    .alert-warning {
+        background-color: #fff3cd;
+        color: #856404;
+        border: 1px solid #ffeeba;
+    }
+
+    .alert-success {
+        background-color: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
     }
 
     /* Button Styles */
@@ -287,17 +357,20 @@ include '../../views/header.php';
         transition: all 0.3s;
         font-weight: 500;
         width: 100%;
-        margin-top: 10px;
     }
 
-    button[type="submit"]:hover {
+    button[type="submit"]:hover:not(:disabled) {
         background: #2980b9;
         transform: translateY(-2px);
         box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     }
 
-    button[type="submit"]:active {
-        transform: translateY(0);
+    button[type="submit"]:disabled {
+        background-color: #95a5a6 !important;
+        transform: none !important;
+        box-shadow: none !important;
+        cursor: not-allowed;
+        opacity: 0.6;
     }
 
     /* Responsive Design */
@@ -311,24 +384,7 @@ include '../../views/header.php';
         }
     }
 
-    /* Animation */
-    @keyframes fadeIn {
-        from {
-            opacity: 0;
-            transform: translateY(-5px);
-        }
-
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
-
-    .suggestions-dropdown {
-        animation: fadeIn 0.2s ease-out;
-    }
-
-    /* New styles for back button and form actions */
+    /* Form Actions */
     .form-actions {
         display: flex;
         gap: 15px;
@@ -356,13 +412,8 @@ include '../../views/header.php';
         box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     }
 
-    .btn-back:active {
-        transform: translateY(0);
-    }
-
     button[type="submit"] {
         flex: 1;
-        margin-top: 0;
     }
 
     @media (max-width: 480px) {
