@@ -381,7 +381,6 @@ include '../../views/header.php';
         --primary: #3a0ca3;
         --primary-light: #f0e7ff;
         --primary-dark: #2c0980;
-        --secondary: #4cc9f0;
         --success: #38b000;
         --success-light: #e6f7e6;
         --danger: #ef233c;
