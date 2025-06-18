@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:3306
--- Generation Time: Jun 11, 2025 at 03:05 AM
+-- Generation Time: Jun 18, 2025 at 05:14 AM
 -- Server version: 5.7.39
 -- PHP Version: 8.1.10
 
@@ -303,9 +303,46 @@ CREATE TABLE `peminjaman` (
   `BukuID` int(11) NOT NULL,
   `TanggalPinjam` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `TanggalKembali` timestamp NULL DEFAULT NULL,
-  `DurasiPinjam` int(11) DEFAULT '14' COMMENT 'Durasi dalam hari',
+  `DurasiPinjam` int(11) GENERATED ALWAYS AS ((case when (`TanggalKembali` is not null) then (to_days(`TanggalKembali`) - to_days(`TanggalPinjam`)) else 14 end)) STORED,
   `Status` enum('Active','Expired','Returned') DEFAULT 'Active'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+--
+-- Dumping data for table `peminjaman`
+--
+
+INSERT INTO `peminjaman` (`PeminjamanID`, `MemberID`, `BukuID`, `TanggalPinjam`, `TanggalKembali`, `Status`) VALUES
+(1, 32, 20, '2025-06-18 14:59:00', '2025-06-27 14:59:00', 'Active'),
+(2, 1, 18, '2025-06-18 15:00:00', '2025-06-28 15:00:00', 'Active'),
+(3, 32, 19, '2025-06-18 04:20:00', '2025-06-30 04:20:00', 'Active'),
+(4, 27, 19, '2025-06-18 04:26:57', '2025-06-30 04:26:57', 'Active'),
+(5, 27, 20, '2025-06-18 04:26:57', '2025-06-29 17:00:00', 'Active'),
+(6, 27, 21, '2025-06-18 04:26:57', '2025-06-29 17:00:00', 'Active'),
+(7, 27, 22, '2025-06-18 04:26:57', '2025-06-29 17:00:00', 'Active'),
+(8, 27, 23, '2025-06-18 04:26:57', '2025-06-29 17:00:00', 'Active'),
+(9, 27, 18, '2025-06-18 04:29:00', '2025-07-03 04:29:00', 'Active');
+
+--
+-- Triggers `peminjaman`
+--
+DELIMITER $$
+CREATE TRIGGER `calculate_loan_duration_insert` BEFORE INSERT ON `peminjaman` FOR EACH ROW BEGIN
+    IF NEW.TanggalKembali IS NOT NULL THEN
+        SET NEW.DurasiPinjam = DATEDIFF(NEW.TanggalKembali, NEW.TanggalPinjam);
+    ELSE
+        SET NEW.DurasiPinjam = 14; -- Nilai default jika belum dikembalikan
+    END IF;
+END
+$$
+DELIMITER ;
+DELIMITER $$
+CREATE TRIGGER `calculate_loan_duration_update` BEFORE UPDATE ON `peminjaman` FOR EACH ROW BEGIN
+    IF NEW.TanggalKembali IS NOT NULL THEN
+        SET NEW.DurasiPinjam = DATEDIFF(NEW.TanggalKembali, NEW.TanggalPinjam);
+    END IF;
+END
+$$
+DELIMITER ;
 
 -- --------------------------------------------------------
 
@@ -793,7 +830,7 @@ ALTER TABLE `pembayaran`
 -- AUTO_INCREMENT for table `peminjaman`
 --
 ALTER TABLE `peminjaman`
-  MODIFY `PeminjamanID` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `PeminjamanID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
 
 --
 -- AUTO_INCREMENT for table `pencarian_populer`
