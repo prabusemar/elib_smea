@@ -363,7 +363,7 @@ $current_page = basename($_SERVER['PHP_SELF']);
         align-items: center;
         justify-content: center;
         font-weight: bold;
-        color: white;
+        color: black;
         flex-shrink: 0;
     }
 
