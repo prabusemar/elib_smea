@@ -681,27 +681,38 @@ include '../../views/header.php';
         justify-content: center;
         border-radius: 6px;
         transition: all 0.2s ease;
+        /* Soft background and white icon */
     }
 
     .return-btn {
-        background-color: #38b000;
-        border-color: #38b000;
+        background-color: #66e492ff;
+        /* soft green */
+        border-color: #66e492ff;
+     
     }
 
     .return-btn:hover {
-        background-color: #2d8c00;
-        border-color: #2d8c00;
+        background-color:rgb(21, 238, 119);
+        /* slightly deeper soft green */
+        border-color:rgb(21, 238, 119);
+        
     }
 
     .delete-btn {
-        background-color: #ef233c;
-        border-color: #ef233c;
+        background-color:rgb(238, 101, 135);
+        /* soft pink */
+        border-color:rgb(238, 101, 135);
+        
     }
 
     .delete-btn:hover {
-        background-color: #d90429;
-        border-color: #d90429;
+        background-color:rgb(235, 79, 118);
+        /* slightly deeper soft pink */
+        border-color:rgb(235, 79, 118);
+        
     }
+
+    
 
     /* Center icons perfectly */
     .btn-sm i {

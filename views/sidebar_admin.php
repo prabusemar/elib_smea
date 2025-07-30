@@ -629,14 +629,14 @@ $current_page = basename($_SERVER['PHP_SELF']);
         // Initialize sidebar state
         function initSidebarState() {
             const isMobile = window.innerWidth <= 992;
-            const savedState = localStorage.getItem('sidebarCollapsed');
 
             if (isMobile) {
-                // Di mobile, sidebar default hidden
-                sidebar.classList.remove('collapsed');
+                // Di mobile, sidebar default tertutup
                 sidebar.classList.remove('active');
+                sidebar.classList.add('collapsed');
             } else {
-                // Di desktop, gunakan saved state
+                // Di desktop, sidebar selalu terbuka
+                sidebar.classList.remove('collapsed');
                 if (savedState === 'true') {
                     sidebar.classList.add('collapsed');
                 } else {
