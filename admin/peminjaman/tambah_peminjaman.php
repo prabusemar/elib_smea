@@ -45,15 +45,62 @@ if (isset($_GET['ajax'])) {
         echo json_encode($data);
         exit;
     } elseif ($_GET['ajax'] === 'check_status') {
-        $memberId = mysqli_real_escape_string($conn, $_GET['member_id']);
-        $sql = "SELECT Status FROM anggota WHERE MemberID = ?";
+        $memberId = (int)$_GET['member_id'];
+
+        // Debug: Tampilkan parameter yang diterima
+        error_log("MEMBER ID: " . $memberId);
+
+        // Query data anggota
+        $sql = "SELECT Status, JenisAkun FROM anggota WHERE MemberID = ?";
         $stmt = mysqli_prepare($conn, $sql);
         mysqli_stmt_bind_param($stmt, 'i', $memberId);
+
+        if (!mysqli_stmt_execute($stmt)) {
+            error_log("Error anggota: " . mysqli_error($conn));
+        }
+
+        $result = mysqli_stmt_get_result($stmt);
+        $anggota = mysqli_fetch_assoc($result);
+
+        // Query peminjaman dengan cara yang lebih reliable
+        $sql2 = "SELECT COUNT(*) as jumlah FROM peminjaman 
+             WHERE MemberID = ? AND Status = 'Active'";
+        $stmt2 = mysqli_prepare($conn, $sql2);
+        mysqli_stmt_bind_param($stmt2, 'i', $memberId);
+
+        if (!mysqli_stmt_execute($stmt2)) {
+            error_log("Error peminjaman: " . mysqli_error($conn));
+        }
+
+        $result2 = mysqli_stmt_get_result($stmt2);
+        $row = mysqli_fetch_assoc($result2);
+        $jumlah = $row['jumlah'] ?? 0;
+
+        // Debug: Tampilkan hasil query
+        error_log("JUMLAH PEMINJAMAN: " . $jumlah);
+
+        $response = [
+            'status' => $anggota['Status'] ?? 'Unknown',
+            'jenis_akun' => $anggota['JenisAkun'] ?? 'Free',
+            'jumlah_pinjam' => (int)$jumlah
+        ];
+
+        error_log("Sending response: " . json_encode($response));
+        echo json_encode($response);
+        exit;
+    } elseif ($_GET['ajax'] === 'check_existing') {
+        // Tambahan logika validasi AJAX
+        $memberId = (int)($_GET['member_id'] ?? 0);
+        $bukuId = (int)($_GET['buku_id'] ?? 0);
+
+        $sql = "SELECT COUNT(*) as total FROM peminjaman WHERE MemberID = ? AND BukuID = ? AND Status = 'Active'";
+        $stmt = mysqli_prepare($conn, $sql);
+        mysqli_stmt_bind_param($stmt, 'ii', $memberId, $bukuId);
         mysqli_stmt_execute($stmt);
         $result = mysqli_stmt_get_result($stmt);
         $row = mysqli_fetch_assoc($result);
 
-        echo json_encode(['status' => $row['Status'] ?? 'Unknown']);
+        echo json_encode(['exists' => $row['total'] > 0]);
         exit;
     }
 }
@@ -71,7 +118,7 @@ include '../../views/header.php';
 
 <div class="content-wrapper">
     <h1>Tambah Peminjaman</h1>
-    <form method="POST" action="peminjaman_handler.php">
+    <form method="POST" action="peminjaman_handler.php" id="form-peminjaman">
         <input type="hidden" name="action" value="tambah">
         <div>
             <label>Anggota</label><br>
@@ -139,7 +186,10 @@ include '../../views/header.php';
                                         suggestions.hide();
 
                                         if (ajaxType === 'anggota') {
-                                            checkMemberStatus(item.status);
+                                            // Panggil checkMemberStatus dengan member ID yang baru dipilih
+                                            setTimeout(function() {
+                                                checkMemberStatus();
+                                            }, 100);
                                         }
                                     });
 
@@ -176,36 +226,69 @@ include '../../views/header.php';
             const memberId = $('#member_id').val();
             if (!memberId) return;
 
+            console.log("Checking status for MemberID:", memberId); // Debug log
+
             $.get(window.location.pathname, {
                 ajax: 'check_status',
                 member_id: memberId
-            }, handleStatusResponse);
+            }, function(response) {
+                console.log("AJAX Response:", response); // Debug log
+                handleStatusResponse(response);
+            }, 'json').fail(function(xhr, status, error) {
+                console.error("AJAX Error:", error);
+                console.error("Response:", xhr.responseText);
+            });
         }
 
         function handleStatusResponse(response) {
+            console.log("RESPONSE:", response); // Debug response di console browser
+
             const warning = $('#status-warning');
             const submitBtn = $('#submit-btn');
+
+            // Pastikan response adalah object
+            if (typeof response === 'string') {
+                try {
+                    response = JSON.parse(response);
+                } catch (e) {
+                    console.error("Error parsing response:", e);
+                    return;
+                }
+            }
+
+            console.log("Parsed response:", response);
 
             if (response.status !== 'Active') {
                 warning.removeClass('alert-success')
                     .addClass('alert-warning')
                     .text('Anggota ini memiliki status: ' + response.status + '. Tidak dapat melakukan peminjaman.')
                     .show();
+                submitBtn.prop('disabled', true);
+                return;
+            }
 
-                submitBtn.prop('disabled', true)
-                    .css('opacity', '0.6')
-                    .css('cursor', 'not-allowed');
+            const jenis = response.jenis_akun || 'Free';
+            const jumlah = parseInt(response.jumlah_pinjam) || 0;
+
+            console.log("JENIS AKUN:", jenis, "JUMLAH:", jumlah); // Debug nilai
+
+            let batas = jenis === 'Premium' ? 15 : 5;
+
+            if (jumlah >= batas) {
+                warning.removeClass('alert-success')
+                    .addClass('alert-warning')
+                    .text(`Anggota dengan akun ${jenis} telah meminjam ${jumlah} buku. Maksimal ${batas} buku.`)
+                    .show();
+                submitBtn.prop('disabled', true);
             } else {
                 warning.removeClass('alert-warning')
                     .addClass('alert-success')
-                    .text('Anggota aktif. Dapat melakukan peminjaman.')
+                    .text(`Anggota aktif (${jenis}). Saat ini meminjam ${jumlah} buku. Dapat melakukan peminjaman.`)
                     .show();
-
-                submitBtn.prop('disabled', false)
-                    .css('opacity', '1')
-                    .css('cursor', 'pointer');
+                submitBtn.prop('disabled', false);
             }
         }
+
 
         // Set default pinjam date to now
         const now = new Date();
@@ -233,6 +316,32 @@ include '../../views/header.php';
             if ($('#tanggal_kembali').val() && new Date($('#tanggal_kembali').val()) < minKembaliDate) {
                 $('#tanggal_kembali').val(formattedMinDate);
             }
+        });
+
+        // Tambahan: Cek peminjaman aktif sebelum submit
+        $('#form-peminjaman').on('submit', function(e) {
+            const memberId = $('#member_id').val();
+            const bukuId = $('#buku_id').val();
+
+            if (!memberId || !bukuId) {
+                alert("Harap pilih anggota dan buku terlebih dahulu.");
+                e.preventDefault();
+                return;
+            }
+
+            e.preventDefault(); // Tunda pengiriman
+
+            $.get(window.location.pathname, {
+                ajax: 'check_existing',
+                member_id: memberId,
+                buku_id: bukuId
+            }, function(response) {
+                if (response.exists) {
+                    alert("Anggota ini sudah meminjam buku yang sama dan belum dikembalikan.");
+                } else {
+                    $('#form-peminjaman')[0].submit(); // Submit form jika aman
+                }
+            }, 'json');
         });
     });
 </script>
