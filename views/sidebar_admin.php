@@ -289,8 +289,7 @@ $current_page = basename($_SERVER['PHP_SELF']);
         border-radius: 8px;
         transition: width 0.3s, height 0.3s;
         flex-shrink: 0;
-        background: #fff;
-        box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
     }
 
     .sidebar-title {
@@ -575,35 +574,39 @@ $current_page = basename($_SERVER['PHP_SELF']);
         .sidebar {
             transform: translateX(-100%);
             z-index: 1000;
-            width: var(--sidebar-width);
+            width: var(--sidebar-width) !important;
+            position: fixed;
+            left: 0;
+            top: 0;
         }
 
         .sidebar.active {
             transform: translateX(0);
+            width: var(--sidebar-width) !important;
         }
 
         .sidebar.collapsed {
             transform: translateX(-100%);
-            width: var(--sidebar-collapsed-width);
         }
 
         .main-content {
-            margin-left: 0;
+            margin-left: 0 !important;
+            width: 100% !important;
         }
 
         /* Toggle button fixes for mobile */
         .toggle-btn {
             display: flex !important;
-            right: -31px;
+            right: -40px !important;
             top: 20px;
             background: white;
             z-index: 1100;
-
+            width: 40px;
+            height: 40px;
         }
 
         .fa-chevron-left {
-
-            transform: scaleX(-1);
+            transform: scaleX(-1) !important;
         }
 
         /* Mobile tooltip adjustments */
@@ -645,47 +648,167 @@ $current_page = basename($_SERVER['PHP_SELF']);
         const tooltips = document.querySelectorAll('.tooltip');
         const mainContent = document.querySelector('.main-content');
 
+        // Show tooltip
+        function showTooltip(e) {
+            const tooltip = e.currentTarget;
+            const tooltipText = tooltip.querySelector('.tooltiptext');
+            const rect = tooltip.getBoundingClientRect();
+            const isMobile = window.innerWidth <= 992;
+
+            if (isMobile && !sidebar.classList.contains('active')) {
+                return;
+            }
+
+            const rightPosition = window.innerWidth - rect.right - 5;
+            const topPosition = rect.top + (rect.height / 2);
+
+            tooltipText.style.cssText = `
+                position: fixed;
+                right: ${rightPosition}px;
+                top: ${topPosition}px;
+                transform: translateY(-50%);
+                visibility: visible;
+                opacity: 1;
+                z-index: 1100;
+                background-color: var(--tooltip-bg);
+                backdrop-filter: blur(2px);
+                max-width: 200px;
+                padding: 8px 12px;
+                border-radius: 6px;
+                box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+            `;
+            tooltipText.setAttribute('data-arrow', 'right');
+        }
+
+        // Hide tooltip
+        function hideTooltip(e) {
+            const tooltip = e.currentTarget;
+            const tooltipText = tooltip.querySelector('.tooltiptext');
+            tooltipText.style.visibility = 'hidden';
+            tooltipText.style.opacity = '0';
+        }
+
+        // Handle touch events
+        function handleTouch(e) {
+            e.preventDefault();
+            const tooltip = e.currentTarget;
+            const tooltipText = tooltip.querySelector('.tooltiptext');
+            const isVisible = tooltipText.style.visibility === 'visible';
+
+            document.querySelectorAll('.tooltip').forEach(t => {
+                if (t !== tooltip) hideTooltip({
+                    currentTarget: t
+                });
+            });
+
+            if (!isVisible) {
+                showTooltip({
+                    currentTarget: tooltip
+                });
+            } else {
+                hideTooltip({
+                    currentTarget: tooltip
+                });
+            }
+        }
+
+        // Initialize tooltips
+        function initTooltips() {
+            tooltips.forEach(tooltip => {
+                tooltip.removeEventListener('mouseenter', showTooltip);
+                tooltip.removeEventListener('mouseleave', hideTooltip);
+                tooltip.removeEventListener('touchstart', handleTouch);
+
+                if (sidebar.classList.contains('collapsed')) {
+                    tooltip.addEventListener('mouseenter', showTooltip);
+                    tooltip.addEventListener('mouseleave', hideTooltip);
+                    tooltip.addEventListener('touchstart', handleTouch, {
+                        passive: false
+                    });
+                }
+            });
+        }
         // Initialize sidebar state
         function initSidebarState() {
             const isMobile = window.innerWidth <= 992;
-            let savedState = localStorage.getItem('sidebarCollapsed');
+            if (isMobile) {
+                sidebar.classList.remove('collapsed');
+                sidebar.classList.remove('active');
+            } else {
+                sidebar.classList.remove('collapsed', 'active');
+            }
+        }
+
+        // Toggle sidebar
+        function toggleSidebar(e) {
+            e.preventDefault();
+            e.stopPropagation();
+
+            const isMobile = window.innerWidth <= 992;
 
             if (isMobile) {
-                sidebar.classList.remove('active');
-                sidebar.classList.add('collapsed');
+                sidebar.classList.toggle('active');
             } else {
-                sidebar.classList.add('active'); // always open on desktop
-                if (savedState === 'true') {
-                    sidebar.classList.add('collapsed');
-                } else {
-                    sidebar.classList.remove('collapsed');
+                sidebar.classList.toggle('collapsed');
+            }
+
+            initTooltips();
+        }
+
+        // Handle window resize
+        let resizeTimer;
+
+        function handleResize() {
+            clearTimeout(resizeTimer);
+            resizeTimer = setTimeout(() => {
+                initSidebarState();
+                initTooltips();
+            }, 250);
+        }
+
+        // Click outside handler
+        function handleClickOutside(e) {
+            if (!e.target.closest('.tooltip') && !e.target.closest('.toggle-btn')) {
+                const isMobile = window.innerWidth <= 992;
+                if (isMobile && sidebar.classList.contains('active')) {
+                    sidebar.classList.remove('active');
                 }
             }
         }
 
-        // Toggle sidebar - diperbaiki untuk mobile/desktop
-        function toggleSidebar() {
-            const isMobile = window.innerWidth <= 992;
+        // Initialize
+        initSidebarState();
+        initTooltips();
 
-            if (isMobile) {
-                // Di mobile, toggle class 'active' untuk show/hide
-                sidebar.classList.toggle('active');
+        // Event listeners
+        toggleBtn.addEventListener('click', toggleSidebar);
+        window.addEventListener('resize', handleResize);
+        document.addEventListener('click', handleClickOutside);
+
+    });
+
+    function toggleSidebar(e) {
+        e.preventDefault();
+        e.stopPropagation();
+
+        const isMobile = window.innerWidth <= 992;
+
+        if (isMobile) {
+            if (sidebar.classList.contains('active')) {
+                sidebar.classList.remove('active');
             } else {
-                // Di desktop, toggle class 'collapsed'
-                sidebar.classList.toggle('collapsed');
-                localStorage.setItem('sidebarCollapsed', sidebar.classList.contains('collapsed'));
+                sidebar.classList.remove('collapsed');
+                sidebar.classList.add('active');
             }
-
-            // Update tooltip positions after transition
-            setTimeout(initTooltips, 300);
+        } else {
+            sidebar.classList.toggle('collapsed');
+            sidebar.classList.remove('active');
         }
 
-        // Initialize tooltips with perfect positioning
+        // Initialize tooltips
         function initTooltips() {
             tooltips.forEach(tooltip => {
-                const tooltipText = tooltip.querySelector('.tooltiptext');
-
-                // Clear existing event listeners
+                const tooltipText = tooltip.querySelector('.tooltiptext'); // Clear existing event listeners
                 tooltip.removeEventListener('mouseenter', showTooltip);
                 tooltip.removeEventListener('mouseleave', hideTooltip);
                 tooltip.removeEventListener('touchstart', handleTouch);
@@ -714,29 +837,30 @@ $current_page = basename($_SERVER['PHP_SELF']);
                 return; // Don't show tooltips if sidebar is hidden on mobile
             }
 
-            // Calculate position (right side of the icon)
+            if (isMobile && !sidebar.classList.contains('active')) {
+                return;
+            }
+
             const rightPosition = window.innerWidth - rect.right - 5;
             const topPosition = rect.top + (rect.height / 2);
 
-            // Apply styles
             tooltipText.style.cssText = `
-            position: fixed;
-            right: ${rightPosition}px;
-            top: ${topPosition}px;
-            left: 5px;
-            transform: translateY(-50%);
-            visibility: visible;
-            opacity: 1;
-            z-index: 1100;
-            background-color: var(--tooltip-bg);
-            backdrop-filter: blur(2px);
-            max-width: 200px;
-            padding: 8px 120px 8px 12px;
-            border-radius: 6px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
-        `;
+                position: fixed;
+                right: ${rightPosition}px;
+                top: ${topPosition}px;
+                left: 5px;
+                transform: translateY(-50%);
+                visibility: visible;
+                opacity: 1;
+                z-index: 1100;
+                background-color: var(--tooltip-bg);
+                backdrop-filter: blur(2px);
+                max-width: 200px;
+                padding: 8px 12px;
+                border-radius: 6px;
+                box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+            `;
 
-            // Create arrow
             tooltipText.setAttribute('data-arrow', 'right');
         }
 
@@ -800,17 +924,17 @@ $current_page = basename($_SERVER['PHP_SELF']);
         // Add arrow styles dynamically
         const style = document.createElement('style');
         style.textContent = `
-        [data-arrow="right"]::after {
-            content: "";
-            position: absolute;
-            right: -10px;
-            top: 50%;
-            transform: translateY(-50%);
-            border-width: 5px;
-            border-style: solid;
-            border-color: transparent transparent transparent var(--tooltip-bg);
-        }
-    `;
+            [data-arrow="right"]::after {
+                content: "";
+                position: absolute;
+                right: -10px;
+                top: 50%;
+                transform: translateY(-50%);
+                border-width: 5px;
+                border-style: solid;
+                border-color: transparent transparent transparent var(--tooltip-bg);
+            }
+        `;
         document.head.appendChild(style);
-    });
+    };
 </script>
