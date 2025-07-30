@@ -13,7 +13,8 @@ $current_page = basename($_SERVER['PHP_SELF']);
 
 <aside class="sidebar">
     <div class="sidebar-header">
-        <h3>SMEA E-lib</h3>
+        <img src="/library/assets/logo/logo-smea.png" alt="Logo SMEA" class="sidebar-logo">
+        <span class="sidebar-title">SMEA E-lib</span>
         <button class="toggle-btn">
             <i class="fas fa-chevron-left"></i>
         </button>
@@ -278,18 +279,36 @@ $current_page = basename($_SERVER['PHP_SELF']);
         border-bottom: 1px solid rgba(255, 255, 255, 0.1);
         position: relative;
         flex-shrink: 0;
+        gap: 0.8rem;
     }
 
-    .sidebar-header h3 {
+    .sidebar-logo {
+        width: 44px;
+        height: 44px;
+        object-fit: contain;
+        border-radius: 8px;
+        transition: width 0.3s, height 0.3s;
+        flex-shrink: 0;
+        background: #fff;
+        box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+    }
+
+    .sidebar-title {
         font-size: 1.3rem;
         white-space: nowrap;
         opacity: 1;
-        transition: opacity 0.3s ease;
+        transition: opacity 0.3s, width 0.3s;
+        color: #fff;
+        font-weight: 700;
+        margin-left: 0.5rem;
     }
 
-    .sidebar.collapsed .sidebar-header h3 {
+    .sidebar.collapsed .sidebar-title {
         opacity: 0;
         width: 0;
+        margin: 0;
+        padding: 0;
+        display: none;
     }
 
     /* Toggle Button */
@@ -488,7 +507,7 @@ $current_page = basename($_SERVER['PHP_SELF']);
     }
 
     .sidebar.collapsed .menu-section {
-        border-bottom: none;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
     }
 
     /* Tooltip Styles - Fixed */
@@ -629,14 +648,13 @@ $current_page = basename($_SERVER['PHP_SELF']);
         // Initialize sidebar state
         function initSidebarState() {
             const isMobile = window.innerWidth <= 992;
+            let savedState = localStorage.getItem('sidebarCollapsed');
 
             if (isMobile) {
-                // Di mobile, sidebar default tertutup
                 sidebar.classList.remove('active');
                 sidebar.classList.add('collapsed');
             } else {
-                // Di desktop, sidebar selalu terbuka
-                sidebar.classList.remove('collapsed');
+                sidebar.classList.add('active'); // always open on desktop
                 if (savedState === 'true') {
                     sidebar.classList.add('collapsed');
                 } else {
@@ -756,24 +774,7 @@ $current_page = basename($_SERVER['PHP_SELF']);
         function handleResize() {
             clearTimeout(resizeTimer);
             resizeTimer = setTimeout(() => {
-                const isMobile = window.innerWidth <= 992;
-
-                if (isMobile) {
-                    // Di mobile, pastikan sidebar hidden dan tidak collapsed
-                    sidebar.classList.remove('collapsed');
-                    sidebar.classList.remove('active');
-                } else {
-                    // Di desktop, gunakan state yang disimpan
-                    const savedState = localStorage.getItem('sidebarCollapsed');
-                    if (savedState === 'true') {
-                        sidebar.classList.add('collapsed');
-                    } else {
-                        sidebar.classList.remove('collapsed');
-                    }
-                    // Pastikan sidebar visible di desktop
-                    sidebar.classList.add('active');
-                }
-
+                initSidebarState();
                 initTooltips();
             }, 250);
         }
