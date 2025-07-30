@@ -659,7 +659,7 @@ $current_page = basename($_SERVER['PHP_SELF']);
                 return;
             }
 
-            const rightPosition = window.innerWidth - rect.right - 5;
+            const rightPosition = window.innerWidth - rect.right - 100;
             const topPosition = rect.top + (rect.height / 2);
 
             tooltipText.style.cssText = `
@@ -673,7 +673,7 @@ $current_page = basename($_SERVER['PHP_SELF']);
                 background-color: var(--tooltip-bg);
                 backdrop-filter: blur(2px);
                 max-width: 200px;
-                padding: 8px 12px;
+                padding: 8px 120px 8px 10px;
                 border-radius: 6px;
                 box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
             `;
