@@ -281,12 +281,11 @@ include '../../views/header.php';
 
 
 <style>
-    /* Search & Filter Form */
+    /* Base Styles */
     .search-filter-form {
         display: flex;
         gap: 12px;
         align-items: stretch;
-        /* Memastikan tinggi elemen sama */
         margin-bottom: 2rem;
     }
 
@@ -335,6 +334,7 @@ include '../../views/header.php';
 
     .table-responsive {
         overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
     }
 
     table {
@@ -384,27 +384,39 @@ include '../../views/header.php';
     .btn-info {
         background-color: #e0f2fe;
         color: #0369a1;
-        padding: 0.5rem 0rem;
-
+        padding: 0.5rem 1rem;
     }
 
     .btn-danger {
         background-color: #fee2e2;
         color: #b91c1c;
-        padding: 0.5rem 0rem;
-
+        padding: 0.5rem 1rem;
     }
 
     .fa-trash,
     .fa-edit {
-        margin-left: 15px;
+        margin-left: 8px;
+    }
+
+    /* Enhanced Profile Photo Styles */
+    .profile-img-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        width: 100%;
+        padding: 5px 0;
     }
 
     .profile-img {
-        width: 40px;
-        height: 40px;
-        border-radius: 50%;
-        object-fit: cover;
+        width: 60px;
+        /* Increased from 40px */
+        height: 60px;
+        /* Increased from 40px */
+        min-width: 60px;
+        object-fit: contain;
+        /* Changed from cover to contain */
+        padding: 2px;
+        box-sizing: border-box;
     }
 
     .badge {
@@ -498,111 +510,6 @@ include '../../views/header.php';
         cursor: pointer;
     }
 
-    @media (max-width: 992px) {
-        .content-wrapper {
-            margin-left: 0;
-        }
-    }
-
-    @media (max-width: 768px) {
-
-        /* Hide table headers */
-        #anggotaTable thead {
-            display: none;
-        }
-
-        /* Make each row a card */
-        #anggotaTable tr {
-            display: block;
-            margin-bottom: 1rem;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-        }
-
-        /* Display cells as flex with label */
-        #anggotaTable td {
-            display: flex;
-            justify-content: space-between;
-            padding: 0.5rem 1rem;
-            border-bottom: 1px solid #eee;
-        }
-
-        /* Add labels before content */
-        #anggotaTable td::before {
-            content: attr(data-label);
-            font-weight: bold;
-            margin-right: 1rem;
-        }
-
-        /* Hide icons and show text on mobile */
-        .btn i {
-            display: none;
-        }
-
-        .mobile-text {
-            display: inline;
-        }
-
-        /* Make form elements full width */
-        .status-select {
-            width: 100%;
-        }
-    }
-
-    /* Tambahan CSS agar card dan card-body tidak membatasi overflow */
-    .card,
-    .card-body {
-        overflow: visible !important;
-    }
-
-    .table-responsive {
-        width: 100%;
-        margin: 1rem 0;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
-    }
-
-    #anggotaTable {
-        min-width: 1000px;
-        /* Minimum width untuk desktop */
-    }
-
-    @media (max-width: 768px) {
-        .table-responsive {
-            overflow-x: auto;
-            -webkit-overflow-scrolling: touch;
-        }
-
-        #anggotaTable {
-            min-width: 100%;
-        }
-
-        /* Perbaikan tampilan mobile */
-        #anggotaTable td {
-            flex-direction: column;
-            align-items: flex-start;
-            padding: 1rem;
-        }
-
-        #anggotaTable td::before {
-            content: attr(data-label);
-            font-weight: bold;
-            margin-bottom: 0.5rem;
-            color: #6c5ce7;
-        }
-
-        .btn-group {
-            flex-direction: column;
-            width: 100%;
-        }
-
-        .btn {
-            width: 100%;
-            justify-content: center;
-            margin: 0.25rem 0;
-        }
-    }
-
-    /* Pagination Modern */
     .pagination {
         display: flex;
         gap: 8px;
@@ -654,76 +561,233 @@ include '../../views/header.php';
         opacity: 0.7;
     }
 
-    /* Mobile View */
+    /* Mobile Styles (max-width: 768px) */
     @media (max-width: 768px) {
+        .content-wrapper {
+            padding: 15px;
+        }
+
+        .page-header {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .page-header h1 {
+            margin-bottom: 15px;
+            font-size: 1.5rem;
+        }
+
+        .header-actions {
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        .header-actions .btn {
+            width: 100%;
+            justify-content: center;
+        }
+
+        .search-filter-form {
+            flex-direction: column;
+            gap: 10px;
+            padding: 15px;
+        }
+
+        .input-group {
+            width: 100%;
+        }
+
+        .form-control[name="search"] {
+            font-size: 0.9rem;
+            padding: 0 15px;
+        }
+
+        .form-control[name="search"]::placeholder {
+            font-size: 0.85rem;
+        }
+
+        select[name="jenis_akun"] {
+            max-width: 100%;
+            width: 100%;
+            font-size: 0.9rem;
+        }
+
+        /* Table adjustments */
+        .table-responsive {
+            border: none;
+        }
+
+        #anggotaTable {
+            min-width: 100%;
+        }
+
+        #anggotaTable thead {
+            display: none;
+        }
+
+        #anggotaTable tr {
+            display: block;
+            margin-bottom: 20px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        #anggotaTable td {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 15px;
+            border-bottom: 1px solid #f1f3f5;
+        }
+
+        #anggotaTable td:last-child {
+            border-bottom: none;
+        }
+
+        #anggotaTable td::before {
+            content: attr(data-label);
+            font-weight: 600;
+            color: var(--primary);
+            margin-right: 10px;
+            flex-basis: 40%;
+            font-size: 0.85rem;
+        }
+
+        #anggotaTable td>*:not(.mobile-text) {
+            flex-basis: 55%;
+        }
+
+        /* Profile Image Mobile Fixes */
+        #anggotaTable td[data-label="Foto"] {
+            display: flex;
+            justify-content: center;
+            padding: 10px !important;
+        }
+
+        .profile-img {
+            width: 50px !important;
+            height: 50px !important;
+            min-width: 50px !important;
+        }
+
+        /* Status form */
+        .status-form {
+            width: 100%;
+        }
+
+        .status-select {
+            width: 100%;
+            padding: 6px 10px;
+            font-size: 0.85rem;
+        }
+
+        /* Action buttons */
+        .btn-group {
+            width: 100%;
+            flex-direction: row;
+            justify-content: space-between;
+            gap: 8px;
+        }
+
+        .btn-group .btn {
+            flex: 1;
+            margin: 0;
+            padding: 8px 5px;
+            font-size: 0;
+            justify-content: center;
+        }
+
+        .btn-group .btn i {
+            display: inline-block;
+            font-size: 1rem;
+            margin: 0;
+        }
+
+        .btn-group .btn .mobile-text {
+            display: none;
+        }
+
+        /* Pagination */
         .pagination {
             flex-wrap: wrap;
-            gap: 6px;
+            justify-content: center;
+        }
+
+        .page-item {
+            margin: 3px;
         }
 
         .page-link {
-            padding: 8px 14px;
-            font-size: 0.9rem;
+            padding: 8px 12px;
             min-width: 36px;
             text-align: center;
+            font-size: 0.85rem;
+        }
+
+        /* Alerts */
+        .alert {
+            padding: 12px 40px 12px 15px;
+            font-size: 0.9rem;
+        }
+
+        .close {
+            padding: 12px 15px;
         }
     }
 
-    /* Search & Filter Nav */
-    .search-filter-form {
-        display: flex;
-        gap: 12px;
-        margin-bottom: 2rem;
-        background: white;
-        padding: 20px;
-        border-radius: 12px;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    /* Very Small Devices (max-width: 480px) */
+    @media (max-width: 480px) {
+        #anggotaTable td {
+            flex-direction: row;
+            align-items: center;
+        }
+
+        #anggotaTable td::before {
+            margin-bottom: 0;
+            flex-basis: 40%;
+        }
+
+        #anggotaTable td>*:not(.mobile-text) {
+            flex-basis: 55%;
+        }
+
+        .btn-group {
+            flex-direction: row;
+            gap: 5px;
+        }
+
+        .btn-group .btn {
+            padding: 8px 5px;
+        }
+
+        /* Profile Image Smaller */
+        .profile-img {
+            width: 45px !important;
+            height: 45px !important;
+            min-width: 45px !important;
+        }
+
+        /* Search placeholder */
+        .form-control[name="search"]::placeholder {
+            font-size: 0.8rem;
+        }
     }
 
-    .input-group {
-        flex: 1;
-        border-radius: 8px;
-        overflow: hidden;
-        transition: box-shadow 0.3s ease;
-    }
+    /* Small Mobile Devices (max-width: 360px) */
+    @media (max-width: 360px) {
+        .btn-group .btn i {
+            font-size: 0.9rem;
+        }
 
-    .input-group:focus-within {
-        box-shadow: 0 0 0 3px rgba(108, 92, 231, 0.2);
-    }
+        #anggotaTable td::before {
+            font-size: 0.8rem;
+        }
 
-    .form-control[name="search"] {
-        border: none;
-        padding: 14px 20px;
-        font-size: 1rem;
-        background: #f8f9fa;
-    }
-
-    .form-control[name="search"]::placeholder {
-        color: #868e96;
-    }
-
-    .btn-primary[type="submit"] {
-        background: var(--primary);
-        border: none;
-        padding: 0 28px;
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-    }
-
-    select[name="jenis_akun"] {
-        background: #f8f9fa;
-        border: none;
-        padding: 14px 20px;
-        font-size: 1rem;
-        border-radius: 8px;
-        cursor: pointer;
-        appearance: none;
-        background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236c5ce7' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
-        background-repeat: no-repeat;
-        background-position: right 15px center;
-        background-size: 18px;
-        padding-right: 45px;
+        .status-select {
+            font-size: 0.8rem;
+        }
     }
 </style>
 
