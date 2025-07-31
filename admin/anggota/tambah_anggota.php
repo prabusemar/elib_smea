@@ -87,7 +87,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <div class="form-container">
     <div class="form-header">
         <h1><i class="fas fa-user-plus"></i> Tambah Anggota Baru</h1>
-        <a href="../anggota_admin.php" class="back-button">
+        <a href="anggota_admin.php" class="back-button">
             <i class="fas fa-arrow-left"></i> Kembali
         </a>
     </div>

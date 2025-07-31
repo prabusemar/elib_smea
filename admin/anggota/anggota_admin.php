@@ -599,7 +599,7 @@ include '../../views/header.php';
 
         .form-control[name="search"] {
             font-size: 0.9rem;
-            padding: 0 15px;
+            padding: 15px 15px;
         }
 
         .form-control[name="search"]::placeholder {
