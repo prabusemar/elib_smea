@@ -13,8 +13,10 @@ $current_page = basename($_SERVER['PHP_SELF']);
 
 <aside class="sidebar">
     <div class="sidebar-header">
-        <img src="/library/assets/logo/logo-smea.png" alt="Logo SMEA" class="sidebar-logo">
-        <span class="sidebar-title">SMEA E-lib</span>
+        <a href="../index.php" class="sidebar-logo-link">
+            <img src="/library/assets/logo/logo-smea.png" alt="Logo SMEA" class="sidebar-logo">
+            <span class="sidebar-title">SMEA E-lib</span>
+        </a>
         <button class="toggle-btn">
             <i class="fas fa-chevron-left"></i>
         </button>
@@ -637,6 +639,13 @@ $current_page = basename($_SERVER['PHP_SELF']);
 
     .fa-chevron-left {
         margin-right: 0px;
+    }
+
+    .sidebar-logo-link {
+        display: flex;
+        align-items: center;
+        text-decoration: none;
+        color: inherit;
     }
 </style>
 

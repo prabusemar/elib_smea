@@ -80,11 +80,10 @@ include 'views/header_index.php';
 
             <div class="feature-card fade-in delay-2">
                 <div class="feature-icon">
-                    <i class="fas fa-mobile-alt"></i>
+                    <i class="fas fa-moon"></i>
                 </div>
-                <h3>Baca Offline</h3>
-                <p>Download buku favorit Anda dan baca tanpa koneksi internet saat sedang bepergian.</p>
-            </div>
+                <h3>Mode Malam</h3>
+                <p>Nikmati pengalaman membaca yang nyaman di malam hari dengan tampilan mode gelap.</p></div>
 
             <div class="feature-card fade-in delay-3">
                 <div class="feature-icon">
@@ -299,34 +298,34 @@ include 'views/header_index.php';
         <div class="pricing-grid">
             <!-- Free Plan -->
             <div class="pricing-card fade-in delay-1">
-                <h3>Free</h3>
-                <div class="price" style="font-size: 3.5rem;">
-                    <span style="word-break: break-all; white-space: normal; font-size: 0.75em;">Rp0</span>
-                    <span style="font-size: 0.5em;">/bulan</span>
-                </div>
-                <ul class="pricing-features">
-                    <li><i class="fas fa-check"></i> Akses ke 5.000+ buku gratis</li>
-                    <li><i class="fas fa-check"></i> Baca online</li>
-                    <li><i class="fas fa-check"></i> Bookmark dasar</li>
-                    <li><i class="fas fa-check"></i> 1 buku offline</li>
-                    <li><i class="fas fa-times"></i> Buku premium</li>
-                    <li><i class="fas fa-times"></i> Fitur komunitas</li>
-                </ul>
-                <a href="auth/register.php" class="btn btn-outline">Daftar Gratis</a>
+            <h3>Free</h3>
+            <div class="price" style="font-size: 3.5rem;">
+                <span style="word-break: break-all; white-space: normal; font-size: 0.75em;">Rp0</span>
+                <span style="font-size: 0.5em;">/bulan</span>
+            </div>
+            <ul class="pricing-features">
+                <li><i class="fas fa-check"></i> Akses ke 5.000+ buku gratis</li>
+                <li><i class="fas fa-check"></i> Baca online</li>
+                <li><i class="fas fa-check"></i> Bookmark dasar</li>
+                <li><i class="fas fa-check"></i> Fitur pencarian sederhana</li>
+                <li><i class="fas fa-times"></i> Buku premium</li>
+                <li><i class="fas fa-times"></i> Fitur komunitas</li>
+            </ul>
+            <a href="auth/register.php" class="btn btn-outline">Daftar Gratis</a>
             </div>
 
             <!-- Premium Plan -->
             <div class="pricing-card popular fade-in delay-2">
-                <div class="popular-badge">Populer</div>
-                <h3>Premium</h3>
-                <div class="price" style="font-size: 3.5rem;">
-                    <span style="word-break: break-all; white-space: normal; font-size: 0.75em;">Rp50.000</span>
-                    <span style="font-size: 0.5em;">/bulan</span>
-                </div>
-                <ul class="pricing-features">
+            <div class="popular-badge">Populer</div>
+            <h3>Premium</h3>
+            <div class="price" style="font-size: 3.5rem;">
+                <span style="word-break: break-all; white-space: normal; font-size: 0.75em;">Rp50.000</span>
+                <span style="font-size: 0.5em;">/bulan</span>
+            </div>
+            <ul class="pricing-features">
                     <li><i class="fas fa-check"></i> Semua fitur Free</li>
                     <li><i class="fas fa-check"></i> Akses ke 10.000+ buku premium</li>
-                    <li><i class="fas fa-check"></i> Download hingga 20 buku offline</li>
+                    <li><i class="fas fa-check"></i> Baca hingga 20 buku online bersamaan</li>
                     <li><i class="fas fa-check"></i> Catatan dan highlight</li>
                     <li><i class="fas fa-check"></i> Akses komunitas pembaca</li>
                     <li><i class="fas fa-check"></i> Rekomendasi personal</li>
@@ -344,7 +343,7 @@ include 'views/header_index.php';
                 <ul class="pricing-features">
                     <li><i class="fas fa-check"></i> Semua fitur Premium</li>
                     <li><i class="fas fa-check"></i> Hemat 25% dibanding bulanan</li>
-                    <li><i class="fas fa-check"></i> Download hingga 50 buku offline</li>
+                    <li><i class="fas fa-check"></i> Baca hingga 50 buku online bersamaan</li>
                     <li><i class="fas fa-check"></i> Laporan membaca mingguan</li>
                     <li><i class="fas fa-check"></i> Prioritas dukungan</li>
                     <li><i class="fas fa-check"></i> Hadiah buku bulanan</li>
