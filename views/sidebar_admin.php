@@ -13,7 +13,7 @@ $current_page = basename($_SERVER['PHP_SELF']);
 
 <aside class="sidebar">
     <div class="sidebar-header">
-        <a href="../index.php" class="sidebar-logo-link">
+        <a href="<?php echo ($current_page == 'dashboard_admin.php') ? '../index.php' : '../../index.php'; ?>" class="sidebar-logo-link">
             <img src="/library/assets/logo/logo-smea.png" alt="Logo SMEA" class="sidebar-logo">
             <span class="sidebar-title">SMEA E-lib</span>
         </a>
@@ -83,7 +83,7 @@ $current_page = basename($_SERVER['PHP_SELF']);
                     <span class="tooltiptext">Manajemen Pengguna</span>
                 </div>
             </div>
-            <a href="/library/admin/anggota/anggota_admin.php" class="nav-item <?php echo ($current_page == 'anggota.php') ? 'active' : ''; ?>">
+            <a href="/library/admin/anggota/anggota_admin.php" class="nav-item <?php echo ($current_page == 'anggota_admin.php') ? 'active' : ''; ?>">
                 <div class="tooltip">
                     <i class="fas fa-users"></i>
                     <span>Anggota</span>
@@ -115,7 +115,7 @@ $current_page = basename($_SERVER['PHP_SELF']);
                     <span class="tooltiptext">Transaksi</span>
                 </div>
             </div>
-            <a href="/library/admin/peminjaman/peminjaman_admin.php" class="nav-item <?php echo ($current_page == 'peminjaman.php') ? 'active' : ''; ?>">
+            <a href="/library/admin/peminjaman/peminjaman_admin.php" class="nav-item <?php echo ($current_page == 'peminjaman_admin.php') ? 'active' : ''; ?>">
                 <div class="tooltip">
                     <i class="fas fa-book-reader"></i>
                     <span>Peminjaman</span>
@@ -179,11 +179,11 @@ $current_page = basename($_SERVER['PHP_SELF']);
                     <span class="tooltiptext">Sistem</span>
                 </div>
             </div>
-            <a href="/library/admin/pengaturan.php" class="nav-item <?php echo ($current_page == 'pengaturan.php') ? 'active' : ''; ?>">
+            <a href="/library/admin/profile/profile_admin.php" class="nav-item <?php echo ($current_page == 'profile_admin.php') ? 'active' : ''; ?>">
                 <div class="tooltip">
-                    <i class="fas fa-wrench"></i>
-                    <span>Pengaturan</span>
-                    <span class="tooltiptext">Pengaturan</span>
+                    <i class="fas fa-user-circle"></i>
+                    <span>Profile</span>
+                    <span class="tooltiptext">Profile</span>
                 </div>
             </a>
             <a href="/library/admin/backup.php" class="nav-item <?php echo ($current_page == 'backup.php') ? 'active' : ''; ?>">
