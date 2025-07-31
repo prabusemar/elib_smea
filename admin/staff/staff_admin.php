@@ -543,50 +543,7 @@ include '../../views/header.php';
         cursor: pointer;
     }
 
-    @media (max-width: 992px) {
-        .content-wrapper {
-            margin-left: 0;
-        }
-    }
-
-    @media (max-width: 768px) {
-        #staffTable thead {
-            display: none;
-        }
-
-        #staffTable tr {
-            display: block;
-            margin-bottom: 1rem;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-        }
-
-        #staffTable td {
-            display: flex;
-            justify-content: space-between;
-            padding: 0.5rem 1rem;
-            border-bottom: 1px solid #eee;
-        }
-
-        #staffTable td::before {
-            content: attr(data-label);
-            font-weight: bold;
-            margin-right: 1rem;
-        }
-
-        .btn i {
-            display: none;
-        }
-
-        .mobile-text {
-            display: inline;
-        }
-
-        .status-select {
-            width: 100%;
-        }
-    }
-
+    /* Card and Table Responsiveness */
     .card,
     .card-body {
         overflow: visible !important;
@@ -600,41 +557,6 @@ include '../../views/header.php';
 
     #staffTable {
         min-width: 1000px;
-    }
-
-    @media (max-width: 768px) {
-        .table-responsive {
-            overflow-x: auto;
-            -webkit-overflow-scrolling: touch;
-        }
-
-        #staffTable {
-            min-width: 100%;
-        }
-
-        #staffTable td {
-            flex-direction: column;
-            align-items: flex-start;
-            padding: 1rem;
-        }
-
-        #staffTable td::before {
-            content: attr(data-label);
-            font-weight: bold;
-            margin-bottom: 0.5rem;
-            color: #6c5ce7;
-        }
-
-        .btn-group {
-            flex-direction: column;
-            width: 100%;
-        }
-
-        .btn {
-            width: 100%;
-            justify-content: center;
-            margin: 0.25rem 0;
-        }
     }
 
     /* Pagination Modern */
@@ -687,21 +609,6 @@ include '../../views/header.php';
         color: #adb5bd;
         cursor: not-allowed;
         opacity: 0.7;
-    }
-
-    /* Mobile View */
-    @media (max-width: 768px) {
-        .pagination {
-            flex-wrap: wrap;
-            gap: 6px;
-        }
-
-        .page-link {
-            padding: 8px 14px;
-            font-size: 0.9rem;
-            min-width: 36px;
-            text-align: center;
-        }
     }
 
     /* Search & Filter Nav */
@@ -760,43 +667,341 @@ include '../../views/header.php';
         background-size: 18px;
         padding-right: 45px;
     }
+
+    /* ==================== */
+    /* MOBILE RESPONSIVENESS */
+    /* ==================== */
+
+    @media (max-width: 992px) {
+        .content-wrapper {
+            margin-left: 0;
+        }
+    }
+
+    @media (max-width: 768px) {
+        #staffTable thead {
+            display: none;
+        }
+
+        #staffTable tr {
+            display: block;
+            margin-bottom: 1rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        #staffTable td {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid #eee;
+        }
+
+        #staffTable td::before {
+            content: attr(data-label);
+            font-weight: bold;
+            margin-right: 1rem;
+            color: var(--primary);
+        }
+
+        .btn i {
+            display: inline-block;
+            margin: 0;
+        }
+
+        .mobile-text {
+            display: none;
+        }
+
+        .status-select {
+            width: 100%;
+        }
+
+        .table-responsive {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        #staffTable {
+            min-width: 100%;
+        }
+
+        .btn-group {
+            flex-direction: row;
+            width: auto;
+        }
+
+        .btn {
+            width: auto;
+            justify-content: center;
+            margin: 0;
+            padding: 0.5rem 0.75rem;
+        }
+    }
+
+    @media (max-width: 576px) {
+
+        /* Mobile-friendly search and filter form */
+
+        /* Untuk placeholder input search */
+        .form-control[name="search"]::placeholder {
+            font-size: 0.8rem;
+            /* Ukuran font yang lebih kecil */
+            opacity: 0.7;
+            /* Membuat placeholder sedikit transparan */
+        }
+
+        /* Opsi alternatif jika perlu menargetkan semua browser */
+        .form-control[name="search"]::-webkit-input-placeholder {
+            /* Chrome/Opera/Safari */
+            font-size: 0.8rem;
+        }
+
+        .form-control[name="search"]::-moz-placeholder {
+            /* Firefox 19+ */
+            font-size: 0.8rem;
+        }
+
+        .form-control[name="search"]:-ms-input-placeholder {
+            /* IE 10+ */
+            font-size: 0.8rem;
+        }
+
+        .form-control[name="search"]:-moz-placeholder {
+            /* Firefox 18- */
+            font-size: 0.8rem;
+        }
+
+        .search-filter-form {
+            flex-direction: column;
+            gap: 12px;
+            padding: 15px;
+        }
+
+        .input-group {
+            width: 100%;
+        }
+
+        select[name="role"] {
+            max-width: 100%;
+            width: 100%;
+        }
+
+        /* Make action buttons visible and properly spaced */
+        .btn-group {
+            flex-direction: row;
+            justify-content: flex-start;
+            gap: 8px;
+        }
+
+        .btn {
+            padding: 0.5rem;
+            min-width: 40px;
+        }
+
+        .btn i {
+            display: inline-block;
+            margin: 0;
+        }
+
+        .mobile-text {
+            display: none;
+        }
+
+        /* Adjust table cells for better mobile display */
+        #staffTable td {
+            padding: 0.75rem 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        #staffTable td::before {
+            margin-right: 0.5rem;
+            font-size: 0.9rem;
+            width: 100px;
+            flex-shrink: 0;
+        }
+
+        /* Profile image size */
+        .profile-img {
+            width: 36px;
+            height: 36px;
+        }
+
+        /* Status select dropdown */
+        .status-select {
+            padding: 4px 8px;
+            font-size: 0.85rem;
+            max-width: 120px;
+        }
+
+        /* Pagination adjustments */
+        .pagination {
+            gap: 4px;
+            flex-wrap: wrap;
+        }
+
+        .page-link {
+            padding: 8px 12px;
+            font-size: 0.85rem;
+        }
+    }
+
+    @media (max-width: 400px) {
+
+        /* Even more compact view for very small screens */
+        #staffTable td {
+            padding: 0.5rem 0.25rem;
+        }
+
+        .btn-group {
+            gap: 4px;
+        }
+
+        .btn {
+            padding: 0.4rem;
+            min-width: 36px;
+        }
+
+        .profile-img {
+            width: 32px;
+            height: 32px;
+        }
+
+        .status-select {
+            font-size: 0.8rem;
+            max-width: 100px;
+        }
+
+        #staffTable td::before {
+            font-size: 0.8rem;
+            width: 80px;
+        }
+
+        .search-filter-form {
+            padding: 12px;
+        }
+    }
 </style>
 
 <!-- JavaScript -->
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<script>
-    $(document).ready(function() {
-        // Close button for alerts
-        $('.close').click(function() {
-            $(this).parent().fadeOut();
-        });
-
-        // Auto submit saat status diubah
-        $('.status-select').change(function() {
-            $(this).closest('form').submit();
-        });
-
-        // Auto submit saat filter role diubah
-        $('select[name="role"]').change(function() {
-            $(this).closest('form').submit();
-        });
-    });
-</script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
 <script>
     $(document).ready(function() {
-        // Reset ke halaman 1 saat melakukan search atau filter
-        $('form.search-filter-form').on('submit', function() {
-            $(this).append('<input type="hidden" name="page" value="1">');
+        // Close button for alerts
+        $('.close').on('click', function() {
+            $(this).parent().fadeOut('fast', function() {
+                $(this).remove();
+            });
         });
 
-        // Pastikan semua link pagination memiliki parameter yang benar
-        $('.pagination a').each(function() {
-            const url = new URL(this.href);
-            url.searchParams.set('search', '<?= $search ?>');
-            url.searchParams.set('role', '<?= $role ?>');
-            this.href = url.toString();
+        // Auto submit when status changes
+        $('.status-select').on('change', function() {
+            $(this).closest('form').submit();
         });
+
+        // Auto submit when role filter changes
+        $('select[name="role"]').on('change', function() {
+            $(this).closest('form').submit();
+        });
+
+        // Reset to page 1 when searching or filtering
+        $('form.search-filter-form').on('submit', function(e) {
+            // Only add page parameter if it's not already in the URL
+            if (!$(this).find('input[name="page"]').length) {
+                $(this).append('<input type="hidden" name="page" value="1">');
+            }
+        });
+
+        // Confirm before deleting staff
+        $('.delete-form').on('submit', function(e) {
+            if (!confirm('Apakah Anda yakin ingin menghapus staff ini?')) {
+                e.preventDefault();
+                return false;
+            }
+            return true;
+        });
+
+        // Mobile view adjustments
+        function adjustMobileView() {
+            const isMobile = $(window).width() <= 768;
+
+            if (isMobile) {
+                // Ensure action buttons are visible
+                $('.btn-group').css({
+                    'flex-direction': 'row',
+                    'justify-content': 'flex-start'
+                });
+
+                $('.btn i').css('display', 'inline-block');
+                $('.mobile-text').css('display', 'none');
+
+                // Adjust status select width
+                $('.status-select').css('width', '100%');
+
+                // Make sure table cells display properly
+                $('td[data-label="Aksi"]').css({
+                    'display': 'flex',
+                    'justify-content': 'space-between'
+                });
+            } else {
+                // Reset to desktop view
+                $('.btn-group').css('flex-direction', 'row');
+                $('.status-select').css('width', 'auto');
+            }
+        }
+
+        // Run on load and resize
+        adjustMobileView();
+        $(window).on('resize', adjustMobileView);
+
+        // Enhance pagination links with current search parameters
+        $('.pagination a').each(function() {
+            const $link = $(this);
+            const url = new URL($link.attr('href'));
+
+            // Preserve search and role parameters
+            const searchParam = $('input[name="search"]').val();
+            const roleParam = $('select[name="role"]').val();
+
+            if (searchParam) {
+                url.searchParams.set('search', searchParam);
+            }
+
+            if (roleParam) {
+                url.searchParams.set('role', roleParam);
+            }
+
+            $link.attr('href', url.toString());
+        });
+
+        // Handle click on pagination links to maintain scroll position
+        $('.pagination').on('click', 'a', function(e) {
+            e.preventDefault();
+            const targetUrl = $(this).attr('href');
+
+            // Save scroll position
+            const scrollPosition = $(window).scrollTop();
+
+            // Load new page
+            window.location.href = targetUrl;
+
+            // Restore scroll position after load
+            $(window).on('load', function() {
+                $(window).scrollTop(scrollPosition);
+            });
+        });
+
+        // Improve mobile touch targets
+        if ('ontouchstart' in document.documentElement) {
+            $('.btn, .status-select, .page-link').css({
+                'min-height': '44px',
+                'min-width': '44px',
+                'padding': '12px 16px'
+            });
+
+            $('.btn i').parent().css('padding', '12px 16px');
+        }
     });
 </script>
 </body>
