@@ -5,7 +5,19 @@ if (!isset($_SESSION['username'])) {
     exit;
 }
 
+// Get user data from database
+require_once(__DIR__ . '/../config.php');
 $username = $_SESSION['username'];
+$query = "SELECT u.full_name, u.id, a.Nama as admin_name 
+          FROM users u 
+          LEFT JOIN admin a ON u.admin_id = a.AdminID 
+          WHERE u.username = ?";
+$stmt = mysqli_prepare($conn, $query);
+mysqli_stmt_bind_param($stmt, "s", $username);
+mysqli_stmt_execute($stmt);
+$result = mysqli_stmt_get_result($stmt);
+$user_data = mysqli_fetch_assoc($result);
+$display_name = $user_data['admin_name'] ?? $user_data['full_name'] ?? $username;
 
 // Get current page filename
 $current_page = basename($_SERVER['PHP_SELF']);
@@ -24,10 +36,10 @@ $current_page = basename($_SERVER['PHP_SELF']);
 
     <div class="user-info">
         <div class="avatar">
-            <?php echo strtoupper(substr($username, 0, 1)); ?>
+            <?php echo htmlentities(strtoupper(substr($display_name, 0, 1)), ENT_QUOTES, 'UTF-8'); ?>
         </div>
         <div class="user-details">
-            <div class="username"><?php echo htmlspecialchars($username); ?></div>
+            <div class="username"><?php echo htmlentities($display_name, ENT_QUOTES, 'UTF-8'); ?></div>
             <div class="role">Admin</div>
         </div>
     </div>
