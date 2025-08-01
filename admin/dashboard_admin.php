@@ -1,5 +1,6 @@
 <?php
-session_start();
+include '../config.php';
+
 
 // Check if user is logged in
 if (!isset($_SESSION['username'])) {
@@ -409,17 +410,29 @@ $username = $_SESSION['username'];
             <div class="dashboard-grid">
                 <div class="card">
                     <h3><i class="fas fa-book"></i> Total Buku</h3>
-                    <div class="stat">1,245</div>
+                    <?php
+                    $count_buku = mysqli_query($conn, "SELECT COUNT(*) AS total FROM buku WHERE DeletedAt IS NULL");
+                    $total_buku = mysqli_fetch_assoc($count_buku)['total'];
+                    ?>
+                    <div class="stat"><?= number_format($total_buku) ?></div>
                     <p>12 buku baru ditambahkan minggu ini</p>
                 </div>
                 <div class="card">
                     <h3><i class="fas fa-users"></i> Pengguna</h3>
-                    <div class="stat">586</div>
+                    <?php
+                    $count_pengguna = mysqli_query($conn, "SELECT COUNT(*) AS total FROM users WHERE role IN ('member','staff','admin')");
+                    $total_pengguna = mysqli_fetch_assoc($count_pengguna)['total'];
+                    ?>
+                    <div class="stat"><?= number_format($total_pengguna) ?></div>
                     <p>5 pengguna baru bergabung hari ini</p>
                 </div>
                 <div class="card">
                     <h3><i class="fas fa-exchange-alt"></i> Transaksi</h3>
-                    <div class="stat">78</div>
+                    <?php
+$count_peminjaman = mysqli_query($conn, "SELECT COUNT(*) AS total FROM peminjaman");
+$total_peminjaman = mysqli_fetch_assoc($count_peminjaman)['total'];
+?>
+<div class="stat"><?= number_format($total_peminjaman) ?></div>
                     <p>3 transaksi menunggu persetujuan</p>
                 </div>
                 <div class="card">
