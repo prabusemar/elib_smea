@@ -1,6 +1,6 @@
 <?php
 session_start();
-include '../config.php';
+require_once '../config.php';
 
 function displayError($message)
 {
@@ -9,7 +9,7 @@ function displayError($message)
     exit;
 }
 
-// Validate input
+// Validasi input
 if (empty($_POST['username']) || empty($_POST['password'])) {
     displayError("Username dan password harus diisi!");
 }
@@ -17,11 +17,22 @@ if (empty($_POST['username']) || empty($_POST['password'])) {
 $username = trim($_POST['username']);
 $password = $_POST['password'];
 
-// Prepare statement with role column (make sure your users table has this column)
-$query = "SELECT id, username, password, role FROM users WHERE username = ?";
+// Query dengan kolom lengkap termasuk data profil
+$query = "SELECT 
+            u.id, 
+            u.username, 
+            u.password, 
+            u.role, 
+            u.full_name,
+            u.profile_pic,
+            COALESCE(a.AdminID, 0) AS admin_id
+          FROM users u
+          LEFT JOIN admin a ON u.admin_id = a.AdminID
+          WHERE u.username = ?";
 $stmt = mysqli_prepare($conn, $query);
 
 if (!$stmt) {
+    error_log("MySQL Prepare Error: " . mysqli_error($conn));
     displayError("Terjadi kesalahan sistem. Silakan coba lagi nanti.");
 }
 
@@ -32,42 +43,39 @@ $result = mysqli_stmt_get_result($stmt);
 if (mysqli_num_rows($result) === 1) {
     $user = mysqli_fetch_assoc($result);
 
-    // Verify password (assuming passwords are hashed)
+    // Verifikasi password
     if (password_verify($password, $user['password'])) {
-        // Regenerate session ID to prevent session fixation
+        // Regenerasi session ID untuk keamanan
         session_regenerate_id(true);
 
-        // Set session data including role
+        // Set data session lengkap
         $_SESSION = [
-            'user_id' => $user['id'],
-            'username' => $user['username'],
-            'role' => $user['role'],
-            'logged_in' => true,
+            'id'            => $user['id'],
+            'username'      => $user['username'],
+            'full_name'     => $user['full_name'],
+            'profile_pic'   => $user['profile_pic'] ?? 'default.jpg',
+            'role'          => $user['role'],
+            'admin_id'      => $user['admin_id'] ?? 0,
+            'logged_in'     => true,
             'last_activity' => time()
         ];
 
-        // Redirect based on role
-        switch ($user['role']) {
-            case 'admin':
-                header("Location: ../admin/dashboard_admin.php");
-                break;
-            case 'staff':
-                header("Location: dashboard_staff.php");
-                break;
-            case 'user':
-                header("Location: dashboard_user.php");
-                break;
-            default:
-                header("Location: dashboard_user.php");
-        }
+        // Redirect berdasarkan role
+        $redirect_url = match ($user['role']) {
+            'admin'  => '../admin/dashboard.php',
+            'staff'  => '../staff/dashboard.php',
+            default  => '../member/dashboard.php'
+        };
+
+        header("Location: " . $redirect_url);
         exit;
     } else {
         displayError("Username atau password salah!");
     }
 } else {
-    displayError("Username atau password salah!");
+    displayError("Akun tidak ditemukan!");
 }
 
-// Close statement and connection
+// Tutup koneksi
 mysqli_stmt_close($stmt);
 mysqli_close($conn);
