@@ -9,6 +9,17 @@ if (!isset($_SESSION['username'])) {
 }
 
 $username = $_SESSION['username'];
+// Ambil Nama admin dari join users-admin
+$query = "SELECT u.full_name, u.id, a.Nama as admin_name 
+          FROM users u 
+          LEFT JOIN admin a ON u.admin_id = a.AdminID 
+          WHERE u.username = ?";
+$stmt = mysqli_prepare($conn, $query);
+mysqli_stmt_bind_param($stmt, "s", $username);
+mysqli_stmt_execute($stmt);
+$result = mysqli_stmt_get_result($stmt);
+$user_data = mysqli_fetch_assoc($result);
+$admin_name = $user_data['admin_name'] ?? $user_data['full_name'] ?? $username;
 ?>
 
 <!DOCTYPE html>
@@ -403,7 +414,7 @@ $username = $_SESSION['username'];
 
         <div class="content-container">
             <div class="greeting-card">
-                <h2>Selamat datang, Admin <?= htmlspecialchars($username) ?>!</h2>
+                <h2>Selamat datang, Admin <?= htmlspecialchars($admin_name) ?>!</h2>
                 <p>Anda memiliki 5 buku baru yang perlu diverifikasi, 3 permohonan peminjaman, dan 2 laporan yang harus ditinjau.</p>
             </div>
 
