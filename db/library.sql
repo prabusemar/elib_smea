@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:3306
--- Generation Time: Jun 18, 2025 at 05:14 AM
+-- Generation Time: Aug 02, 2025 at 07:07 AM
 -- Server version: 5.7.39
 -- PHP Version: 8.1.10
 
@@ -21,6 +21,171 @@ SET time_zone = "+00:00";
 -- Database: `library`
 --
 
+DELIMITER $$
+--
+-- Procedures
+--
+CREATE DEFINER=`root`@`localhost` PROCEDURE `delete_admin_user` (IN `p_admin_id` INT)   BEGIN
+    -- Mulai transaksi
+    START TRANSACTION;
+    
+    -- Pertama hapus dari users
+    DELETE FROM users WHERE admin_id = p_admin_id;
+    
+    -- Kemudian hapus dari admin
+    DELETE FROM admin WHERE AdminID = p_admin_id;
+    
+    -- Commit transaksi
+    COMMIT;
+END$$
+
+CREATE DEFINER=`root`@`localhost` PROCEDURE `register_member` (IN `p_username` VARCHAR(50), IN `p_email` VARCHAR(100), IN `p_password` VARCHAR(255))   BEGIN
+    DECLARE member_id INT;
+    
+    -- Mulai transaksi
+    START TRANSACTION;
+    
+    -- Insert ke tabel anggota dengan data minimal
+    INSERT INTO anggota (Nama, Email, Password, TanggalBergabung, Status)
+    VALUES (
+        p_username, -- Nama sementara (bisa diupdate nanti)
+        p_email,
+        p_password,
+        CURDATE(),
+        'Active'
+    );
+    
+    -- Dapatkan ID anggota yang baru dibuat
+    SET member_id = LAST_INSERT_ID();
+    
+    -- Insert ke tabel users
+    INSERT INTO users (username, email, password, role, full_name, created_at)
+    VALUES (
+        p_username,
+        p_email,
+        p_password,
+        'member',
+        p_username, -- Nama sementara
+        NOW()
+    );
+    
+    -- Commit transaksi
+    COMMIT;
+    
+    SELECT member_id AS MemberID, 'Registrasi berhasil' AS Message;
+END$$
+
+CREATE DEFINER=`root`@`localhost` PROCEDURE `soft_delete_anggota` (IN `p_member_id` INT)   BEGIN
+    DECLARE loan_count INT;
+    DECLARE review_count INT;
+    DECLARE total_activity INT;
+    
+    -- Cek jumlah peminjaman
+    SELECT COUNT(*) INTO loan_count 
+    FROM peminjaman 
+    WHERE MemberID = p_member_id;
+    
+    -- Cek jumlah ulasan
+    SELECT COUNT(*) INTO review_count 
+    FROM ulasan 
+    WHERE MemberID = p_member_id;
+    
+    -- Total aktivitas
+    SET total_activity = loan_count + review_count;
+    
+    IF total_activity = 0 THEN
+        -- Jika tidak ada aktivitas, lakukan hard delete
+        DELETE FROM users WHERE username = (SELECT Email FROM anggota WHERE MemberID = p_member_id);
+        DELETE FROM anggota WHERE MemberID = p_member_id;
+        SELECT 'Anggota berhasil dihapus permanen' AS result;
+    ELSE
+        -- Jika ada aktivitas, lakukan soft delete
+        UPDATE anggota 
+        SET is_deleted = 1, 
+            deleted_at = NOW(),
+            Status = 'Banned'
+        WHERE MemberID = p_member_id;
+        
+        UPDATE users
+        SET is_deleted = 1,
+            deleted_at = NOW()
+        WHERE username = (SELECT Email FROM anggota WHERE MemberID = p_member_id);
+        
+        SELECT 'Anggota dinonaktifkan (soft delete) karena memiliki riwayat aktivitas' AS result;
+    END IF;
+END$$
+
+DELIMITER ;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `admin`
+--
+
+CREATE TABLE `admin` (
+  `AdminID` int(11) NOT NULL,
+  `Nama` varchar(100) NOT NULL,
+  `Email` varchar(100) NOT NULL,
+  `FotoProfil` varchar(255) DEFAULT 'default.jpg',
+  `TanggalBergabung` date NOT NULL,
+  `TerakhirLogin` datetime DEFAULT NULL,
+  `Bio` text,
+  `NoTelepon` varchar(20) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+--
+-- Dumping data for table `admin`
+--
+
+INSERT INTO `admin` (`AdminID`, `Nama`, `Email`, `FotoProfil`, `TanggalBergabung`, `TerakhirLogin`, `Bio`, `NoTelepon`) VALUES
+(6, 'Pribadi Ramadhan', 'pribadi.ramadhan@example.com', 'default.jpg', '2025-08-02', NULL, 'Admin utama sistem perpustakaan digital', '+6281234567890'),
+(7, 'Prabu Semar', 'prabu.semar@perpustakaan.com', 'default.jpg', '2025-08-02', NULL, 'Admin bijak penjaga perpustakaan digital', '+6281234567891'),
+(8, 'Batara Guru', 'batara.guru@perpustakaan.com', 'default.jpg', '2024-11-20', NULL, 'Kepala perpustakaan digital', '+6281298765432');
+
+--
+-- Triggers `admin`
+--
+DELIMITER $$
+CREATE TRIGGER `after_admin_insert` AFTER INSERT ON `admin` FOR EACH ROW BEGIN
+    -- Pastikan tidak ada duplikasi username
+    IF NOT EXISTS (SELECT 1 FROM users WHERE username = NEW.Email) THEN
+        INSERT INTO users (
+            username, 
+            email, 
+            password, 
+            role, 
+            admin_id, 
+            full_name, 
+            profile_pic,  -- Kolom ini ditambahkan
+            created_at
+        ) VALUES (
+            NEW.Email, 
+            NEW.Email,
+            '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi',
+            'admin',
+            NEW.AdminID,
+            NEW.Nama,
+            NEW.FotoProfil,  -- Mengambil nilai FotoProfil dari admin
+            NOW()
+        );
+    END IF;
+END
+$$
+DELIMITER ;
+DELIMITER $$
+CREATE TRIGGER `after_admin_update` AFTER UPDATE ON `admin` FOR EACH ROW BEGIN
+    -- Update data user termasuk foto profil
+    UPDATE users 
+    SET full_name = NEW.Nama,
+        email = NEW.Email,
+        profile_pic = NEW.FotoProfil,  -- Tambah baris ini
+        updated_at = NOW()
+    WHERE admin_id = NEW.AdminID;
+END
+$$
+DELIMITER ;
+
 -- --------------------------------------------------------
 
 --
@@ -37,31 +202,123 @@ CREATE TABLE `anggota` (
   `Status` enum('Active','Suspended','Banned') DEFAULT 'Active',
   `MasaBerlaku` date DEFAULT NULL COMMENT 'Tanggal expire membership',
   `JenisAkun` enum('Free','Premium') DEFAULT 'Free',
-  `TerakhirLogin` datetime DEFAULT NULL
+  `TerakhirLogin` datetime DEFAULT NULL,
+  `is_deleted` tinyint(1) DEFAULT '0',
+  `deleted_at` datetime DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 --
 -- Dumping data for table `anggota`
 --
 
-INSERT INTO `anggota` (`MemberID`, `Nama`, `Email`, `Password`, `FotoProfil`, `TanggalBergabung`, `Status`, `MasaBerlaku`, `JenisAkun`, `TerakhirLogin`) VALUES
-(1, 'Musa Pribadi Alfaruq', 'musaalfaruq@gmail.com', '$2y$10$Dxys74PkWgM17RA4y2OJnOk723jmugJUIC2Q4Ri271hO0v6HAjP.2', 'default.jpg', '2025-05-05', 'Active', '2026-12-25', 'Premium', NULL),
-(17, 'Budi Santoso', 'budi.santoso@mail.com', '$2y$10$TKh8H1.PfQx37YgCzwiKb.KjNyWgaHb9cbcoQgdIVFlYg7B77UdFm', 'default.jpg', '2023-02-10', 'Active', NULL, 'Free', NULL),
-(18, 'Siti Rahayu', 'siti.rahayu@mail.com', '$2y$10$TKh8H1.PfQx37YgCzwiKb.KjNyWgaHb9cbcoQgdIVFlYg7B77UdFm', 'default.jpg', '2023-03-25', 'Active', '2025-03-25', 'Premium', NULL),
-(19, 'Agus Wijaya', 'agus.wijaya@mail.com', '$2y$10$TKh8H1.PfQx37YgCzwiKb.KjNyWgaHb9cbcoQgdIVFlYg7B77UdFm', 'default.jpg', '2023-05-12', 'Active', NULL, 'Free', NULL),
-(20, 'Dewi Lestari', 'dewi.lestari@mail.com', '$2y$10$TKh8H1.PfQx37YgCzwiKb.KjNyWgaHb9cbcoQgdIVFlYg7B77UdFm', 'default.jpg', '2023-07-18', 'Active', '2026-07-18', 'Premium', NULL),
-(21, 'Rudi Hermawan', 'rudi.hermawan@mail.com', '$2y$10$TKh8H1.PfQx37YgCzwiKb.KjNyWgaHb9cbcoQgdIVFlYg7B77UdFm', 'default.jpg', '2023-09-05', 'Active', NULL, 'Free', NULL),
-(22, 'Anita Putri', 'anita.putri@mail.com', '$2y$10$TKh8H1.PfQx37YgCzwiKb.KjNyWgaHb9cbcoQgdIVFlYg7B77UdFm', 'default.jpg', '2024-01-20', 'Active', NULL, 'Free', NULL),
-(23, 'Fajar Pratama', 'fajar.pratama@mail.com', '$2y$10$TKh8H1.PfQx37YgCzwiKb.KjNyWgaHb9cbcoQgdIVFlYg7B77UdFm', 'default.jpg', '2024-04-15', 'Active', '2026-04-15', 'Premium', NULL),
-(24, 'Lina Marlina', 'lina.marlina@mail.com', '$2y$10$TKh8H1.PfQx37YgCzwiKb.KjNyWgaHb9cbcoQgdIVFlYg7B77UdFm', 'default.jpg', '2024-06-30', 'Suspended', NULL, 'Free', NULL),
-(25, 'Hendra Kurniawan', 'hendra.k@mail.com', '$2y$10$TKh8H1.PfQx37YgCzwiKb.KjNyWgaHb9cbcoQgdIVFlYg7B77UdFm', 'default.jpg', '2024-08-22', 'Active', '2025-08-22', 'Premium', NULL),
-(26, 'Maya Indah', 'maya.indah@mail.com', '$2y$10$TKh8H1.PfQx37YgCzwiKb.KjNyWgaHb9cbcoQgdIVFlYg7B77UdFm', 'default.jpg', '2025-01-05', 'Active', NULL, 'Free', NULL),
-(27, 'Irfan Syah', 'irfan.syah@mail.com', '$2y$10$TKh8H1.PfQx37YgCzwiKb.KjNyWgaHb9cbcoQgdIVFlYg7B77UdFm', 'default.jpg', '2025-02-14', 'Active', NULL, 'Free', NULL),
-(28, 'Rina Permata', 'rina.permata@mail.com', '$2y$10$TKh8H1.PfQx37YgCzwiKb.KjNyWgaHb9cbcoQgdIVFlYg7B77UdFm', 'default.jpg', '2025-03-10', 'Active', '2027-03-10', 'Premium', NULL),
-(29, 'Adi Nugroho', 'adi.nugroho@mail.com', '$2y$10$TKh8H1.PfQx37YgCzwiKb.KjNyWgaHb9cbcoQgdIVFlYg7B77UdFm', 'default.jpg', '2025-04-01', 'Suspended', NULL, 'Free', NULL),
-(30, 'Citra Dewi', 'citra.dewi@mail.com', '$2y$10$TKh8H1.PfQx37YgCzwiKb.KjNyWgaHb9cbcoQgdIVFlYg7B77UdFm', 'default.jpg', '2025-05-01', 'Banned', NULL, 'Free', NULL),
-(31, 'Eko Prasetyo', 'eko.prasetyo@mail.com', '$2y$10$TKh8H1.PfQx37YgCzwiKb.KjNyWgaHb9cbcoQgdIVFlYg7B77UdFm', 'default.jpg', '2025-05-15', 'Active', '2026-05-15', 'Premium', NULL),
-(32, 'Yuyun Arrining', 'yuyun.aj@gmail.com', '$2y$10$nvUHiDpAyMsM2r9y4Z6B0udcy6l/1InAj1kAEyMwkh3hbDlqcZbju', 'default.jpg', '2025-05-26', 'Active', '2030-12-25', 'Premium', NULL);
+INSERT INTO `anggota` (`MemberID`, `Nama`, `Email`, `Password`, `FotoProfil`, `TanggalBergabung`, `Status`, `MasaBerlaku`, `JenisAkun`, `TerakhirLogin`, `is_deleted`, `deleted_at`) VALUES
+(1, 'Musa Pribadi Alfaruq', 'musaalfaruq@gmail.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'default.jpg', '2025-05-05', 'Active', '2026-12-25', 'Premium', NULL, 1, '2025-08-02 10:37:08'),
+(33, 'Jane Doe', 'jane.doe@example.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'default.jpg', '2025-08-02', 'Active', NULL, 'Free', NULL, 0, NULL);
+
+--
+-- Triggers `anggota`
+--
+DELIMITER $$
+CREATE TRIGGER `after_anggota_insert` AFTER INSERT ON `anggota` FOR EACH ROW BEGIN
+    -- Pastikan tidak ada duplikasi username atau email
+    IF NOT EXISTS (SELECT 1 FROM users WHERE username = NEW.Email OR email = NEW.Email) THEN
+        INSERT INTO users (username, email, password, role, full_name, profile_pic, created_at)
+        VALUES (
+            CONCAT('user_', NEW.MemberID), -- Generate username unik
+            NEW.Email, 
+            NEW.Password, 
+            'member', 
+            NEW.Nama,
+            NEW.FotoProfil,
+            NOW()
+        );
+    END IF;
+END
+$$
+DELIMITER ;
+DELIMITER $$
+CREATE TRIGGER `after_anggota_soft_delete` AFTER UPDATE ON `anggota` FOR EACH ROW BEGIN
+    IF NEW.is_deleted = 1 AND OLD.is_deleted = 0 THEN
+        UPDATE users
+        SET is_deleted = 1,
+            deleted_at = NOW()
+        WHERE username = NEW.Email;
+    END IF;
+END
+$$
+DELIMITER ;
+DELIMITER $$
+CREATE TRIGGER `after_anggota_update` AFTER UPDATE ON `anggota` FOR EACH ROW BEGIN
+    -- Update data user jika ada perubahan pada Nama, Email, atau FotoProfil
+    IF NEW.Nama != OLD.Nama OR NEW.Email != OLD.Email OR NEW.FotoProfil != OLD.FotoProfil THEN
+        UPDATE users 
+        SET 
+            full_name = NEW.Nama,
+            email = NEW.Email,
+            profile_pic = NEW.FotoProfil,
+            updated_at = NOW()
+        WHERE email = OLD.Email;
+    END IF;
+END
+$$
+DELIMITER ;
+DELIMITER $$
+CREATE TRIGGER `after_anggota_update_foto` AFTER UPDATE ON `anggota` FOR EACH ROW BEGIN
+    -- Hanya update foto profil jika yang berubah hanya FotoProfil
+    IF NEW.FotoProfil != OLD.FotoProfil THEN
+        UPDATE users 
+        SET 
+            profile_pic = NEW.FotoProfil,
+            updated_at = NOW()
+        WHERE username = NEW.Email;
+    END IF;
+END
+$$
+DELIMITER ;
+
+-- --------------------------------------------------------
+
+--
+-- Stand-in structure for view `anggota_aktif`
+-- (See below for the actual view)
+--
+CREATE TABLE `anggota_aktif` (
+`MemberID` int(11)
+,`Nama` varchar(100)
+,`Email` varchar(100)
+,`Password` varchar(255)
+,`FotoProfil` varchar(255)
+,`TanggalBergabung` date
+,`Status` enum('Active','Suspended','Banned')
+,`MasaBerlaku` date
+,`JenisAkun` enum('Free','Premium')
+,`TerakhirLogin` datetime
+,`is_deleted` tinyint(1)
+,`deleted_at` datetime
+);
+
+-- --------------------------------------------------------
+
+--
+-- Stand-in structure for view `anggota_dengan_status`
+-- (See below for the actual view)
+--
+CREATE TABLE `anggota_dengan_status` (
+`MemberID` int(11)
+,`Nama` varchar(100)
+,`Email` varchar(100)
+,`Password` varchar(255)
+,`FotoProfil` varchar(255)
+,`TanggalBergabung` date
+,`Status` enum('Active','Suspended','Banned')
+,`MasaBerlaku` date
+,`JenisAkun` enum('Free','Premium')
+,`TerakhirLogin` datetime
+,`is_deleted` tinyint(1)
+,`deleted_at` datetime
+,`total_peminjaman` bigint(21)
+,`total_ulasan` bigint(21)
+);
 
 -- --------------------------------------------------------
 
@@ -308,21 +565,6 @@ CREATE TABLE `peminjaman` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 --
--- Dumping data for table `peminjaman`
---
-
-INSERT INTO `peminjaman` (`PeminjamanID`, `MemberID`, `BukuID`, `TanggalPinjam`, `TanggalKembali`, `Status`) VALUES
-(1, 32, 20, '2025-06-18 14:59:00', '2025-06-27 14:59:00', 'Active'),
-(2, 1, 18, '2025-06-18 15:00:00', '2025-06-28 15:00:00', 'Active'),
-(3, 32, 19, '2025-06-18 04:20:00', '2025-06-30 04:20:00', 'Active'),
-(4, 27, 19, '2025-06-18 04:26:57', '2025-06-30 04:26:57', 'Active'),
-(5, 27, 20, '2025-06-18 04:26:57', '2025-06-29 17:00:00', 'Active'),
-(6, 27, 21, '2025-06-18 04:26:57', '2025-06-29 17:00:00', 'Active'),
-(7, 27, 22, '2025-06-18 04:26:57', '2025-06-29 17:00:00', 'Active'),
-(8, 27, 23, '2025-06-18 04:26:57', '2025-06-29 17:00:00', 'Active'),
-(9, 27, 18, '2025-06-18 04:29:00', '2025-07-03 04:29:00', 'Active');
-
---
 -- Triggers `peminjaman`
 --
 DELIMITER $$
@@ -535,41 +777,113 @@ DELIMITER ;
 CREATE TABLE `users` (
   `id` int(11) NOT NULL,
   `username` varchar(50) NOT NULL,
+  `email` varchar(100) DEFAULT NULL,
+  `full_name` varchar(100) DEFAULT NULL,
+  `profile_pic` varchar(255) DEFAULT 'default.jpg',
   `password` varchar(255) NOT NULL,
   `role` enum('admin','staff','member') DEFAULT 'member',
+  `admin_id` int(11) DEFAULT NULL,
   `last_login` datetime DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `is_deleted` tinyint(1) DEFAULT '0',
+  `deleted_at` datetime DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 --
 -- Dumping data for table `users`
 --
 
-INSERT INTO `users` (`id`, `username`, `password`, `role`, `last_login`, `created_at`, `updated_at`) VALUES
-(1, 'pribadi', '1sampai8', 'admin', NULL, '2025-04-29 18:27:51', '2025-04-29 18:28:11'),
-(3, 'prabusemar', '$2y$10$bcgB/Daenrjdc0Rv79xbKecBEUL0Pw6V.R5vlEOXAa2.QdcqKyNqa', 'admin', NULL, '2025-04-29 18:27:51', '2025-04-29 18:28:25'),
-(4, 'musaalfaruq@gmail.com', '$2y$10$Dxys74PkWgM17RA4y2OJnOk723jmugJUIC2Q4Ri271hO0v6HAjP.2', 'member', NULL, '2025-05-04 17:07:42', '2025-05-04 17:07:42'),
-(5, 'budi.santoso@mail.com', '$2y$10$TKh8H1.PfQx37YgCzwiKb.KjNyWgaHb9cbcoQgdIVFlYg7B77UdFm', 'member', NULL, '2025-05-20 16:58:04', '2025-05-20 16:58:04'),
-(6, 'siti.rahayu@mail.com', '$2y$10$TKh8H1.PfQx37YgCzwiKb.KjNyWgaHb9cbcoQgdIVFlYg7B77UdFm', 'member', NULL, '2025-05-20 16:58:04', '2025-05-20 16:58:04'),
-(7, 'agus.wijaya@mail.com', '$2y$10$TKh8H1.PfQx37YgCzwiKb.KjNyWgaHb9cbcoQgdIVFlYg7B77UdFm', 'member', NULL, '2025-05-20 16:58:04', '2025-05-20 16:58:04'),
-(8, 'dewi.lestari@mail.com', '$2y$10$TKh8H1.PfQx37YgCzwiKb.KjNyWgaHb9cbcoQgdIVFlYg7B77UdFm', 'member', NULL, '2025-05-20 16:58:04', '2025-05-20 16:58:04'),
-(9, 'rudi.hermawan@mail.com', '$2y$10$TKh8H1.PfQx37YgCzwiKb.KjNyWgaHb9cbcoQgdIVFlYg7B77UdFm', 'member', NULL, '2025-05-20 16:58:04', '2025-05-20 16:58:04'),
-(10, 'anita.putri@mail.com', '$2y$10$TKh8H1.PfQx37YgCzwiKb.KjNyWgaHb9cbcoQgdIVFlYg7B77UdFm', 'member', NULL, '2025-05-20 16:58:04', '2025-05-20 16:58:04'),
-(11, 'fajar.pratama@mail.com', '$2y$10$TKh8H1.PfQx37YgCzwiKb.KjNyWgaHb9cbcoQgdIVFlYg7B77UdFm', 'member', NULL, '2025-05-20 16:58:04', '2025-05-20 16:58:04'),
-(12, 'lina.marlina@mail.com', '$2y$10$TKh8H1.PfQx37YgCzwiKb.KjNyWgaHb9cbcoQgdIVFlYg7B77UdFm', 'member', NULL, '2025-05-20 16:58:04', '2025-05-20 16:58:04'),
-(13, 'hendra.k@mail.com', '$2y$10$TKh8H1.PfQx37YgCzwiKb.KjNyWgaHb9cbcoQgdIVFlYg7B77UdFm', 'member', NULL, '2025-05-20 16:58:04', '2025-05-20 16:58:04'),
-(14, 'maya.indah@mail.com', '$2y$10$TKh8H1.PfQx37YgCzwiKb.KjNyWgaHb9cbcoQgdIVFlYg7B77UdFm', 'member', NULL, '2025-05-20 16:58:04', '2025-05-20 16:58:04'),
-(15, 'irfan.syah@mail.com', '$2y$10$TKh8H1.PfQx37YgCzwiKb.KjNyWgaHb9cbcoQgdIVFlYg7B77UdFm', 'member', NULL, '2025-05-20 16:58:04', '2025-05-20 16:58:04'),
-(16, 'rina.permata@mail.com', '$2y$10$TKh8H1.PfQx37YgCzwiKb.KjNyWgaHb9cbcoQgdIVFlYg7B77UdFm', 'member', NULL, '2025-05-20 16:58:04', '2025-05-20 16:58:04'),
-(17, 'adi.nugroho@mail.com', '$2y$10$TKh8H1.PfQx37YgCzwiKb.KjNyWgaHb9cbcoQgdIVFlYg7B77UdFm', 'member', NULL, '2025-05-20 16:58:04', '2025-05-20 16:58:04'),
-(18, 'citra.dewi@mail.com', '$2y$10$TKh8H1.PfQx37YgCzwiKb.KjNyWgaHb9cbcoQgdIVFlYg7B77UdFm', 'member', NULL, '2025-05-20 16:58:04', '2025-05-20 16:58:04'),
-(19, 'eko.prasetyo@mail.com', '$2y$10$TKh8H1.PfQx37YgCzwiKb.KjNyWgaHb9cbcoQgdIVFlYg7B77UdFm', 'member', NULL, '2025-05-20 16:58:04', '2025-05-20 16:58:04'),
-(20, 'yuyun.aj@gmail.com', '$2y$10$nvUHiDpAyMsM2r9y4Z6B0udcy6l/1InAj1kAEyMwkh3hbDlqcZbju', 'member', NULL, '2025-05-26 06:53:37', '2025-05-26 06:53:37');
+INSERT INTO `users` (`id`, `username`, `email`, `full_name`, `profile_pic`, `password`, `role`, `admin_id`, `last_login`, `created_at`, `updated_at`, `is_deleted`, `deleted_at`) VALUES
+(24, 'musa_pribadi', 'musaalfaruq@gmail.com', 'Musa Pribadi Alfaruq', 'default.jpg', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'member', NULL, NULL, '2025-05-05 04:22:23', '2025-08-02 04:52:46', 0, NULL),
+(26, 'jane_doe', 'jane.doe@example.com', 'Jane Doe', 'default.jpg', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'member', NULL, NULL, '2025-08-02 04:27:10', '2025-08-02 04:27:10', 0, NULL),
+(27, 'pribadi.ramadhan@example.com', NULL, 'Pribadi Ramadhan', 'default.jpg', '$2y$10$bcgB/Daenrjdc0Rv79xbKecBEUL0Pw6V.R5vlEOXAa2.QdcqKyNqa', 'admin', 6, NULL, '2025-08-02 04:48:38', '2025-08-02 04:48:38', 0, NULL),
+(28, 'prabu.semar@perpustakaan.com', 'prabu.semar@perpustakaan.com', 'Prabu Semar', 'default.jpg', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'admin', 7, NULL, '2025-08-02 06:55:24', '2025-08-02 06:56:13', 0, NULL),
+(29, 'batara.guru@perpustakaan.com', 'batara.guru@perpustakaan.com', 'Batara Guru', 'default.jpg', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'admin', 8, NULL, '2025-08-02 07:05:32', '2025-08-02 07:06:06', 0, NULL);
+
+--
+-- Triggers `users`
+--
+DELIMITER $$
+CREATE TRIGGER `after_user_insert_member` AFTER INSERT ON `users` FOR EACH ROW BEGIN
+    -- Hanya eksekusi untuk role 'member' dan jika email belum ada di anggota
+    IF NEW.role = 'member' AND NOT EXISTS (
+        SELECT 1 FROM anggota WHERE Email = NEW.email
+    ) THEN
+        INSERT INTO anggota (
+            Nama, 
+            Email, 
+            Password, 
+            FotoProfil, 
+            TanggalBergabung, 
+            Status, 
+            JenisAkun
+        )
+        VALUES (
+            NEW.full_name,
+            NEW.email,
+            NEW.password,
+            COALESCE(NEW.profile_pic, 'default.jpg'),
+            CURDATE(),
+            'Active',
+            'Free'
+        );
+    END IF;
+END
+$$
+DELIMITER ;
+DELIMITER $$
+CREATE TRIGGER `after_user_update_member` AFTER UPDATE ON `users` FOR EACH ROW BEGIN
+    IF NEW.role = 'member' THEN
+        UPDATE anggota 
+        SET 
+            Nama = NEW.full_name,
+            Email = NEW.email,
+            Password = NEW.password,
+            FotoProfil = COALESCE(NEW.profile_pic, 'default.jpg')
+        WHERE Email = OLD.email;
+    END IF;
+END
+$$
+DELIMITER ;
+DELIMITER $$
+CREATE TRIGGER `after_users_delete_admin` AFTER DELETE ON `users` FOR EACH ROW BEGIN
+    -- Hanya eksekusi jika yang dihapus adalah user dengan role admin
+    IF OLD.role = 'admin' AND OLD.admin_id IS NOT NULL THEN
+        DELETE FROM admin WHERE AdminID = OLD.admin_id;
+    END IF;
+END
+$$
+DELIMITER ;
+
+-- --------------------------------------------------------
+
+--
+-- Structure for view `anggota_aktif`
+--
+DROP TABLE IF EXISTS `anggota_aktif`;
+
+CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW `anggota_aktif`  AS SELECT `anggota`.`MemberID` AS `MemberID`, `anggota`.`Nama` AS `Nama`, `anggota`.`Email` AS `Email`, `anggota`.`Password` AS `Password`, `anggota`.`FotoProfil` AS `FotoProfil`, `anggota`.`TanggalBergabung` AS `TanggalBergabung`, `anggota`.`Status` AS `Status`, `anggota`.`MasaBerlaku` AS `MasaBerlaku`, `anggota`.`JenisAkun` AS `JenisAkun`, `anggota`.`TerakhirLogin` AS `TerakhirLogin`, `anggota`.`is_deleted` AS `is_deleted`, `anggota`.`deleted_at` AS `deleted_at` FROM `anggota` WHERE (`anggota`.`is_deleted` = 0)  ;
+
+-- --------------------------------------------------------
+
+--
+-- Structure for view `anggota_dengan_status`
+--
+DROP TABLE IF EXISTS `anggota_dengan_status`;
+
+CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW `anggota_dengan_status`  AS SELECT `a`.`MemberID` AS `MemberID`, `a`.`Nama` AS `Nama`, `a`.`Email` AS `Email`, `a`.`Password` AS `Password`, `a`.`FotoProfil` AS `FotoProfil`, `a`.`TanggalBergabung` AS `TanggalBergabung`, `a`.`Status` AS `Status`, `a`.`MasaBerlaku` AS `MasaBerlaku`, `a`.`JenisAkun` AS `JenisAkun`, `a`.`TerakhirLogin` AS `TerakhirLogin`, `a`.`is_deleted` AS `is_deleted`, `a`.`deleted_at` AS `deleted_at`, count(`p`.`PeminjamanID`) AS `total_peminjaman`, count(`u`.`UlasanID`) AS `total_ulasan` FROM ((`anggota` `a` left join `peminjaman` `p` on((`a`.`MemberID` = `p`.`MemberID`))) left join `ulasan` `u` on((`a`.`MemberID` = `u`.`MemberID`))) GROUP BY `a`.`MemberID``MemberID`  ;
 
 --
 -- Indexes for dumped tables
 --
+
+--
+-- Indexes for table `admin`
+--
+ALTER TABLE `admin`
+  ADD PRIMARY KEY (`AdminID`),
+  ADD UNIQUE KEY `Email` (`Email`);
 
 --
 -- Indexes for table `anggota`
@@ -742,17 +1056,25 @@ ALTER TABLE `ulasan`
 --
 ALTER TABLE `users`
   ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `username` (`username`);
+  ADD UNIQUE KEY `username` (`username`),
+  ADD UNIQUE KEY `email_UNIQUE` (`email`),
+  ADD KEY `fk_users_admin` (`admin_id`);
 
 --
 -- AUTO_INCREMENT for dumped tables
 --
 
 --
+-- AUTO_INCREMENT for table `admin`
+--
+ALTER TABLE `admin`
+  MODIFY `AdminID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
+
+--
 -- AUTO_INCREMENT for table `anggota`
 --
 ALTER TABLE `anggota`
-  MODIFY `MemberID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=33;
+  MODIFY `MemberID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=34;
 
 --
 -- AUTO_INCREMENT for table `anotasi`
@@ -830,7 +1152,7 @@ ALTER TABLE `pembayaran`
 -- AUTO_INCREMENT for table `peminjaman`
 --
 ALTER TABLE `peminjaman`
-  MODIFY `PeminjamanID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
+  MODIFY `PeminjamanID` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `pencarian_populer`
@@ -878,7 +1200,7 @@ ALTER TABLE `ulasan`
 -- AUTO_INCREMENT for table `users`
 --
 ALTER TABLE `users`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=21;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=30;
 
 --
 -- Constraints for dumped tables
@@ -995,6 +1317,12 @@ ALTER TABLE `statistik_membaca`
 ALTER TABLE `ulasan`
   ADD CONSTRAINT `ulasan_ibfk_1` FOREIGN KEY (`MemberID`) REFERENCES `anggota` (`MemberID`),
   ADD CONSTRAINT `ulasan_ibfk_2` FOREIGN KEY (`BukuID`) REFERENCES `buku` (`BukuID`);
+
+--
+-- Constraints for table `users`
+--
+ALTER TABLE `users`
+  ADD CONSTRAINT `fk_users_admin` FOREIGN KEY (`admin_id`) REFERENCES `admin` (`AdminID`);
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
