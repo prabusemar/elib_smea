@@ -14,7 +14,7 @@ function getAllAnggota($conn, $search = null, $jenisAkun = null, $limit = 10, $o
     $sql = "SELECT a.*, u.last_login 
             FROM anggota a
             LEFT JOIN users u ON a.Email = u.email
-            WHERE a.is_deleted = 0";
+            WHERE a.is_deleted = 0 AND (u.is_deleted = 0 OR u.is_deleted IS NULL)";
 
     if ($search) {
         $search = mysqli_real_escape_string($conn, $search);
@@ -34,7 +34,9 @@ function getAllAnggota($conn, $search = null, $jenisAkun = null, $limit = 10, $o
 
 function getTotalAnggota($conn, $search = null, $jenisAkun = null)
 {
-    $sql = "SELECT COUNT(*) as total FROM anggota a WHERE a.is_deleted = 0";
+    $sql = "SELECT COUNT(*) as total FROM anggota a 
+            LEFT JOIN users u ON a.Email = u.email
+            WHERE a.is_deleted = 0 AND (u.is_deleted = 0 OR u.is_deleted IS NULL)";
     if ($search) {
         $search = mysqli_real_escape_string($conn, $search);
         $sql .= " AND (a.Nama LIKE '%$search%' OR a.Email LIKE '%$search%')";
@@ -62,45 +64,69 @@ function updateStatusAnggota($conn, $memberID, $status)
     return mysqli_stmt_execute($stmt);
 }
 
-// Fungsi untuk menghapus anggota
+// Fungsi untuk menghapus anggota (soft delete)
 function deleteAnggota($conn, $memberID)
 {
     // Mulai transaksi
     mysqli_begin_transaction($conn);
 
     try {
-        // Dapatkan email anggota untuk menghapus dari tabel users
+        // Dapatkan email anggota untuk update tabel users
         $sql = "SELECT Email FROM anggota WHERE MemberID = ?";
         $stmt = mysqli_prepare($conn, $sql);
+        if (!$stmt) {
+            throw new Exception("Prepare failed: " . mysqli_error($conn));
+        }
+
         mysqli_stmt_bind_param($stmt, "i", $memberID);
-        mysqli_stmt_execute($stmt);
+        if (!mysqli_stmt_execute($stmt)) {
+            throw new Exception("Execute failed: " . mysqli_stmt_error($stmt));
+        }
+
         $result = mysqli_stmt_get_result($stmt);
         $row = mysqli_fetch_assoc($result);
+        mysqli_stmt_close($stmt);
 
         if (!$row) {
-            throw new Exception("Anggota tidak ditemukan");
+            throw new Exception("Anggota dengan ID $memberID tidak ditemukan");
         }
 
         $email = $row['Email'];
+        $now = date('Y-m-d H:i:s');
 
-        // Hapus dari tabel anggota
-        $sql = "DELETE FROM anggota WHERE MemberID = ?";
+        // Soft delete di tabel users
+        $sql = "UPDATE users SET is_deleted = 1, deleted_at = ? WHERE email = ?";
         $stmt = mysqli_prepare($conn, $sql);
-        mysqli_stmt_bind_param($stmt, "i", $memberID);
-        mysqli_stmt_execute($stmt);
+        if (!$stmt) {
+            throw new Exception("Prepare failed: " . mysqli_error($conn));
+        }
 
-        // Hapus dari tabel users
-        $sql = "DELETE FROM users WHERE email = ?";
+        mysqli_stmt_bind_param($stmt, "ss", $now, $email);
+        if (!mysqli_stmt_execute($stmt)) {
+            throw new Exception("Gagal soft delete di users: " . mysqli_stmt_error($stmt));
+        }
+        mysqli_stmt_close($stmt);
+
+        // Soft delete di tabel anggota
+        $sql = "UPDATE anggota SET is_deleted = 1, deleted_at = ?, Status = 'Banned' WHERE MemberID = ?";
         $stmt = mysqli_prepare($conn, $sql);
-        mysqli_stmt_bind_param($stmt, "s", $email);
-        mysqli_stmt_execute($stmt);
+        if (!$stmt) {
+            throw new Exception("Prepare failed: " . mysqli_error($conn));
+        }
+
+        mysqli_stmt_bind_param($stmt, "si", $now, $memberID);
+        if (!mysqli_stmt_execute($stmt)) {
+            throw new Exception("Gagal soft delete di anggota: " . mysqli_stmt_error($stmt));
+        }
+        mysqli_stmt_close($stmt);
 
         // Commit transaksi
         mysqli_commit($conn);
         return true;
     } catch (Exception $e) {
         mysqli_rollback($conn);
-        error_log("Error deleting member: " . $e->getMessage());
+        error_log("Error soft deleting member: " . $e->getMessage());
+        $_SESSION['error_details'] = $e->getMessage(); // Untuk debugging
         return false;
     }
 }
@@ -128,9 +154,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $memberID = intval($_POST['member_id']);
 
             if (deleteAnggota($conn, $memberID)) {
-                $_SESSION['success'] = "Anggota berhasil dihapus";
+                $_SESSION['success'] = "Anggota berhasil dihapus (soft delete)";
             } else {
                 $_SESSION['error'] = "Gagal menghapus anggota";
+                // Untuk debugging, tampilkan detail error (bisa dihapus di production)
+                if (isset($_SESSION['error_details'])) {
+                    $_SESSION['error'] .= "<br>Detail: " . $_SESSION['error_details'];
+                    unset($_SESSION['error_details']);
+                }
             }
 
             header("Location: " . $_SERVER['PHP_SELF']);
@@ -260,7 +291,7 @@ include '../../views/header.php';
                                                 <input type="hidden" name="action" value="delete">
                                                 <input type="hidden" name="member_id" value="<?= $a['MemberID']; ?>">
                                                 <button type="submit" class="btn btn-danger"
-                                                    title="Hapus" onclick="return confirm('Yakin ingin menghapus anggota ini?')">
+                                                    title="Hapus" onclick="return confirm('Yakin ingin menghapus anggota ini? Data akan diarsipkan.')">
                                                     <i class="fas fa-trash"></i>
                                                     <span class="mobile-text"></span>
                                                 </button>
