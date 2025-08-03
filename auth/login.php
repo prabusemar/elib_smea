@@ -417,7 +417,7 @@ include_once '../config.php';
 
         .fa-user,
         .fa-lock {
-            margin-top: 0.8rem;
+            margin-top: 0.9rem;
         }
 
         .alert {
@@ -469,6 +469,15 @@ include_once '../config.php';
                 unset($_SESSION['register_alert']);
 
                 echo "<div class='alert alert-success'>$alertMessage</div>";
+            }
+            ?>
+
+            <?php
+            // Tampilkan notifikasi error login jika ada
+            if (isset($_SESSION['login_alert'])) {
+                $alert = $_SESSION['login_alert'];
+                echo "<div class='alert alert-{$alert['type']}'>{$alert['message']}</div>";
+                unset($_SESSION['login_alert']);
             }
             ?>
             <div class="login-title fade-in delay-1">

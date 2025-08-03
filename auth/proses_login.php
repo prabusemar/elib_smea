@@ -2,16 +2,19 @@
 session_start();
 require_once '../config.php';
 
-function displayError($message)
+function redirectWithError($message)
 {
-    $_SESSION['login_error'] = $message;
+    $_SESSION['login_alert'] = [
+        'type' => 'error',
+        'message' => $message
+    ];
     header("Location: login.php");
     exit;
 }
 
 // Validasi input
 if (empty($_POST['username']) || empty($_POST['password'])) {
-    displayError("Username dan password harus diisi!");
+    redirectWithError("Username dan password harus diisi!");
 }
 
 $username = trim($_POST['username']);
@@ -33,7 +36,7 @@ $stmt = mysqli_prepare($conn, $query);
 
 if (!$stmt) {
     error_log("MySQL Prepare Error: " . mysqli_error($conn));
-    displayError("Terjadi kesalahan sistem. Silakan coba lagi nanti.");
+    redirectWithError("Terjadi kesalahan sistem. Silakan coba lagi nanti.");
 }
 
 mysqli_stmt_bind_param($stmt, "s", $username);
@@ -62,18 +65,18 @@ if (mysqli_num_rows($result) === 1) {
 
         // Redirect berdasarkan role
         $redirect_url = match ($user['role']) {
-            'admin'  => '../admin/dashboard.php',
-            'staff'  => '../staff/dashboard.php',
+            'admin'  => '../admin/dashboard_admin.php',
+            'staff'  => '../staff/dashboard_staff.php',
             default  => '../member/dashboard.php'
         };
 
         header("Location: " . $redirect_url);
         exit;
     } else {
-        displayError("Username atau password salah!");
+        redirectWithError("Username atau password salah!");
     }
 } else {
-    displayError("Akun tidak ditemukan!");
+    redirectWithError("Akun tidak ditemukan!");
 }
 
 // Tutup koneksi
