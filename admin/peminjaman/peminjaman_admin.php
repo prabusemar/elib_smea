@@ -196,11 +196,11 @@ include '../../views/header.php';
                             <?php foreach ($peminjaman as $index => $row): ?>
                                 <tr class="d-flex flex-column d-md-table-row">
                                     <td class="text-muted d-flex justify-content-between d-md-table-cell">
-                                        
+
                                         <span><?= $offset + $index + 1 ?></span>
                                     </td>
                                     <td class="d-flex flex-column d-md-table-cell">
-                                        
+
                                         <div class="d-flex align-items-center">
                                             <div class="avatar avatar-sm me-3">
                                                 <span class="avatar-title rounded-circle"
@@ -215,7 +215,7 @@ include '../../views/header.php';
                                         </div>
                                     </td>
                                     <td class="d-flex flex-column d-md-table-cell">
-                                        
+
                                         <div class="d-flex align-items-center">
                                             <div class="me-3">
                                                 <?php if (!empty($row['Cover'])): ?>
@@ -232,22 +232,22 @@ include '../../views/header.php';
                                         </div>
                                     </td>
                                     <td class="text-muted d-flex justify-content-between d-md-table-cell">
-                                        
+
                                         <span><?= date('d M Y H:i', strtotime($row['TanggalPinjam'])) ?></span>
                                     </td>
                                     <td class="text-muted d-flex justify-content-between d-md-table-cell">
-                                        
+
                                         <span><?= $row['TanggalKembali'] ? date('d M Y H:i', strtotime($row['TanggalKembali'])) : '-' ?></span>
                                     </td>
                                     <td class="d-flex justify-content-between d-md-table-cell">
-                                    
+
                                         <span class="badge rounded-pill 
                                             <?= $row['Status'] === 'Active' ? 'bg-primary-light text-primary' : ($row['Status'] === 'Returned' ? 'bg-success-light text-success' : 'bg-danger-light text-danger') ?>">
                                             <?= htmlspecialchars($row['Status']) ?>
                                         </span>
                                     </td>
                                     <td class="d-flex justify-content-between d-md-table-cell">
-                                        
+
                                         <div class="d-flex gap-2">
                                             <?php if ($row['Status'] === 'Active' || $row['Status'] === 'Expired'): ?>
                                                 <button type="button" class="btn btn-sm btn-success me-1 return-btn"
@@ -331,19 +331,22 @@ include '../../views/header.php';
                     <nav aria-label="Page navigation">
                         <ul class="pagination justify-content-center mb-0">
                             <li class="page-item <?= ($page <= 1) ? 'disabled' : '' ?>">
-                                <a class="page-link" href="?<?= http_build_query(array_merge($filters, ['page' => $page - 1])) ?>">
+                                <a class="page-link"
+                                    href="?nama=<?= urlencode($filters['nama']) ?>&judul=<?= urlencode($filters['judul']) ?>&status=<?= urlencode($filters['status']) ?>&page=<?= $page - 1 ?>">
                                     <i class="fas fa-chevron-left"></i>
                                 </a>
                             </li>
-
                             <?php
-                            // Tampilkan maksimal 5 halaman di sekitar halaman aktif
+                            // Show page numbers with ellipsis
                             $startPage = max(1, $page - 2);
                             $endPage = min($totalPages, $page + 2);
 
                             if ($startPage > 1): ?>
                                 <li class="page-item">
-                                    <a class="page-link" href="?<?= http_build_query(array_merge($filters, ['page' => 1])) ?>">1</a>
+                                    <a class="page-link"
+                                        href="?nama=<?= urlencode($filters['nama']) ?>&judul=<?= urlencode($filters['judul']) ?>&status=<?= urlencode($filters['status']) ?>&page=1">
+                                        1
+                                    </a>
                                 </li>
                                 <?php if ($startPage > 2): ?>
                                     <li class="page-item disabled">
@@ -354,7 +357,8 @@ include '../../views/header.php';
 
                             <?php for ($i = $startPage; $i <= $endPage; $i++): ?>
                                 <li class="page-item <?= ($i == $page) ? 'active' : '' ?>">
-                                    <a class="page-link" href="?<?= http_build_query(array_merge($filters, ['page' => $i])) ?>">
+                                    <a class="page-link"
+                                        href="?nama=<?= urlencode($filters['nama']) ?>&judul=<?= urlencode($filters['judul']) ?>&status=<?= urlencode($filters['status']) ?>&page=<?= $i ?>">
                                         <?= $i ?>
                                     </a>
                                 </li>
@@ -367,14 +371,16 @@ include '../../views/header.php';
                                     </li>
                                 <?php endif; ?>
                                 <li class="page-item">
-                                    <a class="page-link" href="?<?= http_build_query(array_merge($filters, ['page' => $totalPages])) ?>">
+                                    <a class="page-link"
+                                        href="?nama=<?= urlencode($filters['nama']) ?>&judul=<?= urlencode($filters['judul']) ?>&status=<?= urlencode($filters['status']) ?>&page=<?= $totalPages ?>">
                                         <?= $totalPages ?>
                                     </a>
                                 </li>
                             <?php endif; ?>
 
                             <li class="page-item <?= ($page >= $totalPages) ? 'disabled' : '' ?>">
-                                <a class="page-link" href="?<?= http_build_query(array_merge($filters, ['page' => $page + 1])) ?>">
+                                <a class="page-link"
+                                    href="?nama=<?= urlencode($filters['nama']) ?>&judul=<?= urlencode($filters['judul']) ?>&status=<?= urlencode($filters['status']) ?>&page=<?= $page + 1 ?>">
                                     <i class="fas fa-chevron-right"></i>
                                 </a>
                             </li>
@@ -601,23 +607,70 @@ include '../../views/header.php';
 
     /* Pagination */
     .pagination {
-        margin-bottom: 0;
+        display: flex;
+        gap: 8px;
+        list-style: none;
+        padding: 0;
+        margin: 2rem 0 0;
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+
+    .page-item {
+        transition: transform 0.2s ease;
+    }
+
+    .page-item:hover {
+        transform: translateY(-2px);
     }
 
     .page-link {
-        min-width: 2.25rem;
-        height: 2.25rem;
         display: flex;
         align-items: center;
         justify-content: center;
-        color: var(--gray);
-        border: 1px solid var(--border-color);
-        margin: 0 0.125rem;
+        min-width: 40px;
+        height: 40px;
+        padding: 0 12px;
+        text-decoration: none;
+        border-radius: 8px;
+        background: white;
+        color: var(--primary);
+        border: 1px solid #e9ecef;
+        transition: all 0.3s ease;
+        font-weight: 500;
+        font-size: 0.9rem;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    }
+
+    .page-link:hover {
+        background: var(--primary-light);
+        color: var(--primary-dark);
+        border-color: var(--primary-light);
+        box-shadow: 0 4px 8px rgba(108, 92, 231, 0.1);
     }
 
     .page-item.active .page-link {
-        background-color: var(--primary);
+        background: var(--primary);
         border-color: var(--primary);
+        color: white;
+        box-shadow: 0 4px 12px rgba(108, 92, 231, 0.2);
+    }
+
+    .page-item.active .page-link:hover {
+        background: var(--primary-dark);
+        border-color: var(--primary-dark);
+    }
+
+    .page-item.disabled .page-link {
+        background: #f8f9fa;
+        color: #adb5bd;
+        cursor: not-allowed;
+        opacity: 0.7;
+        box-shadow: none;
+    }
+
+    .page-link i {
+        font-size: 0.8rem;
     }
 
     /* Modal */
@@ -651,26 +704,27 @@ include '../../views/header.php';
 
     /* Responsive Table */
     @media (max-width: 767.98px) {
+
         /* Hide regular table header on mobile */
         .d-md-table-header-group {
             display: none;
         }
-        
+
         /* Make table rows stack vertically on mobile */
         .d-md-table-row {
             display: table-row;
         }
-        
+
         /* Make table cells stack vertically on mobile */
         .d-md-table-cell {
             display: table-cell;
         }
-        
+
         /* Mobile-specific table styles */
         .table-responsive {
             border: 0;
         }
-        
+
         .table tbody tr {
             display: block;
             margin-bottom: 1rem;
@@ -680,7 +734,7 @@ include '../../views/header.php';
             background-color: white;
             box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
         }
-        
+
         .table tbody td {
             display: flex;
             justify-content: space-between;
@@ -688,30 +742,31 @@ include '../../views/header.php';
             padding: 0.75rem 0.5rem;
             border-bottom: 1px solid var(--gray-light);
         }
-        
+
         .table tbody td:last-child {
             border-bottom: 0;
         }
-        
+
         /* Label for mobile view */
-        .table tbody td > span:first-child:not(.badge) {
+        .table tbody td>span:first-child:not(.badge) {
             font-weight: 600;
             color: var(--gray);
             margin-right: 1rem;
             min-width: 120px;
         }
-        
+
         /* Special handling for complex cells */
-        .table tbody td > div {
+        .table tbody td>div {
             width: 100%;
         }
-        
+
         /* Avatar and book cover adjustments */
-        .avatar, .book-cover {
+        .avatar,
+        .book-cover {
             width: 2rem;
             height: 2rem;
         }
-        
+
         .book-cover {
             height: 3rem;
         }
