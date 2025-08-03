@@ -191,7 +191,7 @@ $current_page = basename($_SERVER['PHP_SELF']);
                     <span class="tooltiptext">Sistem</span>
                 </div>
             </div>
-            <a href="/library/admin/profile/profile_admin.php" class="nav-item <?php echo ($current_page == 'profile_admin.php') ? 'active' : ''; ?>">
+            <a href="/library/admin/admin_profile.php" class="nav-item <?php echo ($current_page == 'admin_profile.php') ? 'active' : ''; ?>">
                 <div class="tooltip">
                     <i class="fas fa-user-circle"></i>
                     <span>Profile</span>

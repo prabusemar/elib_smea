@@ -6,8 +6,8 @@ require_once '../config.php';
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
-// Validasi session admin
-if (!isset($_SESSION['id']) || !isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
+// Validasi session admin - menggunakan 'user_id' yang konsisten dengan proses_login.php
+if (!isset($_SESSION['user_id']) || !isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
     header("Location: ../auth/login.php");
     exit;
 }
@@ -22,9 +22,12 @@ function safe_redirect($url)
     exit;
 }
 
-// Get admin data
-$adminId = $_SESSION['id'];
-$sql = "SELECT * FROM users WHERE id = ? AND role = 'admin'";
+// Get admin data - menggunakan $_SESSION['user_id']
+$adminId = $_SESSION['user_id'];
+$sql = "SELECT u.*, a.Bio, a.NoTelepon 
+        FROM users u
+        JOIN admin a ON u.admin_id = a.AdminID
+        WHERE u.id = ? AND u.role = 'admin'";
 $stmt = mysqli_prepare($conn, $sql);
 
 if (!$stmt) {
@@ -90,26 +93,52 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['update_profile'])) {
     }
 
     if (!isset($_SESSION['error'])) {
-        $sql = "UPDATE users SET 
-                full_name = ?, 
-                bio = ?, 
-                no_telepon = ?,
-                profile_pic = ?
-                WHERE id = ?";
-        $stmt = mysqli_prepare($conn, $sql);
+        // Mulai transaksi
+        mysqli_begin_transaction($conn);
 
-        if ($stmt && mysqli_stmt_bind_param($stmt, "ssssi", $full_name, $bio, $no_telepon, $profile_pic, $adminId)) {
-            if (mysqli_stmt_execute($stmt)) {
-                $_SESSION['success'] = "Profil berhasil diperbarui";
-                // Update session data
-                $_SESSION['full_name'] = $full_name;
-                $_SESSION['profile_pic'] = $profile_pic;
-                safe_redirect("admin_profile.php?tab=profile");
-            } else {
-                $_SESSION['error'] = "Gagal memperbarui profil: " . mysqli_error($conn);
+        try {
+            // Update tabel users
+            $sqlUser = "UPDATE users SET 
+                       full_name = ?, 
+                       profile_pic = ?
+                       WHERE id = ?";
+            $stmtUser = mysqli_prepare($conn, $sqlUser);
+
+            if (!$stmtUser || !mysqli_stmt_bind_param($stmtUser, "ssi", $full_name, $profile_pic, $adminId)) {
+                throw new Exception("Gagal mempersiapkan update user");
             }
-        } else {
-            $_SESSION['error'] = "Terjadi kesalahan sistem";
+
+            if (!mysqli_stmt_execute($stmtUser)) {
+                throw new Exception("Gagal memperbarui user: " . mysqli_error($conn));
+            }
+
+            // Update tabel admin
+            $sqlAdmin = "UPDATE admin SET 
+                        Bio = ?, 
+                        NoTelepon = ?
+                        WHERE AdminID = ?";
+            $stmtAdmin = mysqli_prepare($conn, $sqlAdmin);
+
+            if (!$stmtAdmin || !mysqli_stmt_bind_param($stmtAdmin, "ssi", $bio, $no_telepon, $admin['admin_id'])) {
+                throw new Exception("Gagal mempersiapkan update admin");
+            }
+
+            if (!mysqli_stmt_execute($stmtAdmin)) {
+                throw new Exception("Gagal memperbarui admin: " . mysqli_error($conn));
+            }
+
+            // Commit transaksi jika semua berhasil
+            mysqli_commit($conn);
+
+            $_SESSION['success'] = "Profil berhasil diperbarui";
+            // Update session data
+            $_SESSION['full_name'] = $full_name;
+            $_SESSION['profile_pic'] = $profile_pic;
+            safe_redirect("admin_profile.php?tab=profile");
+        } catch (Exception $e) {
+            // Rollback jika ada error
+            mysqli_rollback($conn);
+            $_SESSION['error'] = $e->getMessage();
         }
     }
 }
@@ -247,18 +276,12 @@ include '../views/header.php';
                     <div class="form-group">
                         <label for="no_telepon">Nomor Telepon</label>
                         <input type="text" id="no_telepon" name="no_telepon"
-                            value="<?= htmlspecialchars($admin['no_telepon'] ?? '') ?>">
+                            value="<?= htmlspecialchars($admin['NoTelepon'] ?? '') ?>">
                     </div>
 
                     <div class="form-group">
                         <label for="bio">Bio</label>
-                        <textarea id="bio" name="bio" rows="3"><?= htmlspecialchars($admin['bio'] ?? '') ?></textarea>
-                    </div>
-
-                    <div class="form-actions">
-                        <button type="submit" class="btn btn-primary">
-                            <i class="fas fa-save"></i> Simpan Perubahan
-                        </button>
+                        <textarea id="bio" name="bio" rows="3"><?= htmlspecialchars($admin['Bio'] ?? '') ?></textarea>
                     </div>
                 </form>
             </div>
@@ -706,12 +729,11 @@ include '../views/header.php';
         margin-top: 8px;
         margin-left: 8px;
         cursor: pointer;
+    }
 
-        &:hover {
-            color: var(--primary-light);
-
-
-        }
+    .fa-camera:hover {
+        color: var(--primary-light);
+    }
 </style>
 
 <script>
