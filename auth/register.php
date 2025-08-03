@@ -11,6 +11,7 @@ unset($_SESSION['register_error']);
 include_once '../config.php';
 ?>
 
+
 <!DOCTYPE html>
 <html lang="id">
 
@@ -50,13 +51,15 @@ include_once '../config.php';
             justify-content: center;
             align-items: center;
             min-height: 100vh;
+            padding: 20px;
         }
 
         .register-wrapper {
             display: flex;
-            width: 900px;
-            max-width: 90%;
-            height: 600px;
+            width: 950px;
+            max-width: 95%;
+            height: auto;
+            min-height: 650px;
             border-radius: 20px;
             overflow: hidden;
             box-shadow: var(--shadow);
@@ -73,7 +76,7 @@ include_once '../config.php';
             background: linear-gradient(rgba(58, 12, 163, 0.7), rgba(67, 97, 238, 0.7)),
                 url('https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1590&q=80') no-repeat center center/cover;
             color: var(--white);
-            padding: 3rem;
+            padding: 2.5rem;
             display: flex;
             flex-direction: column;
             justify-content: center;
@@ -96,37 +99,38 @@ include_once '../config.php';
         .register-content {
             flex: 1;
             background-color: var(--white);
-            padding: 3rem;
+            padding: 2.5rem;
             display: flex;
             flex-direction: column;
             justify-content: center;
+            overflow-y: auto;
         }
 
         .register-logo {
             display: flex;
             align-items: center;
-            margin-bottom: 2rem;
+            margin-bottom: 1.5rem;
         }
 
         .register-logo img {
-            height: 50px;
+            height: 45px;
             margin-right: 1rem;
         }
 
         .logo-text h1 {
-            font-size: 1.5rem;
+            font-size: 1.4rem;
             color: var(--white);
             line-height: 1.2;
         }
 
         .logo-text span {
-            font-size: 0.8rem;
+            font-size: 0.75rem;
             opacity: 0.8;
         }
 
         .welcome-text h2 {
-            font-size: 2rem;
-            margin-bottom: 1rem;
+            font-size: 1.8rem;
+            margin-bottom: 0.8rem;
             position: relative;
             display: inline-block;
         }
@@ -134,25 +138,26 @@ include_once '../config.php';
         .welcome-text h2::after {
             content: '';
             position: absolute;
-            bottom: -10px;
+            bottom: -8px;
             left: 0;
-            width: 50px;
+            width: 45px;
             height: 3px;
             background-color: var(--white);
         }
 
         .welcome-text p {
             opacity: 0.9;
-            margin-bottom: 2rem;
+            margin-bottom: 1.5rem;
+            font-size: 0.9rem;
         }
 
         .register-title {
             text-align: center;
-            margin-bottom: 2rem;
+            margin-bottom: 1.5rem;
         }
 
         .register-title h2 {
-            font-size: 1.8rem;
+            font-size: 1.6rem;
             color: var(--primary);
             margin-bottom: 0.5rem;
             position: relative;
@@ -162,10 +167,10 @@ include_once '../config.php';
         .register-title h2::after {
             content: '';
             position: absolute;
-            bottom: -8px;
+            bottom: -6px;
             left: 50%;
             transform: translateX(-50%);
-            width: 60px;
+            width: 50px;
             height: 3px;
             background: linear-gradient(90deg, var(--primary), var(--secondary));
             border-radius: 3px;
@@ -173,28 +178,28 @@ include_once '../config.php';
 
         .register-title p {
             color: var(--gray);
-            font-size: 0.9rem;
+            font-size: 0.85rem;
         }
 
         .form-group {
-            margin-bottom: 1.5rem;
+            margin-bottom: 1.2rem;
             position: relative;
         }
 
         .form-group label {
             display: block;
-            margin-bottom: 0.5rem;
+            margin-bottom: 0.4rem;
             font-weight: 500;
             color: var(--dark);
-            font-size: 0.9rem;
+            font-size: 0.85rem;
         }
 
         .form-control {
             width: 100%;
-            padding: 0.9rem 1rem 0.9rem 3rem;
+            padding: 0.8rem 1rem 0.8rem 2.8rem;
             border: 1px solid var(--light-gray);
             border-radius: 8px;
-            font-size: 1rem;
+            font-size: 0.9rem;
             transition: var(--transition);
             background-color: var(--light);
         }
@@ -212,27 +217,27 @@ include_once '../config.php';
             top: 50%;
             transform: translateY(-50%);
             color: var(--primary);
-            font-size: 1rem;
+            font-size: 0.9rem;
         }
 
         .register-btn {
             width: 100%;
-            padding: 1rem;
+            padding: 0.9rem;
             background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
             color: var(--white);
             border: none;
             border-radius: 8px;
-            font-size: 1rem;
+            font-size: 0.95rem;
             font-weight: 600;
             cursor: pointer;
             transition: var(--transition);
-            margin: 1.5rem 0;
+            margin: 1.2rem 0;
             box-shadow: var(--shadow);
         }
 
         .register-btn:hover {
             background: linear-gradient(135deg, var(--primary-light) 0%, var(--primary) 100%);
-            transform: translateY(-3px);
+            transform: translateY(-2px);
             box-shadow: 0 6px 12px rgba(58, 12, 163, 0.15);
         }
 
@@ -242,8 +247,9 @@ include_once '../config.php';
 
         .login-link {
             text-align: center;
-            font-size: 0.9rem;
+            font-size: 0.85rem;
             color: var(--gray);
+            margin-top: 0.5rem;
         }
 
         .login-link a {
@@ -261,10 +267,10 @@ include_once '../config.php';
         .error-message {
             color: var(--error);
             background-color: rgba(239, 68, 68, 0.1);
-            padding: 0.8rem;
+            padding: 0.7rem;
             border-radius: 8px;
-            font-size: 0.9rem;
-            margin-bottom: 1.5rem;
+            font-size: 0.85rem;
+            margin-bottom: 1.2rem;
             text-align: center;
             display: <?php echo !empty($error) ? 'block' : 'none'; ?>;
         }
@@ -274,14 +280,27 @@ include_once '../config.php';
             .register-wrapper {
                 flex-direction: column;
                 height: auto;
+                min-height: auto;
             }
 
             .register-image {
-                display: none;
+                padding: 2rem;
             }
 
             .register-content {
                 padding: 2rem;
+            }
+
+            .register-logo img {
+                height: 40px;
+            }
+
+            .logo-text h1 {
+                font-size: 1.3rem;
+            }
+
+            .welcome-text h2 {
+                font-size: 1.6rem;
             }
         }
 
@@ -291,7 +310,15 @@ include_once '../config.php';
             }
 
             .register-title h2 {
-                font-size: 1.5rem;
+                font-size: 1.4rem;
+            }
+
+            .form-control {
+                padding: 0.7rem 1rem 0.7rem 2.7rem;
+            }
+
+            .register-btn {
+                padding: 0.8rem;
             }
         }
 
@@ -333,8 +360,30 @@ include_once '../config.php';
         }
 
         .fa-user,
-        .fa-lock {
-            margin-top: 0.8rem;
+        .fa-lock,
+        .fa-user-tag,
+        .fa-envelope {
+            margin-top: 0.9rem;
+        }
+
+        .alert {
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 5px;
+            text-align: center;
+            font-size: 14px;
+        }
+
+        .alert-success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .alert-error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
         }
     </style>
 </head>
@@ -359,6 +408,17 @@ include_once '../config.php';
 
         <!-- Bagian Kanan (Form) -->
         <div class="register-content">
+            <?php
+
+            if (isset($_SESSION['register_alert'])) {
+                $alert = $_SESSION['register_alert'];
+                $alertType = $alert['type'];
+                $alertMessage = $alert['message'];
+                unset($_SESSION['register_alert']);
+
+                echo "<div class='alert alert-$alertType'>$alertMessage</div>";
+            }
+            ?>
             <div class="register-title fade-in delay-1">
                 <h2>Buat Akun Baru</h2>
                 <p>Isi formulir berikut untuk mendaftar</p>
@@ -372,10 +432,24 @@ include_once '../config.php';
 
             <form id="registerForm" action="proses_register.php" method="post" class="fade-in delay-2">
                 <div class="form-group">
-                    <label for="username">Username</label>
+                    <label for="full_name">Nama Lengkap</label>
                     <i class="fas fa-user input-icon"></i>
+                    <input type="text" id="full_name" name="full_name" class="form-control" placeholder="Masukkan nama lengkap" required>
+                    <div class="error-message" id="fullname-error" style="display: none; margin-top: 0.5rem;"></div>
+                </div>
+
+                <div class="form-group">
+                    <label for="username">Username</label>
+                    <i class="fas fa-user-tag input-icon"></i>
                     <input type="text" id="username" name="username" class="form-control" placeholder="Masukkan username" required>
                     <div class="error-message" id="username-error" style="display: none; margin-top: 0.5rem;"></div>
+                </div>
+
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <i class="fas fa-envelope input-icon"></i>
+                    <input type="email" id="email" name="email" class="form-control" placeholder="Masukkan alamat email" required>
+                    <div class="error-message" id="email-error" style="display: none; margin-top: 0.5rem;"></div>
                 </div>
 
                 <div class="form-group">
@@ -396,12 +470,12 @@ include_once '../config.php';
                     <i class="fas fa-user-plus"></i> Daftar Sekarang
                 </button>
 
-                <div class="login-link" style="margin-top: 1.5rem;">
-                    <span style="color: var(--gray);">Sudah punya akun?</span>
+                <div class="login-link">
+                    <span>Sudah punya akun?</span>
                     <a href="login.php" style="margin-left: 0.3rem; color: var(--primary); font-weight: 600; display: inline-flex; align-items: center; transition: color 0.2s; text-decoration: none;"
                         onmouseover="this.style.textDecoration='none';"
                         onmouseout="this.style.textDecoration='none';">
-                        <i class="fas fa-sign-in-alt" style="margin-right: 0.4em; font-size: 1em;"></i>
+                        <i class="fas fa-sign-in-alt" style="margin-right: 0.4em; font-size: 0.9em;"></i>
                         <span>Masuk di sini</span>
                     </a>
                 </div>
@@ -428,7 +502,9 @@ include_once '../config.php';
             // Client-side validation
             document.getElementById('registerForm').addEventListener('submit', function(e) {
                 let valid = true;
+                const full_name = document.getElementById('full_name').value;
                 const username = document.getElementById('username').value;
+                const email = document.getElementById('email').value;
                 const password = document.getElementById('password').value;
                 const confirmPassword = document.getElementById('confirm_password').value;
 
@@ -437,10 +513,24 @@ include_once '../config.php';
                     el.style.display = 'none';
                 });
 
+                // Check full name length
+                if (full_name.length < 3) {
+                    document.getElementById('fullname-error').textContent = 'Nama lengkap minimal 3 karakter!';
+                    document.getElementById('fullname-error').style.display = 'block';
+                    valid = false;
+                }
+
                 // Check username length
                 if (username.length < 3) {
                     document.getElementById('username-error').textContent = 'Username minimal 3 karakter!';
                     document.getElementById('username-error').style.display = 'block';
+                    valid = false;
+                }
+
+                // Check email format
+                if (!/^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/.test(email)) {
+                    document.getElementById('email-error').textContent = 'Format email tidak valid!';
+                    document.getElementById('email-error').style.display = 'block';
                     valid = false;
                 }
 

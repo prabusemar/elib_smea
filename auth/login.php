@@ -1,7 +1,9 @@
 <?php
 
 include_once '../config.php';
+
 ?>
+
 <!DOCTYPE html>
 <html lang="id">
 
@@ -417,6 +419,26 @@ include_once '../config.php';
         .fa-lock {
             margin-top: 0.8rem;
         }
+
+        .alert {
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 5px;
+            text-align: center;
+            font-size: 14px;
+        }
+
+        .alert-success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .alert-error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
     </style>
 </head>
 
@@ -440,6 +462,15 @@ include_once '../config.php';
 
         <!-- Bagian Kanan (Form) -->
         <div class="login-content">
+            <?php
+            if (isset($_SESSION['register_alert']) && $_SESSION['register_alert']['type'] === 'success') {
+                $alert = $_SESSION['register_alert'];
+                $alertMessage = $alert['message'];
+                unset($_SESSION['register_alert']);
+
+                echo "<div class='alert alert-success'>$alertMessage</div>";
+            }
+            ?>
             <div class="login-title fade-in delay-1">
                 <h2>Masuk ke Akun Anda</h2>
                 <p>Gunakan username dan password Anda untuk masuk</p>

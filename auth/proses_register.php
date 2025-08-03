@@ -2,65 +2,82 @@
 session_start();
 include '../config.php';
 
-function displayError($message)
+function redirectWithMessage($isSuccess, $message)
 {
-    $_SESSION['register_error'] = $message;
-    header("Location: register.php");
+    $_SESSION['register_alert'] = [
+        'type' => $isSuccess ? 'success' : 'error',
+        'message' => $message
+    ];
+    header("Location: " . ($isSuccess ? "login.php" : "register.php"));
     exit;
 }
 
-// Validate input
-if (empty($_POST['username']) || empty($_POST['password']) || empty($_POST['confirm_password'])) {
-    displayError("Semua field harus diisi!");
+// Validate all fields
+$required_fields = ['full_name', 'username', 'email', 'password', 'confirm_password'];
+foreach ($required_fields as $field) {
+    if (empty($_POST[$field])) {
+        redirectWithMessage(false, "Semua field harus diisi!");
+    }
 }
 
+$full_name = trim($_POST['full_name']);
 $username = trim($_POST['username']);
+$email = trim($_POST['email']);
 $password = $_POST['password'];
 $confirm_password = $_POST['confirm_password'];
 
-// Validate username length
-if (strlen($username) < 3) {
-    displayError("Username minimal 3 karakter!");
+// Input validation
+if (strlen($full_name) < 3) redirectWithMessage(false, "Nama lengkap minimal 3 karakter!");
+if (strlen($username) < 3) redirectWithMessage(false, "Username minimal 3 karakter!");
+if (!filter_var($email, FILTER_VALIDATE_EMAIL)) redirectWithMessage(false, "Format email tidak valid!");
+if (strlen($password) < 6) redirectWithMessage(false, "Password minimal 6 karakter!");
+if ($password !== $confirm_password) redirectWithMessage(false, "Password tidak cocok!");
+
+// Check for existing username or email
+$check_stmt = $conn->prepare("SELECT 
+    SUM(username = ?) as username_exists, 
+    SUM(email = ?) as email_exists 
+    FROM users");
+$check_stmt->bind_param("ss", $username, $email);
+$check_stmt->execute();
+$result = $check_stmt->get_result()->fetch_assoc();
+
+if ($result['username_exists'] > 0) {
+    redirectWithMessage(false, "Username sudah digunakan!");
 }
 
-// Check password match
-if ($password !== $confirm_password) {
-    displayError("Password dan konfirmasi password tidak cocok!");
-}
-
-// Check password length
-if (strlen($password) < 6) {
-    displayError("Password minimal 6 karakter!");
-}
-
-// Check if username already exists
-$check_query = "SELECT id FROM users WHERE username = ?";
-$stmt = mysqli_prepare($conn, $check_query);
-mysqli_stmt_bind_param($stmt, "s", $username);
-mysqli_stmt_execute($stmt);
-mysqli_stmt_store_result($stmt);
-
-if (mysqli_stmt_num_rows($stmt) > 0) {
-    mysqli_stmt_close($stmt);
-    displayError("Username sudah digunakan!");
+if ($result['email_exists'] > 0) {
+    redirectWithMessage(false, "Email sudah terdaftar!");
 }
 
 // Hash password
 $hashed_password = password_hash($password, PASSWORD_DEFAULT);
 
-// Insert new user
-$insert_query = "INSERT INTO users (username, password) VALUES (?, ?)";
-$stmt = mysqli_prepare($conn, $insert_query);
-mysqli_stmt_bind_param($stmt, "ss", $username, $hashed_password);
+// Start transaction
+$conn->begin_transaction();
 
-if (mysqli_stmt_execute($stmt)) {
-    // Registration successful
-    $_SESSION['register_success'] = "Pendaftaran berhasil! Silakan login.";
-    header("Location: login.php");
-    exit;
-} else {
-    displayError("Terjadi kesalahan. Silakan coba lagi.");
+try {
+    // Insert into users table
+    $user_stmt = $conn->prepare("INSERT INTO users (username, email, full_name, password, role) VALUES (?, ?, ?, ?, 'member')");
+    $user_stmt->bind_param("ssss", $username, $email, $full_name, $hashed_password);
+
+    if (!$user_stmt->execute()) {
+        throw new Exception("Gagal membuat akun pengguna");
+    }
+
+    // Try to call stored procedure (optional)
+    try {
+        $proc_stmt = $conn->prepare("CALL register_member(?, ?, ?)");
+        $proc_stmt->bind_param("sss", $username, $email, $hashed_password);
+        $proc_stmt->execute();
+    } catch (Exception $e) {
+        error_log("Procedure error: " . $e->getMessage());
+    }
+
+    $conn->commit();
+    redirectWithMessage(true, "🎉 Pendaftaran berhasil! Silakan login");
+} catch (Exception $e) {
+    $conn->rollback();
+    error_log("Registration error: " . $e->getMessage());
+    redirectWithMessage(false, "Terjadi kesalahan saat pendaftaran. Silakan coba lagi.");
 }
-
-mysqli_stmt_close($stmt);
-mysqli_close($conn);
