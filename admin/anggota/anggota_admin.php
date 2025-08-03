@@ -11,19 +11,20 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
 // Fungsi untuk mendapatkan semua anggota
 function getAllAnggota($conn, $search = null, $jenisAkun = null, $limit = 10, $offset = 0)
 {
-    $sql = "SELECT m.*, u.username, u.role, u.last_login 
-            FROM anggota m
-            JOIN users u ON m.Email = u.username
-            WHERE u.role = 'member'";
+    $sql = "SELECT a.*, u.last_login 
+            FROM anggota a
+            LEFT JOIN users u ON a.Email = u.email
+            WHERE a.is_deleted = 0";
+
     if ($search) {
         $search = mysqli_real_escape_string($conn, $search);
-        $sql .= " AND (m.Nama LIKE '%$search%' OR m.Email LIKE '%$search%' OR u.username LIKE '%$search%')";
+        $sql .= " AND (a.Nama LIKE '%$search%' OR a.Email LIKE '%$search%')";
     }
     if ($jenisAkun && in_array($jenisAkun, ['Free', 'Premium'])) {
         $jenisAkun = mysqli_real_escape_string($conn, $jenisAkun);
-        $sql .= " AND m.JenisAkun = '$jenisAkun'";
+        $sql .= " AND a.JenisAkun = '$jenisAkun'";
     }
-    $sql .= " ORDER BY m.TanggalBergabung DESC LIMIT $limit OFFSET $offset";
+    $sql .= " ORDER BY a.TanggalBergabung DESC LIMIT $limit OFFSET $offset";
     $result = mysqli_query($conn, $sql);
     if (!$result) {
         die("Error: " . mysqli_error($conn));
@@ -33,14 +34,14 @@ function getAllAnggota($conn, $search = null, $jenisAkun = null, $limit = 10, $o
 
 function getTotalAnggota($conn, $search = null, $jenisAkun = null)
 {
-    $sql = "SELECT COUNT(*) as total FROM anggota m JOIN users u ON m.Email = u.username WHERE u.role = 'member'";
+    $sql = "SELECT COUNT(*) as total FROM anggota a WHERE a.is_deleted = 0";
     if ($search) {
         $search = mysqli_real_escape_string($conn, $search);
-        $sql .= " AND (m.Nama LIKE '%$search%' OR m.Email LIKE '%$search%' OR u.username LIKE '%$search%')";
+        $sql .= " AND (a.Nama LIKE '%$search%' OR a.Email LIKE '%$search%')";
     }
     if ($jenisAkun && in_array($jenisAkun, ['Free', 'Premium'])) {
         $jenisAkun = mysqli_real_escape_string($conn, $jenisAkun);
-        $sql .= " AND m.JenisAkun = '$jenisAkun'";
+        $sql .= " AND a.JenisAkun = '$jenisAkun'";
     }
     $result = mysqli_query($conn, $sql);
     $row = mysqli_fetch_assoc($result);
@@ -89,7 +90,7 @@ function deleteAnggota($conn, $memberID)
         mysqli_stmt_execute($stmt);
 
         // Hapus dari tabel users
-        $sql = "DELETE FROM users WHERE username = ?";
+        $sql = "DELETE FROM users WHERE email = ?";
         $stmt = mysqli_prepare($conn, $sql);
         mysqli_stmt_bind_param($stmt, "s", $email);
         mysqli_stmt_execute($stmt);
@@ -104,6 +105,39 @@ function deleteAnggota($conn, $memberID)
     }
 }
 
+// Handle form submissions
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (isset($_POST['action'])) {
+        $action = $_POST['action'];
+
+        if ($action === 'update_status' && isset($_POST['member_id']) && isset($_POST['status'])) {
+            $memberID = intval($_POST['member_id']);
+            $status = $_POST['status'];
+
+            if (updateStatusAnggota($conn, $memberID, $status)) {
+                $_SESSION['success'] = "Status anggota berhasil diperbarui";
+            } else {
+                $_SESSION['error'] = "Gagal memperbarui status anggota";
+            }
+
+            header("Location: " . $_SERVER['PHP_SELF']);
+            exit;
+        }
+
+        if ($action === 'delete' && isset($_POST['member_id'])) {
+            $memberID = intval($_POST['member_id']);
+
+            if (deleteAnggota($conn, $memberID)) {
+                $_SESSION['success'] = "Anggota berhasil dihapus";
+            } else {
+                $_SESSION['error'] = "Gagal menghapus anggota";
+            }
+
+            header("Location: " . $_SERVER['PHP_SELF']);
+            exit;
+        }
+    }
+}
 
 // Ambil data anggota
 $search = isset($_GET['search']) ? $_GET['search'] : null;
@@ -167,10 +201,9 @@ include '../../views/header.php';
                 <table class="table" id="anggotaTable">
                     <thead>
                         <tr>
-
                             <th>Foto</th>
                             <th>Nama</th>
-                            <th>Email/Username</th>
+                            <th>Email</th>
                             <th>Tanggal Bergabung</th>
                             <th>Terakhir Login</th>
                             <th>Jenis Akun</th>
@@ -183,12 +216,10 @@ include '../../views/header.php';
                         <?php if (!empty($anggota)): ?>
                             <?php foreach ($anggota as $a): ?>
                                 <tr>
-
                                     <td data-label="Foto">
                                         <?php
-                                        $fotoProfil = !empty($a['FotoProfil']) ? $a['FotoProfil'] : 'assets/profiles/default.jpg';
-                                        // Jika bukan default, pastikan path benar
-                                        $fotoPath = ($fotoProfil === 'assets/profiles/default.jpg') ? '../../assets/profiles/default.jpg' : '../../uploads/profiles/' . htmlspecialchars($fotoProfil);
+                                        $fotoProfil = !empty($a['FotoProfil']) ? $a['FotoProfil'] : 'default.jpg';
+                                        $fotoPath = ($fotoProfil === 'default.jpg') ? '../../assets/profiles/default.jpg' : '../../uploads/profiles/' . htmlspecialchars($fotoProfil);
                                         ?>
                                         <img src="<?= $fotoPath ?>" alt="Foto Profil" class="profile-img">
                                     </td>
@@ -211,7 +242,7 @@ include '../../views/header.php';
                                             <input type="hidden" name="action" value="update_status">
                                             <input type="hidden" name="member_id" value="<?= $a['MemberID']; ?>">
                                             <select name="status" class="status-select 
-                        <?= $a['Status'] === 'Active' ? 'bg-success-light' : ($a['Status'] === 'Suspended' ? 'bg-warning-light' : 'bg-danger-light'); ?>">
+                                                <?= $a['Status'] === 'Active' ? 'bg-success-light' : ($a['Status'] === 'Suspended' ? 'bg-warning-light' : 'bg-danger-light'); ?>">
                                                 <option value="Active" <?= $a['Status'] === 'Active' ? 'selected' : ''; ?>>Active</option>
                                                 <option value="Suspended" <?= $a['Status'] === 'Suspended' ? 'selected' : ''; ?>>Suspended</option>
                                                 <option value="Banned" <?= $a['Status'] === 'Banned' ? 'selected' : ''; ?>>Banned</option>
@@ -240,7 +271,7 @@ include '../../views/header.php';
                             <?php endforeach; ?>
                         <?php else: ?>
                             <tr>
-                                <td colspan="10" class="text-center">Tidak ada data anggota</td>
+                                <td colspan="9" class="text-center">Tidak ada data anggota</td>
                             </tr>
                         <?php endif; ?>
                     </tbody>
@@ -278,7 +309,6 @@ include '../../views/header.php';
 </div>
 
 <?php include '../../views/footer.php'; ?>
-
 
 <style>
     /* Base Styles */
@@ -409,12 +439,9 @@ include '../../views/header.php';
 
     .profile-img {
         width: 60px;
-        /* Increased from 40px */
         height: 60px;
-        /* Increased from 40px */
         min-width: 60px;
         object-fit: contain;
-        /* Changed from cover to contain */
         padding: 2px;
         box-sizing: border-box;
     }
@@ -788,6 +815,13 @@ include '../../views/header.php';
         .status-select {
             font-size: 0.8rem;
         }
+    }
+
+    .fa-edit,
+    .fa-trash {
+        font-size: 1rem;
+
+        margin-left: 19px;
     }
 </style>
 
