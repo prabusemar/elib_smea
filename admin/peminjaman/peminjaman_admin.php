@@ -180,7 +180,7 @@ include '../../views/header.php';
         <div class="card-body p-0">
             <div class="table-responsive">
                 <table class="table table-hover mb-0" id="peminjamanTable">
-                    <thead class="table-light">
+                    <thead class="table-light d-none d-md-table-header-group">
                         <tr>
                             <th width="50">No</th>
                             <th>Anggota</th>
@@ -194,9 +194,13 @@ include '../../views/header.php';
                     <tbody>
                         <?php if (!empty($peminjaman)): ?>
                             <?php foreach ($peminjaman as $index => $row): ?>
-                                <tr>
-                                    <td class="text-muted"><?= $offset + $index + 1 ?></td>
-                                    <td>
+                                <tr class="d-flex flex-column d-md-table-row">
+                                    <td class="text-muted d-flex justify-content-between d-md-table-cell">
+                                        
+                                        <span><?= $offset + $index + 1 ?></span>
+                                    </td>
+                                    <td class="d-flex flex-column d-md-table-cell">
+                                        
                                         <div class="d-flex align-items-center">
                                             <div class="avatar avatar-sm me-3">
                                                 <span class="avatar-title rounded-circle"
@@ -206,11 +210,12 @@ include '../../views/header.php';
                                             </div>
                                             <div>
                                                 <h6 class="mb-0 fw-semibold"><?= htmlspecialchars($row['NamaAnggota']) ?></h6>
-                                                <small class="text-muted"><?= htmlspecialchars($row['Email']) ?></small>
+                                                <small class="text-muted d-block d-md-inline"><?= htmlspecialchars($row['Email']) ?></small>
                                             </div>
                                         </div>
                                     </td>
-                                    <td>
+                                    <td class="d-flex flex-column d-md-table-cell">
+                                        
                                         <div class="d-flex align-items-center">
                                             <div class="me-3">
                                                 <?php if (!empty($row['Cover'])): ?>
@@ -223,21 +228,26 @@ include '../../views/header.php';
                                             </div>
                                             <div>
                                                 <h6 class="mb-0 fw-semibold"><?= htmlspecialchars($row['Judul']) ?></h6>
-
                                             </div>
                                         </div>
                                     </td>
-                                    <td class="text-muted"><?= date('d M Y H:i', strtotime($row['TanggalPinjam'])) ?></td>
-                                    <td class="text-muted">
-                                        <?= $row['TanggalKembali'] ? date('d M Y H:i', strtotime($row['TanggalKembali'])) : '-' ?>
+                                    <td class="text-muted d-flex justify-content-between d-md-table-cell">
+                                        
+                                        <span><?= date('d M Y H:i', strtotime($row['TanggalPinjam'])) ?></span>
                                     </td>
-                                    <td>
+                                    <td class="text-muted d-flex justify-content-between d-md-table-cell">
+                                        
+                                        <span><?= $row['TanggalKembali'] ? date('d M Y H:i', strtotime($row['TanggalKembali'])) : '-' ?></span>
+                                    </td>
+                                    <td class="d-flex justify-content-between d-md-table-cell">
+                                    
                                         <span class="badge rounded-pill 
                                             <?= $row['Status'] === 'Active' ? 'bg-primary-light text-primary' : ($row['Status'] === 'Returned' ? 'bg-success-light text-success' : 'bg-danger-light text-danger') ?>">
                                             <?= htmlspecialchars($row['Status']) ?>
                                         </span>
                                     </td>
-                                    <td>
+                                    <td class="d-flex justify-content-between d-md-table-cell">
+                                        
                                         <div class="d-flex gap-2">
                                             <?php if ($row['Status'] === 'Active' || $row['Status'] === 'Expired'): ?>
                                                 <button type="button" class="btn btn-sm btn-success me-1 return-btn"
@@ -636,8 +646,75 @@ include '../../views/header.php';
     }
 
     .fa-sync-alt {
-
         margin-top: 15px;
+    }
+
+    /* Responsive Table */
+    @media (max-width: 767.98px) {
+        /* Hide regular table header on mobile */
+        .d-md-table-header-group {
+            display: none;
+        }
+        
+        /* Make table rows stack vertically on mobile */
+        .d-md-table-row {
+            display: table-row;
+        }
+        
+        /* Make table cells stack vertically on mobile */
+        .d-md-table-cell {
+            display: table-cell;
+        }
+        
+        /* Mobile-specific table styles */
+        .table-responsive {
+            border: 0;
+        }
+        
+        .table tbody tr {
+            display: block;
+            margin-bottom: 1rem;
+            border: 1px solid var(--border-color);
+            border-radius: 0.5rem;
+            padding: 1rem;
+            background-color: white;
+            box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+        }
+        
+        .table tbody td {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem 0.5rem;
+            border-bottom: 1px solid var(--gray-light);
+        }
+        
+        .table tbody td:last-child {
+            border-bottom: 0;
+        }
+        
+        /* Label for mobile view */
+        .table tbody td > span:first-child:not(.badge) {
+            font-weight: 600;
+            color: var(--gray);
+            margin-right: 1rem;
+            min-width: 120px;
+        }
+        
+        /* Special handling for complex cells */
+        .table tbody td > div {
+            width: 100%;
+        }
+        
+        /* Avatar and book cover adjustments */
+        .avatar, .book-cover {
+            width: 2rem;
+            height: 2rem;
+        }
+        
+        .book-cover {
+            height: 3rem;
+        }
     }
 
     /* Responsive */
@@ -663,11 +740,6 @@ include '../../views/header.php';
         .table-responsive {
             border-radius: 0.5rem;
         }
-
-        .table th,
-        .table td {
-            padding: 0.75rem;
-        }
     }
 
     /* Action Buttons */
@@ -681,38 +753,27 @@ include '../../views/header.php';
         justify-content: center;
         border-radius: 6px;
         transition: all 0.2s ease;
-        /* Soft background and white icon */
     }
 
     .return-btn {
         background-color: #66e492ff;
-        /* soft green */
         border-color: #66e492ff;
-     
     }
 
     .return-btn:hover {
-        background-color:rgb(21, 238, 119);
-        /* slightly deeper soft green */
-        border-color:rgb(21, 238, 119);
-        
+        background-color: rgb(21, 238, 119);
+        border-color: rgb(21, 238, 119);
     }
 
     .delete-btn {
-        background-color:rgb(238, 101, 135);
-        /* soft pink */
-        border-color:rgb(238, 101, 135);
-        
+        background-color: rgb(238, 101, 135);
+        border-color: rgb(238, 101, 135);
     }
 
     .delete-btn:hover {
-        background-color:rgb(235, 79, 118);
-        /* slightly deeper soft pink */
-        border-color:rgb(235, 79, 118);
-        
+        background-color: rgb(235, 79, 118);
+        border-color: rgb(235, 79, 118);
     }
-
-    
 
     /* Center icons perfectly */
     .btn-sm i {
