@@ -28,6 +28,7 @@ $query = "SELECT
             u.role, 
             u.full_name,
             u.profile_pic,
+            u.email,
             COALESCE(a.AdminID, 0) AS admin_id
           FROM users u
           LEFT JOIN admin a ON u.admin_id = a.AdminID
@@ -53,21 +54,22 @@ if (mysqli_num_rows($result) === 1) {
 
         // Set data session lengkap
         $_SESSION = [
-            'id'            => $user['id'],
+            'user_id'       => $user['id'], // Pastikan menggunakan 'user_id'
             'username'      => $user['username'],
+            'email'         => $user['email'],
             'full_name'     => $user['full_name'],
             'profile_pic'   => $user['profile_pic'] ?? 'default.jpg',
             'role'          => $user['role'],
             'admin_id'      => $user['admin_id'] ?? 0,
-            'logged_in'     => true,
+            'logged_in'     => true, // Tambahkan status logged_in
             'last_activity' => time()
         ];
 
-        // Redirect berdasarkan role
+        // Redirect berdasarkan role dengan BASE_URL
         $redirect_url = match ($user['role']) {
-            'admin'  => '../admin/dashboard_admin.php',
-            'staff'  => '../staff/dashboard_staff.php',
-            default  => '../member/dashboard.php'
+            'admin'  => BASE_URL . '/admin/dashboard_admin.php',
+            'staff'  => BASE_URL . '/staff/dashboard_staff.php',
+            default  => BASE_URL . '/user/dashboard.php'
         };
 
         header("Location: " . $redirect_url);
