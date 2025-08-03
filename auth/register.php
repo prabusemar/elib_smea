@@ -362,7 +362,9 @@ include_once '../config.php';
         .fa-user,
         .fa-lock,
         .fa-user-tag,
-        .fa-envelope {
+        .fa-envelope,
+        .fa-eye,
+        .fa-eye-slash {
             margin-top: 0.9rem;
         }
 
@@ -384,6 +386,24 @@ include_once '../config.php';
             background-color: #f8d7da;
             color: #721c24;
             border: 1px solid #f5c6cb;
+        }
+
+        /* Add to your existing CSS */
+        .toggle-password {
+            color: var(--primary);
+            z-index: 10;
+            transition: var(--transition);
+            padding: 10px;
+            /* Makes it easier to click */
+        }
+
+        .toggle-password:hover {
+            color: var(--secondary);
+        }
+
+        /* Adjust input padding to accommodate the eye icon */
+        .form-control {
+            padding-right: 3rem !important;
         }
     </style>
 </head>
@@ -456,6 +476,7 @@ include_once '../config.php';
                     <label for="password">Password</label>
                     <i class="fas fa-lock input-icon"></i>
                     <input type="password" id="password" name="password" class="form-control" placeholder="Masukkan password" required>
+                    <i class="fas fa-eye toggle-password" data-target="password" style="position: absolute; right: 15px; top: 50%; transform: translateY(-50%); cursor: pointer;"></i>
                     <div class="error-message" id="password-error" style="display: none; margin-top: 0.5rem;"></div>
                 </div>
 
@@ -463,6 +484,7 @@ include_once '../config.php';
                     <label for="confirm_password">Konfirmasi Password</label>
                     <i class="fas fa-lock input-icon"></i>
                     <input type="password" id="confirm_password" name="confirm_password" class="form-control" placeholder="Ulangi password" required>
+                    <i class="fas fa-eye toggle-password" data-target="confirm_password" style="position: absolute; right: 15px; top: 50%; transform: translateY(-50%); cursor: pointer;"></i>
                     <div class="error-message" id="confirm-error" style="display: none; margin-top: 0.5rem;"></div>
                 </div>
 
@@ -484,6 +506,24 @@ include_once '../config.php';
     </div>
 
     <script>
+        // Toggle password visibility for both fields
+        document.querySelectorAll('.toggle-password').forEach(function(icon) {
+            icon.addEventListener('click', function() {
+                const targetId = this.getAttribute('data-target');
+                const passwordField = document.getElementById(targetId);
+
+                if (passwordField.type === 'password') {
+                    passwordField.type = 'text';
+                    this.classList.remove('fa-eye');
+                    this.classList.add('fa-eye-slash');
+                } else {
+                    passwordField.type = 'password';
+                    this.classList.remove('fa-eye-slash');
+                    this.classList.add('fa-eye');
+                }
+            });
+        });
+
         // Animasi saat halaman dimuat
         document.addEventListener('DOMContentLoaded', function() {
             // Set opacity 0 untuk elemen yang akan dianimasikan

@@ -416,7 +416,9 @@ include_once '../config.php';
         }
 
         .fa-user,
-        .fa-lock {
+        .fa-lock,
+        .fa-eye,
+        .fa-eye-slash {
             margin-top: 0.9rem;
         }
 
@@ -496,6 +498,7 @@ include_once '../config.php';
                     <label for="password">Password</label>
                     <i class="fas fa-lock input-icon"></i>
                     <input type="password" id="password" name="password" class="form-control" placeholder="Masukkan password" required>
+                    <i class="fas fa-eye toggle-password" style="position: absolute; right: 15px; top: 50%; transform: translateY(-50%); cursor: pointer;"></i>
                 </div>
 
                 <div class="login-actions">
@@ -532,6 +535,22 @@ include_once '../config.php';
     </div>
 
     <script>
+        // Toggle password visibility
+        document.querySelector('.toggle-password').addEventListener('click', function() {
+            const passwordField = document.getElementById('password');
+            const icon = this;
+
+            if (passwordField.type === 'password') {
+                passwordField.type = 'text';
+                icon.classList.remove('fa-eye');
+                icon.classList.add('fa-eye-slash');
+            } else {
+                passwordField.type = 'password';
+                icon.classList.remove('fa-eye-slash');
+                icon.classList.add('fa-eye');
+            }
+        });
+
         // Animasi saat halaman dimuat
         document.addEventListener('DOMContentLoaded', function() {
             // Set opacity 0 untuk elemen yang akan dianimasikan
