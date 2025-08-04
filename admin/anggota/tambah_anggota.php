@@ -13,37 +13,60 @@ $success = '';
 
 // Process form submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $nama = mysqli_real_escape_string($conn, $_POST['nama']);
-    $email = mysqli_real_escape_string($conn, $_POST['email']);
-    $password = mysqli_real_escape_string($conn, $_POST['password']);
-    $jenis_akun = mysqli_real_escape_string($conn, $_POST['jenis_akun']);
-    $masa_berlaku = !empty($_POST['masa_berlaku']) ? mysqli_real_escape_string($conn, $_POST['masa_berlaku']) : null;
+    $nama = trim($_POST['nama']);
+    $username = trim($_POST['username']);
+    $email = trim($_POST['email']);
+    $password = $_POST['password'];
+    $jenis_akun = $_POST['jenis_akun'];
+    $masa_berlaku = !empty($_POST['masa_berlaku']) ? $_POST['masa_berlaku'] : null;
     $foto_profil = 'default.jpg';
 
     // Validate input
-    if (empty($nama) || empty($email) || empty($password)) {
-        $error = 'Nama, email, dan password wajib diisi!';
+    if (empty($nama) || empty($username) || empty($email) || empty($password)) {
+        $error = 'Nama, username, email, dan password wajib diisi!';
     } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
         $error = 'Format email tidak valid!';
     } else {
-        $check = mysqli_query($conn, "SELECT * FROM anggota WHERE Email = '$email'");
-        if (mysqli_num_rows($check) > 0) {
+        // Escape inputs
+        $nama = mysqli_real_escape_string($conn, $nama);
+        $username = mysqli_real_escape_string($conn, $username);
+        $email = mysqli_real_escape_string($conn, $email);
+        $password = mysqli_real_escape_string($conn, $password);
+
+        // Check if email or username exists
+        $check = mysqli_query($conn, "SELECT 
+            (SELECT COUNT(*) FROM anggota WHERE Email = '$email') as email_anggota,
+            (SELECT COUNT(*) FROM users WHERE email = '$email') as email_users,
+            (SELECT COUNT(*) FROM users WHERE username = '$username') as username_count");
+
+        $result = mysqli_fetch_assoc($check);
+
+        if ($result['email_anggota'] > 0 || $result['email_users'] > 0) {
             $error = 'Email sudah terdaftar!';
+        } elseif ($result['username_count'] > 0) {
+            $error = 'Username sudah terdaftar!';
         } else {
             // File upload handling
             if (isset($_FILES['foto_profil']) && $_FILES['foto_profil']['error'] === UPLOAD_ERR_OK) {
                 $uploadDir = '../../uploads/profiles/';
-                if (!is_dir($uploadDir)) mkdir($uploadDir, 0755, true);
+                if (!is_dir($uploadDir)) {
+                    mkdir($uploadDir, 0755, true);
+                }
 
                 $fileExt = strtolower(pathinfo($_FILES['foto_profil']['name'], PATHINFO_EXTENSION));
                 $allowedTypes = ['jpg', 'jpeg', 'png', 'gif'];
+                $maxSize = 2 * 1024 * 1024; // 2MB
 
                 if (in_array($fileExt, $allowedTypes)) {
-                    $fileName = uniqid('profile_') . '.' . $fileExt;
-                    if (move_uploaded_file($_FILES['foto_profil']['tmp_name'], $uploadDir . $fileName)) {
-                        $foto_profil = $fileName;
+                    if ($_FILES['foto_profil']['size'] <= $maxSize) {
+                        $fileName = uniqid('profile_') . '.' . $fileExt;
+                        if (move_uploaded_file($_FILES['foto_profil']['tmp_name'], $uploadDir . $fileName)) {
+                            $foto_profil = $fileName;
+                        } else {
+                            $error = 'Gagal mengunggah foto profil.';
+                        }
                     } else {
-                        $error = 'Gagal mengunggah foto profil.';
+                        $error = 'Ukuran file terlalu besar. Maksimal 2MB.';
                     }
                 } else {
                     $error = 'Format file tidak didukung. Gunakan JPG, PNG, atau GIF.';
@@ -55,25 +78,44 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 mysqli_begin_transaction($conn);
 
                 try {
+                    // Disable triggers temporarily
+                    mysqli_query($conn, "SET @DISABLE_TRIGGERS = TRUE");
+
+                    // Insert into users table first
+                    $sql_users = "INSERT INTO users (username, email, password, role, full_name, profile_pic, created_at) 
+                                 VALUES (?, ?, ?, 'member', ?, ?, NOW())";
+                    $stmt = mysqli_prepare($conn, $sql_users);
+                    mysqli_stmt_bind_param($stmt, "sssss", $username, $email, $hashed_password, $nama, $foto_profil);
+
+                    if (!mysqli_stmt_execute($stmt)) {
+                        throw new Exception("Gagal insert ke users: " . mysqli_error($conn));
+                    }
+
+                    // Then insert into anggota table
                     $sql_anggota = "INSERT INTO anggota (Nama, Email, Password, FotoProfil, TanggalBergabung, Status, JenisAkun, MasaBerlaku) 
                                    VALUES (?, ?, ?, ?, CURDATE(), 'Active', ?, ?)";
                     $stmt = mysqli_prepare($conn, $sql_anggota);
                     mysqli_stmt_bind_param($stmt, "ssssss", $nama, $email, $hashed_password, $foto_profil, $jenis_akun, $masa_berlaku);
-                    mysqli_stmt_execute($stmt);
 
-                    $sql_users = "INSERT INTO users (username, password, role) VALUES (?, ?, 'member')";
-                    $stmt = mysqli_prepare($conn, $sql_users);
-                    mysqli_stmt_bind_param($stmt, "ss", $email, $hashed_password);
-                    mysqli_stmt_execute($stmt);
+                    if (!mysqli_stmt_execute($stmt)) {
+                        throw new Exception("Gagal insert ke anggota: " . mysqli_error($conn));
+                    }
+
+                    // Re-enable triggers
+                    mysqli_query($conn, "SET @DISABLE_TRIGGERS = FALSE");
 
                     mysqli_commit($conn);
                     $success = 'Anggota berhasil ditambahkan!';
-                    $_POST = array();
+                    $_POST = array(); // Clear form
                 } catch (Exception $e) {
                     mysqli_rollback($conn);
+                    // Ensure triggers are re-enabled
+                    mysqli_query($conn, "SET @DISABLE_TRIGGERS = FALSE");
                     $error = 'Gagal menambahkan anggota: ' . $e->getMessage();
-                    if ($foto_profil !== 'default.jpg' && file_exists($uploadDir . $foto_profil)) {
-                        unlink($uploadDir . $foto_profil);
+
+                    // Clean up uploaded file if transaction failed
+                    if (isset($fileName) && $fileName !== 'default.jpg' && file_exists($uploadDir . $fileName)) {
+                        unlink($uploadDir . $fileName);
                     }
                 }
             }
@@ -82,6 +124,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 ?>
 
+<!-- HTML Form -->
 <?php include '../../views/header.php'; ?>
 
 <div class="form-container">
@@ -94,13 +137,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     <?php if ($error): ?>
         <div class="alert error">
-            <i class="fas fa-exclamation-circle"></i> <?= $error ?>
+            <i class="fas fa-exclamation-circle"></i> <?= htmlspecialchars($error) ?>
         </div>
     <?php endif; ?>
 
     <?php if ($success): ?>
         <div class="alert success">
-            <i class="fas fa-check-circle"></i> <?= $success ?>
+            <i class="fas fa-check-circle"></i> <?= htmlspecialchars($success) ?>
         </div>
     <?php endif; ?>
 
@@ -113,6 +156,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </div>
 
                 <div class="form-group">
+                    <label for="username">Username <span class="required">*</span></label>
+                    <input type="text" id="username" name="username" value="<?= htmlspecialchars($_POST['username'] ?? '') ?>" required>
+                    <small class="hint">Harus unik, digunakan untuk login</small>
+                </div>
+
+                <div class="form-group">
                     <label for="email">Email <span class="required">*</span></label>
                     <input type="email" id="email" name="email" value="<?= htmlspecialchars($_POST['email'] ?? '') ?>" required>
                 </div>
@@ -120,7 +169,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <div class="form-group">
                     <label for="password">Password <span class="required">*</span></label>
                     <div class="password-wrapper">
-                        <input type="password" id="password" name="password" required>
+                        <input type="password" id="password" name="password" required minlength="8">
                         <button type="button" class="toggle-password" aria-label="Toggle password visibility">
                             <i class="fas fa-eye"></i>
                         </button>
@@ -134,7 +183,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <label for="foto_profil">Foto Profil</label>
                     <div class="file-upload">
                         <label class="file-label">
-                            <input type="file" id="foto_profil" name="foto_profil" accept="image/*">
+                            <input type="file" id="foto_profil" name="foto_profil" accept="image/jpeg, image/png, image/gif">
                             <span class="file-button"><i class="fas fa-upload"></i> Pilih File</span>
                             <span class="file-name">Belum ada file dipilih</span>
                         </label>
@@ -204,7 +253,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         line-height: 1.6;
         color: var(--dark);
         background-color: #f5f7fa;
-
     }
 
     /* Form Container */
@@ -492,6 +540,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     #jenis_akun[value="Premium"]~#masa_berlaku_group {
         display: block;
     }
+
+    .form-container {
+        max-width: 1000px;
+        margin: 2rem auto;
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        padding: 2rem;
+    }
+
+    .form-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid #dee2e6;
+    }
+
+    /* Add other styles as needed */
 </style>
 
 <script>
@@ -515,7 +583,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             const file = this.files[0];
             if (file) {
                 fileNameDisplay.textContent = file.name;
-
                 const reader = new FileReader();
                 reader.onload = function(e) {
                     previewImg.src = e.target.result;
@@ -531,17 +598,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         const accountType = document.getElementById('jenis_akun');
         const masaBerlakuGroup = document.getElementById('masa_berlaku_group');
 
-        accountType.addEventListener('change', function() {
-            if (this.value === 'Premium') {
-                masaBerlakuGroup.style.display = 'flex';
+        function toggleMasaBerlaku() {
+            if (accountType.value === 'Premium') {
+                masaBerlakuGroup.style.display = 'block';
                 document.getElementById('masa_berlaku').setAttribute('required', 'required');
             } else {
                 masaBerlakuGroup.style.display = 'none';
                 document.getElementById('masa_berlaku').removeAttribute('required');
             }
-        });
+        }
 
-        // Trigger change event on page load
-        accountType.dispatchEvent(new Event('change'));
+        accountType.addEventListener('change', toggleMasaBerlaku);
+        toggleMasaBerlaku(); // Initialize on page load
     });
 </script>
