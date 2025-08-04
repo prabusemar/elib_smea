@@ -3,7 +3,7 @@ session_start();
 require_once '../../config.php';
 
 // Ensure only admin can access
-if (!isset($_SESSION['role'])) {
+if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
     header("Location: ../../auth/login.php");
     exit;
 }
@@ -13,16 +13,27 @@ $success = '';
 
 // Get member data if ID is provided
 $member = null;
+$user_data = null;
 if (isset($_GET['id'])) {
     $member_id = (int)$_GET['id'];
+
+    // Get data from anggota table
     $query = "SELECT * FROM anggota WHERE MemberID = ?";
     $stmt = mysqli_prepare($conn, $query);
     mysqli_stmt_bind_param($stmt, "i", $member_id);
     mysqli_stmt_execute($stmt);
     $result = mysqli_stmt_get_result($stmt);
     $member = mysqli_fetch_assoc($result);
-    
-    if (!$member) {
+
+    if ($member) {
+        // Get data from users table
+        $query = "SELECT * FROM users WHERE email = ? AND role = 'member'";
+        $stmt = mysqli_prepare($conn, $query);
+        mysqli_stmt_bind_param($stmt, "s", $member['Email']);
+        mysqli_stmt_execute($stmt);
+        $result = mysqli_stmt_get_result($stmt);
+        $user_data = mysqli_fetch_assoc($result);
+    } else {
         $error = 'Anggota tidak ditemukan!';
     }
 } else {
@@ -30,25 +41,36 @@ if (isset($_GET['id'])) {
 }
 
 // Process form submission
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && $member && $user_data) {
     $member_id = (int)$_POST['member_id'];
-    $nama = mysqli_real_escape_string($conn, $_POST['nama']);
-    $email = mysqli_real_escape_string($conn, $_POST['email']);
-    $jenis_akun = mysqli_real_escape_string($conn, $_POST['jenis_akun']);
-    $masa_berlaku = !empty($_POST['masa_berlaku']) ? mysqli_real_escape_string($conn, $_POST['masa_berlaku']) : null;
-    $status = mysqli_real_escape_string($conn, $_POST['status']);
+    $nama = trim($_POST['nama']);
+    $username = trim($_POST['username']);
+    $email = trim($_POST['email']);
+    $jenis_akun = $_POST['jenis_akun'];
+    $masa_berlaku = !empty($_POST['masa_berlaku']) ? $_POST['masa_berlaku'] : null;
+    $status = $_POST['status'];
     $foto_profil = $member['FotoProfil']; // Default to existing photo
-    
+
     // Validate input
-    if (empty($nama) || empty($email)) {
-        $error = 'Nama dan email wajib diisi!';
+    if (empty($nama) || empty($username) || empty($email)) {
+        $error = 'Nama, username, dan email wajib diisi!';
     } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
         $error = 'Format email tidak valid!';
     } else {
+        // Check if username is changed and already exists
+        if ($username !== $user_data['username']) {
+            $check = mysqli_query($conn, "SELECT COUNT(*) as count FROM users WHERE username = '$username' AND id != {$user_data['id']}");
+            $result = mysqli_fetch_assoc($check);
+            if ($result['count'] > 0) {
+                $error = 'Username sudah terdaftar!';
+            }
+        }
+
         // Check if email is changed and already exists
-        if ($email !== $member['Email']) {
-            $check = mysqli_query($conn, "SELECT * FROM anggota WHERE Email = '$email'");
-            if (mysqli_num_rows($check) > 0) {
+        if (empty($error) && $email !== $member['Email']) {
+            $check = mysqli_query($conn, "SELECT COUNT(*) as count FROM anggota WHERE Email = '$email' AND MemberID != $member_id");
+            $result = mysqli_fetch_assoc($check);
+            if ($result['count'] > 0) {
                 $error = 'Email sudah terdaftar!';
             }
         }
@@ -62,17 +84,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             $fileExt = strtolower(pathinfo($_FILES['foto_profil']['name'], PATHINFO_EXTENSION));
             $allowedTypes = ['jpg', 'jpeg', 'png', 'gif'];
+            $maxSize = 2 * 1024 * 1024; // 2MB
 
             if (in_array($fileExt, $allowedTypes)) {
-                $fileName = uniqid('profile_') . '.' . $fileExt;
-                if (move_uploaded_file($_FILES['foto_profil']['tmp_name'], $uploadDir . $fileName)) {
-                    // Delete old photo if not default
-                    if ($member['FotoProfil'] !== 'default.jpg' && file_exists($uploadDir . $member['FotoProfil'])) {
-                        unlink($uploadDir . $member['FotoProfil']);
+                if ($_FILES['foto_profil']['size'] <= $maxSize) {
+                    $fileName = uniqid('profile_') . '.' . $fileExt;
+                    if (move_uploaded_file($_FILES['foto_profil']['tmp_name'], $uploadDir . $fileName)) {
+                        // Delete old photo if not default
+                        if ($member['FotoProfil'] !== 'default.jpg' && file_exists($uploadDir . $member['FotoProfil'])) {
+                            unlink($uploadDir . $member['FotoProfil']);
+                        }
+                        $foto_profil = $fileName;
+                    } else {
+                        $error = 'Gagal mengunggah foto profil.';
                     }
-                    $foto_profil = $fileName;
                 } else {
-                    $error = 'Gagal mengunggah foto profil.';
+                    $error = 'Ukuran file terlalu besar. Maksimal 2MB.';
                 }
             } else {
                 $error = 'Format file tidak didukung. Gunakan JPG, PNG, atau GIF.';
@@ -83,6 +110,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             mysqli_begin_transaction($conn);
 
             try {
+                // Disable triggers temporarily to prevent recursive updates
+                mysqli_query($conn, "SET @DISABLE_TRIGGERS = TRUE");
+
+                // Update users table first (username might be used in anggota triggers)
+                $sql_users = "UPDATE users SET 
+                    username = ?, 
+                    email = ?, 
+                    full_name = ?, 
+                    profile_pic = ?,
+                    updated_at = NOW()
+                    WHERE id = ?";
+                $stmt = mysqli_prepare($conn, $sql_users);
+                mysqli_stmt_bind_param($stmt, "ssssi", $username, $email, $nama, $foto_profil, $user_data['id']);
+                mysqli_stmt_execute($stmt);
+
                 // Update anggota table
                 $sql_anggota = "UPDATE anggota SET 
                     Nama = ?, 
@@ -96,17 +138,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 mysqli_stmt_bind_param($stmt, "ssssssi", $nama, $email, $foto_profil, $jenis_akun, $masa_berlaku, $status, $member_id);
                 mysqli_stmt_execute($stmt);
 
-                // Update users table if email changed
-                if ($email !== $member['Email']) {
-                    $sql_users = "UPDATE users SET username = ? WHERE username = ? AND role = 'member'";
-                    $stmt = mysqli_prepare($conn, $sql_users);
-                    mysqli_stmt_bind_param($stmt, "ss", $email, $member['Email']);
-                    mysqli_stmt_execute($stmt);
-                }
+                // Re-enable triggers
+                mysqli_query($conn, "SET @DISABLE_TRIGGERS = FALSE");
 
                 mysqli_commit($conn);
                 $success = 'Data anggota berhasil diperbarui!';
-                
+
                 // Refresh member data
                 $query = "SELECT * FROM anggota WHERE MemberID = ?";
                 $stmt = mysqli_prepare($conn, $query);
@@ -114,12 +151,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 mysqli_stmt_execute($stmt);
                 $result = mysqli_stmt_get_result($stmt);
                 $member = mysqli_fetch_assoc($result);
+
+                // Refresh user data
+                $query = "SELECT * FROM users WHERE id = ?";
+                $stmt = mysqli_prepare($conn, $query);
+                mysqli_stmt_bind_param($stmt, "i", $user_data['id']);
+                mysqli_stmt_execute($stmt);
+                $result = mysqli_stmt_get_result($stmt);
+                $user_data = mysqli_fetch_assoc($result);
             } catch (Exception $e) {
                 mysqli_rollback($conn);
+                // Ensure triggers are re-enabled
+                mysqli_query($conn, "SET @DISABLE_TRIGGERS = FALSE");
                 $error = 'Gagal memperbarui data anggota: ' . $e->getMessage();
                 // Delete uploaded photo if transaction failed
-                if ($foto_profil !== $member['FotoProfil'] && file_exists($uploadDir . $foto_profil)) {
-                    unlink($uploadDir . $foto_profil);
+                if (isset($fileName) && $fileName !== $member['FotoProfil'] && file_exists($uploadDir . $fileName)) {
+                    unlink($uploadDir . $fileName);
                 }
             }
         }
@@ -139,85 +186,93 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     <?php if ($error): ?>
         <div class="alert error">
-            <i class="fas fa-exclamation-circle"></i> <?= $error ?>
+            <i class="fas fa-exclamation-circle"></i> <?= htmlspecialchars($error) ?>
         </div>
     <?php endif; ?>
 
     <?php if ($success): ?>
         <div class="alert success">
-            <i class="fas fa-check-circle"></i> <?= $success ?>
+            <i class="fas fa-check-circle"></i> <?= htmlspecialchars($success) ?>
         </div>
     <?php endif; ?>
 
-    <?php if ($member): ?>
-    <form method="POST" enctype="multipart/form-data" class="member-form">
-        <input type="hidden" name="member_id" value="<?= $member['MemberID'] ?>">
-        
-        <div class="form-grid">
-            <div class="form-column">
-                <div class="form-group">
-                    <label for="nama">Nama Lengkap <span class="required">*</span></label>
-                    <input type="text" id="nama" name="nama" value="<?= htmlspecialchars($member['Nama']) ?>" required>
+    <?php if ($member && $user_data): ?>
+        <form method="POST" enctype="multipart/form-data" class="member-form">
+            <input type="hidden" name="member_id" value="<?= htmlspecialchars($member['MemberID']) ?>">
+
+            <div class="form-grid">
+                <div class="form-column">
+                    <div class="form-group">
+                        <label for="nama">Nama Lengkap <span class="required">*</span></label>
+                        <input type="text" id="nama" name="nama" value="<?= htmlspecialchars($member['Nama']) ?>" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="username">Username <span class="required">*</span></label>
+                        <input type="text" id="username" name="username"
+                            value="<?= isset($user_data['username']) ? htmlspecialchars($user_data['username']) : '' ?>"
+                            required>
+                        <small class="hint">Harus unik, digunakan untuk login</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="email">Email <span class="required">*</span></label>
+                        <input type="email" id="email" name="email" value="<?= htmlspecialchars($member['Email']) ?>" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="status">Status <span class="required">*</span></label>
+                        <select id="status" name="status" required>
+                            <option value="Active" <?= $member['Status'] === 'Active' ? 'selected' : '' ?>>Active</option>
+                            <option value="Suspended" <?= $member['Status'] === 'Suspended' ? 'selected' : '' ?>>Suspended</option>
+                            <option value="Banned" <?= $member['Status'] === 'Banned' ? 'selected' : '' ?>>Banned</option>
+                        </select>
+                    </div>
                 </div>
 
-                <div class="form-group">
-                    <label for="email">Email <span class="required">*</span></label>
-                    <input type="email" id="email" name="email" value="<?= htmlspecialchars($member['Email']) ?>" required>
+                <div class="form-column">
+                    <div class="form-group">
+                        <label for="foto_profil">Foto Profil</label>
+                        <div class="file-upload">
+                            <label class="file-label">
+                                <input type="file" id="foto_profil" name="foto_profil" accept="image/*">
+                                <span class="file-button"><i class="fas fa-upload"></i> Pilih File</span>
+                                <span class="file-name">Belum ada file dipilih</span>
+                            </label>
+                            <small class="hint">Format: JPG, PNG, GIF (Maks. 2MB)</small>
+                        </div>
+                        <div class="image-preview">
+                            <img id="previewFoto" src="../../uploads/profiles/<?= htmlspecialchars($member['FotoProfil']) ?>" alt="Preview Foto Profil">
+                        </div>
+                    </div>
                 </div>
+            </div>
 
+            <div class="form-row">
                 <div class="form-group">
-                    <label for="status">Status <span class="required">*</span></label>
-                    <select id="status" name="status" required>
-                        <option value="Active" <?= $member['Status'] === 'Active' ? 'selected' : '' ?>>Active</option>
-                        <option value="Suspended" <?= $member['Status'] === 'Suspended' ? 'selected' : '' ?>>Suspended</option>
-                        <option value="Banned" <?= $member['Status'] === 'Banned' ? 'selected' : '' ?>>Banned</option>
+                    <label for="jenis_akun">Jenis Akun <span class="required">*</span></label>
+                    <select id="jenis_akun" name="jenis_akun" required>
+                        <option value="Free" <?= $member['JenisAkun'] === 'Free' ? 'selected' : '' ?>>Free</option>
+                        <option value="Premium" <?= $member['JenisAkun'] === 'Premium' ? 'selected' : '' ?>>Premium</option>
                     </select>
                 </div>
-            </div>
 
-            <div class="form-column">
-                <div class="form-group">
-                    <label for="foto_profil">Foto Profil</label>
-                    <div class="file-upload">
-                        <label class="file-label">
-                            <input type="file" id="foto_profil" name="foto_profil" accept="image/*">
-                            <span class="file-button"><i class="fas fa-upload"></i> Pilih File</span>
-                            <span class="file-name">Belum ada file dipilih</span>
-                        </label>
-                        <small class="hint">Format: JPG, PNG, GIF (Maks. 2MB)</small>
-                    </div>
-                    <div class="image-preview">
-                        <img id="previewFoto" src="../../uploads/profiles/<?= htmlspecialchars($member['FotoProfil']) ?>" alt="Preview Foto Profil">
-                    </div>
+                <div class="form-group" id="masa_berlaku_group">
+                    <label for="masa_berlaku">Masa Berlaku</label>
+                    <input type="date" id="masa_berlaku" name="masa_berlaku" value="<?= htmlspecialchars($member['MasaBerlaku']) ?>">
+                    <small class="hint">Hanya untuk akun Premium</small>
                 </div>
             </div>
-        </div>
 
-        <div class="form-row">
-            <div class="form-group">
-                <label for="jenis_akun">Jenis Akun <span class="required">*</span></label>
-                <select id="jenis_akun" name="jenis_akun" required>
-                    <option value="Free" <?= $member['JenisAkun'] === 'Free' ? 'selected' : '' ?>>Free</option>
-                    <option value="Premium" <?= $member['JenisAkun'] === 'Premium' ? 'selected' : '' ?>>Premium</option>
-                </select>
+            <div class="form-actions">
+                <button type="reset" class="reset-button">
+                    <i class="fas fa-undo"></i> Reset
+                </button>
+                <button type="submit" class="submit-button">
+                    <i class="fas fa-save"></i> Simpan Perubahan
+                </button>
             </div>
-
-            <div class="form-group" id="masa_berlaku_group">
-                <label for="masa_berlaku">Masa Berlaku</label>
-                <input type="date" id="masa_berlaku" name="masa_berlaku" value="<?= htmlspecialchars($member['MasaBerlaku']) ?>">
-                <small class="hint">Hanya untuk akun Premium</small>
-            </div>
-        </div>
-
-        <div class="form-actions">
-            <button type="reset" class="reset-button">
-                <i class="fas fa-undo"></i> Reset
-            </button>
-            <button type="submit" class="submit-button">
-                <i class="fas fa-save"></i> Simpan Perubahan
-            </button>
-        </div>
-    </form>
+        </form>
     <?php endif; ?>
 </div>
 
@@ -344,6 +399,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     @media (max-width: 768px) {
+
         .form-grid,
         .form-row {
             grid-template-columns: 1fr;
@@ -396,31 +452,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         outline: none;
         border-color: var(--primary);
         box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.2);
-    }
-
-    /* Password Input */
-    .password-wrapper {
-        position: relative;
-    }
-
-    .password-wrapper input {
-        padding-right: 40px;
-    }
-
-    .toggle-password {
-        position: absolute;
-        right: 10px;
-        top: 50%;
-        transform: translateY(-50%);
-        background: none;
-        border: none;
-        color: var(--gray);
-        cursor: pointer;
-        padding: 5px;
-    }
-
-    .toggle-password:hover {
-        color: var(--primary);
     }
 
     /* File Upload */
@@ -533,10 +564,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     #masa_berlaku_group {
         display: none;
     }
-
-    #jenis_akun[value="Premium"]~#masa_berlaku_group {
-        display: block;
-    }
 </style>
 
 <script>
@@ -565,15 +592,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         const accountType = document.getElementById('jenis_akun');
         const masaBerlakuGroup = document.getElementById('masa_berlaku_group');
 
-        accountType.addEventListener('change', function() {
-            if (this.value === 'Premium') {
-                masaBerlakuGroup.style.display = 'flex';
-            } else {
-                masaBerlakuGroup.style.display = 'none';
-            }
-        });
+        function toggleMasaBerlaku() {
+            masaBerlakuGroup.style.display = accountType.value === 'Premium' ? 'block' : 'none';
+        }
 
-        // Trigger change event on page load
-        accountType.dispatchEvent(new Event('change'));
+        accountType.addEventListener('change', toggleMasaBerlaku);
+        toggleMasaBerlaku(); // Initialize on page load
     });
 </script>
