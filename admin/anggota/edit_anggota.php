@@ -10,37 +10,48 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
 
 $error = '';
 $success = '';
-
-// Get member data if ID is provided
 $member = null;
 $user_data = null;
+
+// Ambil data anggota + user sekaligus
 if (isset($_GET['id'])) {
     $member_id = (int)$_GET['id'];
 
-    // Get data from anggota table
-    $query = "SELECT * FROM anggota WHERE MemberID = ?";
+    $query = "
+        SELECT 
+            a.*, 
+            u.id as user_id,
+            u.username,
+            u.email as user_email,
+            u.full_name,
+            u.profile_pic
+        FROM anggota a
+        JOIN users u ON a.Email = u.email
+        WHERE a.MemberID = ? AND u.role = 'member' AND u.is_deleted = 0
+    ";
     $stmt = mysqli_prepare($conn, $query);
     mysqli_stmt_bind_param($stmt, "i", $member_id);
     mysqli_stmt_execute($stmt);
     $result = mysqli_stmt_get_result($stmt);
-    $member = mysqli_fetch_assoc($result);
+    $row = mysqli_fetch_assoc($result);
 
-    if ($member) {
-        // Get data from users table
-        $query = "SELECT * FROM users WHERE email = ? AND role = 'member'";
-        $stmt = mysqli_prepare($conn, $query);
-        mysqli_stmt_bind_param($stmt, "s", $member['Email']);
-        mysqli_stmt_execute($stmt);
-        $result = mysqli_stmt_get_result($stmt);
-        $user_data = mysqli_fetch_assoc($result);
+    if ($row) {
+        $member = $row;
+        $user_data = [
+            'id' => $row['user_id'],
+            'username' => $row['username'],
+            'email' => $row['user_email'],
+            'full_name' => $row['full_name'],
+            'profile_pic' => $row['profile_pic']
+        ];
     } else {
-        $error = 'Anggota tidak ditemukan!';
+        $error = 'Data anggota atau user tidak ditemukan!';
     }
 } else {
     $error = 'ID Anggota tidak valid!';
 }
 
-// Process form submission
+// Proses submit form
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && $member && $user_data) {
     $member_id = (int)$_POST['member_id'];
     $nama = trim($_POST['nama']);
@@ -49,15 +60,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $member && $user_data) {
     $jenis_akun = $_POST['jenis_akun'];
     $masa_berlaku = !empty($_POST['masa_berlaku']) ? $_POST['masa_berlaku'] : null;
     $status = $_POST['status'];
-    $foto_profil = $member['FotoProfil']; // Default to existing photo
+    $foto_profil = $member['FotoProfil'];
 
-    // Validate input
     if (empty($nama) || empty($username) || empty($email)) {
         $error = 'Nama, username, dan email wajib diisi!';
     } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
         $error = 'Format email tidak valid!';
     } else {
-        // Check if username is changed and already exists
         if ($username !== $user_data['username']) {
             $check = mysqli_query($conn, "SELECT COUNT(*) as count FROM users WHERE username = '$username' AND id != {$user_data['id']}");
             $result = mysqli_fetch_assoc($check);
@@ -66,7 +75,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $member && $user_data) {
             }
         }
 
-        // Check if email is changed and already exists
         if (empty($error) && $email !== $member['Email']) {
             $check = mysqli_query($conn, "SELECT COUNT(*) as count FROM anggota WHERE Email = '$email' AND MemberID != $member_id");
             $result = mysqli_fetch_assoc($check);
@@ -77,20 +85,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $member && $user_data) {
     }
 
     if (empty($error)) {
-        // File upload handling
         if (isset($_FILES['foto_profil']) && $_FILES['foto_profil']['error'] === UPLOAD_ERR_OK) {
             $uploadDir = '../../uploads/profiles/';
             if (!is_dir($uploadDir)) mkdir($uploadDir, 0755, true);
 
             $fileExt = strtolower(pathinfo($_FILES['foto_profil']['name'], PATHINFO_EXTENSION));
             $allowedTypes = ['jpg', 'jpeg', 'png', 'gif'];
-            $maxSize = 2 * 1024 * 1024; // 2MB
+            $maxSize = 2 * 1024 * 1024;
 
             if (in_array($fileExt, $allowedTypes)) {
                 if ($_FILES['foto_profil']['size'] <= $maxSize) {
                     $fileName = uniqid('profile_') . '.' . $fileExt;
                     if (move_uploaded_file($_FILES['foto_profil']['tmp_name'], $uploadDir . $fileName)) {
-                        // Delete old photo if not default
                         if ($member['FotoProfil'] !== 'default.jpg' && file_exists($uploadDir . $member['FotoProfil'])) {
                             unlink($uploadDir . $member['FotoProfil']);
                         }
@@ -108,12 +114,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $member && $user_data) {
 
         if (empty($error)) {
             mysqli_begin_transaction($conn);
-
             try {
-                // Disable triggers temporarily to prevent recursive updates
                 mysqli_query($conn, "SET @DISABLE_TRIGGERS = TRUE");
 
-                // Update users table first (username might be used in anggota triggers)
                 $sql_users = "UPDATE users SET 
                     username = ?, 
                     email = ?, 
@@ -125,7 +128,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $member && $user_data) {
                 mysqli_stmt_bind_param($stmt, "ssssi", $username, $email, $nama, $foto_profil, $user_data['id']);
                 mysqli_stmt_execute($stmt);
 
-                // Update anggota table
                 $sql_anggota = "UPDATE anggota SET 
                     Nama = ?, 
                     Email = ?, 
@@ -138,33 +140,43 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $member && $user_data) {
                 mysqli_stmt_bind_param($stmt, "ssssssi", $nama, $email, $foto_profil, $jenis_akun, $masa_berlaku, $status, $member_id);
                 mysqli_stmt_execute($stmt);
 
-                // Re-enable triggers
                 mysqli_query($conn, "SET @DISABLE_TRIGGERS = FALSE");
-
                 mysqli_commit($conn);
                 $success = 'Data anggota berhasil diperbarui!';
 
-                // Refresh member data
-                $query = "SELECT * FROM anggota WHERE MemberID = ?";
+                // Refresh data
+                $query = "
+                    SELECT 
+                        a.*, 
+                        u.id as user_id,
+                        u.username,
+                        u.email as user_email,
+                        u.full_name,
+                        u.profile_pic
+                    FROM anggota a
+                    JOIN users u ON a.Email = u.email
+                    WHERE a.MemberID = ? AND u.role = 'member' AND u.is_deleted = 0
+                ";
                 $stmt = mysqli_prepare($conn, $query);
                 mysqli_stmt_bind_param($stmt, "i", $member_id);
                 mysqli_stmt_execute($stmt);
                 $result = mysqli_stmt_get_result($stmt);
-                $member = mysqli_fetch_assoc($result);
+                $row = mysqli_fetch_assoc($result);
 
-                // Refresh user data
-                $query = "SELECT * FROM users WHERE id = ?";
-                $stmt = mysqli_prepare($conn, $query);
-                mysqli_stmt_bind_param($stmt, "i", $user_data['id']);
-                mysqli_stmt_execute($stmt);
-                $result = mysqli_stmt_get_result($stmt);
-                $user_data = mysqli_fetch_assoc($result);
+                if ($row) {
+                    $member = $row;
+                    $user_data = [
+                        'id' => $row['user_id'],
+                        'username' => $row['username'],
+                        'email' => $row['user_email'],
+                        'full_name' => $row['full_name'],
+                        'profile_pic' => $row['profile_pic']
+                    ];
+                }
             } catch (Exception $e) {
                 mysqli_rollback($conn);
-                // Ensure triggers are re-enabled
                 mysqli_query($conn, "SET @DISABLE_TRIGGERS = FALSE");
                 $error = 'Gagal memperbarui data anggota: ' . $e->getMessage();
-                // Delete uploaded photo if transaction failed
                 if (isset($fileName) && $fileName !== $member['FotoProfil'] && file_exists($uploadDir . $fileName)) {
                     unlink($uploadDir . $fileName);
                 }
@@ -173,6 +185,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $member && $user_data) {
     }
 }
 ?>
+
 
 <?php include '../../views/header.php'; ?>
 
@@ -209,9 +222,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $member && $user_data) {
 
                     <div class="form-group">
                         <label for="username">Username <span class="required">*</span></label>
-                        <input type="text" id="username" name="username"
-                            value="<?= isset($user_data['username']) ? htmlspecialchars($user_data['username']) : '' ?>"
-                            required>
+                        <input type="text" id="username" name="username" value="<?= isset($user_data['username']) ? htmlspecialchars($user_data['username']) : '' ?>" required>
                         <small class="hint">Harus unik, digunakan untuk login</small>
                     </div>
 
@@ -568,7 +579,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $member && $user_data) {
 
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        // Preview image before upload
         const fileInput = document.getElementById('foto_profil');
         const previewImg = document.getElementById('previewFoto');
         const fileNameDisplay = document.querySelector('.file-name');
@@ -577,7 +587,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $member && $user_data) {
             const file = this.files[0];
             if (file) {
                 fileNameDisplay.textContent = file.name;
-
                 const reader = new FileReader();
                 reader.onload = function(e) {
                     previewImg.src = e.target.result;
@@ -588,7 +597,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $member && $user_data) {
             }
         });
 
-        // Show/hide masa berlaku based on account type
         const accountType = document.getElementById('jenis_akun');
         const masaBerlakuGroup = document.getElementById('masa_berlaku_group');
 
@@ -597,6 +605,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $member && $user_data) {
         }
 
         accountType.addEventListener('change', toggleMasaBerlaku);
-        toggleMasaBerlaku(); // Initialize on page load
+        toggleMasaBerlaku();
     });
 </script>

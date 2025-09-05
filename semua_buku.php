@@ -64,13 +64,16 @@ $kategories = mysqli_query($conn, "SELECT * FROM kategori ORDER BY NamaKategori"
             border: 1px solid rgba(255, 255, 255, 0.3);
         }
 
-        /* Hero Section with Parallax Effect */
+        /* Hero Section Redesign */
         .hero-section {
-            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             padding: 6rem 5% 4rem;
             margin-bottom: 3rem;
             position: relative;
             overflow: hidden;
+            min-height: 60vh;
+            display: flex;
+            align-items: center;
         }
 
         .hero-section::before {
@@ -80,8 +83,7 @@ $kategories = mysqli_query($conn, "SELECT * FROM kategori ORDER BY NamaKategori"
             left: 0;
             width: 100%;
             height: 100%;
-            background: url('<?= BASE_URL ?>/assets/patterns/circuit-board.svg') center/cover;
-            opacity: 0.05;
+            background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320"><path fill="%23ffffff" fill-opacity="0.1" d="M0,128L48,117.3C96,107,192,85,288,112C384,139,480,213,576,218.7C672,224,768,160,864,138.7C960,117,1056,139,1152,149.3C1248,160,1344,160,1392,160L1440,160L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path></svg>') no-repeat bottom/cover;
             z-index: 0;
         }
 
@@ -90,27 +92,38 @@ $kategories = mysqli_query($conn, "SELECT * FROM kategori ORDER BY NamaKategori"
             z-index: 1;
             max-width: 1400px;
             margin: 0 auto;
+            width: 100%;
         }
 
         .hero-title {
-            font-size: 2.5rem;
+            font-size: 3rem;
             font-weight: 800;
             color: white;
-            margin-bottom: 1rem;
-            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            margin-bottom: 1.5rem;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+            line-height: 1.2;
         }
 
         .hero-subtitle {
-            font-size: 1.1rem;
+            font-size: 1.25rem;
             color: rgba(255, 255, 255, 0.9);
-            margin-bottom: 2rem;
+            margin-bottom: 3rem;
             max-width: 600px;
+            line-height: 1.6;
+            font-weight: 300;
         }
 
         /* Enhanced Filter Section */
         .filter-container {
             max-width: 1200px;
-            margin: 2rem auto 0;
+            margin: 0 auto;
+            padding: 2.5rem;
+            border-radius: 24px;
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
         }
 
         .filter-grid {
@@ -125,42 +138,84 @@ $kategories = mysqli_query($conn, "SELECT * FROM kategori ORDER BY NamaKategori"
 
         .filter-input {
             width: 100%;
-            padding: 1rem 1.5rem;
+            padding: 1.25rem 1.5rem;
             border: none;
-            border-radius: 12px;
+            border-radius: 14px;
             font-size: 1rem;
             transition: all 0.3s ease;
-            background: rgba(255, 255, 255, 0.9);
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            background: rgba(255, 255, 255, 0.95);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            color: var(--dark);
         }
 
         .filter-input:focus {
             outline: none;
-            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.3);
+            box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.5);
             background: white;
+            transform: translateY(-2px);
+        }
+
+        .filter-input::placeholder {
+            color: #94a3b8;
         }
 
         .search-button {
-            background: white;
-            color: var(--primary);
+            background: var(--primary);
+            color: white;
             border: none;
             padding: 0 2rem;
             height: 100%;
-            border-radius: 12px;
+            border-radius: 14px;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.3s ease;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 0.5rem;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            gap: 0.75rem;
+            box-shadow: 0 4px 15px rgba(79, 70, 229, 0.3);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
 
         .search-button:hover {
-            background: var(--primary-light);
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(79, 70, 229, 0.4);
+        }
+
+        /* Floating decorative elements */
+        .floating-books {
+            position: absolute;
+            right: 5%;
+            bottom: 20%;
+            z-index: 0;
+            opacity: 0.7;
+        }
+
+        .floating-books i {
+            font-size: 3rem;
             color: white;
-            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+            position: absolute;
+            text-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .floating-books i:nth-child(1) {
+            top: -50px;
+            right: 30px;
+            transform: rotate(15deg);
+        }
+
+        .floating-books i:nth-child(2) {
+            top: 20px;
+            right: -20px;
+            transform: rotate(-10deg);
+        }
+
+        .floating-books i:nth-child(3) {
+            top: 70px;
+            right: 40px;
+            transform: rotate(5deg);
         }
 
         /* Book Grid Layout */
@@ -362,19 +417,36 @@ $kategories = mysqli_query($conn, "SELECT * FROM kategori ORDER BY NamaKategori"
             .books-grid {
                 grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
             }
+
+            .hero-title {
+                font-size: 2.5rem;
+            }
+
+            .floating-books {
+                display: none;
+            }
         }
 
         @media (max-width: 768px) {
             .hero-section {
                 padding: 5rem 5% 3rem;
+                min-height: auto;
             }
 
             .hero-title {
-                font-size: 2rem;
+                font-size: 2.2rem;
+            }
+
+            .hero-subtitle {
+                font-size: 1.1rem;
             }
 
             .filter-grid {
                 grid-template-columns: 1fr;
+            }
+
+            .filter-container {
+                padding: 1.5rem;
             }
 
             .book-cover-container {
@@ -383,6 +455,14 @@ $kategories = mysqli_query($conn, "SELECT * FROM kategori ORDER BY NamaKategori"
         }
 
         @media (max-width: 480px) {
+            .hero-title {
+                font-size: 1.8rem;
+            }
+
+            .filter-input {
+                padding: 1rem;
+            }
+
             .book-actions {
                 flex-direction: column;
             }
@@ -439,7 +519,7 @@ $kategories = mysqli_query($conn, "SELECT * FROM kategori ORDER BY NamaKategori"
                 Temukan pengetahuan tanpa batas dalam koleksi buku digital kami. Mulai petualangan membaca Anda hari ini!
             </p>
 
-            <div class="filter-container glass-card animate__animated animate__fadeInUp animate__delay-1s">
+            <div class="filter-container animate__animated animate__fadeInUp animate__delay-1s">
                 <form method="GET" class="filter-grid">
                     <div class="filter-group">
                         <input type="text" name="search" class="filter-input" placeholder="🔍 Cari judul atau penulis..."
@@ -448,7 +528,10 @@ $kategories = mysqli_query($conn, "SELECT * FROM kategori ORDER BY NamaKategori"
                     <div class="filter-group">
                         <select name="kategori" class="filter-input">
                             <option value="">📚 Semua Kategori</option>
-                            <?php while ($k = mysqli_fetch_assoc($kategories)): ?>
+                            <?php
+                            // Reset pointer untuk kategori
+                            mysqli_data_seek($kategories, 0);
+                            while ($k = mysqli_fetch_assoc($kategories)): ?>
                                 <option value="<?= $k['KategoriID'] ?>" <?= $kategori == $k['KategoriID'] ? 'selected' : '' ?>>
                                     <?= htmlspecialchars($k['NamaKategori']) ?>
                                 </option>
@@ -458,16 +541,22 @@ $kategories = mysqli_query($conn, "SELECT * FROM kategori ORDER BY NamaKategori"
                     <div class="filter-group">
                         <select name="status" class="filter-input">
                             <option value="">🏷️ Semua Status</option>
-                            <option value="Free" <?= $status == 'Free' ? 'selected' : '' ?>&#127758; Gratis</option>
-                            <option value="Premium" <?= $status == 'Premium' ? 'selected' : '' ?>&#11088; Premium</option>
+                            <option value="Free" <?= $status == 'Free' ? 'selected' : '' ?>>🌍 Gratis</option>
+                            <option value="Premium" <?= $status == 'Premium' ? 'selected' : '' ?>>⭐ Premium</option>
                         </select>
                     </div>
                     <div class="filter-group">
                         <button type="submit" class="search-button">
-                            <i class="fas fa-search"></i>
+                            <i class="fas fa-search"></i> Cari
                         </button>
                     </div>
                 </form>
+            </div>
+
+            <div class="floating-books animate__animated animate__fadeInRight animate__delay-2s">
+                <i class="fas fa-book"></i>
+                <i class="fas fa-book-open"></i>
+                <i class="fas fa-bookmark"></i>
             </div>
         </div>
     </section>

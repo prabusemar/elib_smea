@@ -83,7 +83,8 @@ include 'views/header_index.php';
                     <i class="fas fa-moon"></i>
                 </div>
                 <h3>Mode Malam</h3>
-                <p>Nikmati pengalaman membaca yang nyaman di malam hari dengan tampilan mode gelap.</p></div>
+                <p>Nikmati pengalaman membaca yang nyaman di malam hari dengan tampilan mode gelap.</p>
+            </div>
 
             <div class="feature-card fade-in delay-3">
                 <div class="feature-icon">
@@ -298,34 +299,34 @@ include 'views/header_index.php';
         <div class="pricing-grid">
             <!-- Free Plan -->
             <div class="pricing-card fade-in delay-1">
-            <h3>Free</h3>
-            <div class="price" style="font-size: 3.5rem;">
-                <span style="word-break: break-all; white-space: normal; font-size: 0.75em;">Rp0</span>
-                <span style="font-size: 0.5em;">/bulan</span>
-            </div>
-            <ul class="pricing-features">
-                <li><i class="fas fa-check"></i> Akses ke 5.000+ buku gratis</li>
-                <li><i class="fas fa-check"></i> Baca online</li>
-                <li><i class="fas fa-check"></i> Bookmark dasar</li>
-                <li><i class="fas fa-check"></i> Fitur pencarian sederhana</li>
-                <li><i class="fas fa-times"></i> Buku premium</li>
-                <li><i class="fas fa-times"></i> Fitur komunitas</li>
-            </ul>
-            <a href="auth/register.php" class="btn btn-outline">Daftar Gratis</a>
+                <h3>Free</h3>
+                <div class="price" style="font-size: 3.5rem;">
+                    <span style="word-break: break-all; white-space: normal; font-size: 0.75em;">Rp0</span>
+                    <span style="font-size: 0.5em;">/bulan</span>
+                </div>
+                <ul class="pricing-features">
+                    <li><i class="fas fa-check"></i> Akses ke 5.000+ buku gratis</li>
+                    <li><i class="fas fa-check"></i> 1 buku offline</li>
+                    <li><i class="fas fa-check"></i> Bookmark dasar</li>
+                    <li><i class="fas fa-check"></i> Fitur pencarian sederhana</li>
+                    <li><i class="fas fa-times"></i> Buku premium</li>
+                    <li><i class="fas fa-times"></i> Fitur komunitas</li>
+                </ul>
+                <a href="auth/register.php" class="btn btn-outline">Daftar Gratis</a>
             </div>
 
             <!-- Premium Plan -->
             <div class="pricing-card popular fade-in delay-2">
-            <div class="popular-badge">Populer</div>
-            <h3>Premium</h3>
-            <div class="price" style="font-size: 3.5rem;">
-                <span style="word-break: break-all; white-space: normal; font-size: 0.75em;">Rp50.000</span>
-                <span style="font-size: 0.5em;">/bulan</span>
-            </div>
-            <ul class="pricing-features">
+                <div class="popular-badge">Populer</div>
+                <h3>Premium</h3>
+                <div class="price" style="font-size: 3.5rem;">
+                    <span style="word-break: break-all; white-space: normal; font-size: 0.75em;">Rp10.000</span>
+                    <span style="font-size: 0.5em;">/bulan</span>
+                </div>
+                <ul class="pricing-features">
                     <li><i class="fas fa-check"></i> Semua fitur Free</li>
                     <li><i class="fas fa-check"></i> Akses ke 10.000+ buku premium</li>
-                    <li><i class="fas fa-check"></i> Baca hingga 20 buku online bersamaan</li>
+                    <li><i class="fas fa-check"></i> Baca dan pinjam hingga 15 buku online bersamaan</li>
                     <li><i class="fas fa-check"></i> Catatan dan highlight</li>
                     <li><i class="fas fa-check"></i> Akses komunitas pembaca</li>
                     <li><i class="fas fa-check"></i> Rekomendasi personal</li>
@@ -337,222 +338,18 @@ include 'views/header_index.php';
             <div class="pricing-card fade-in delay-3">
                 <h3>Tahunan</h3>
                 <div class="price" style="font-size: 3.5rem;">
-                    <span style="word-break: break-all; white-space: normal; font-size: 0.75em;">Rp450.000</span>
+                    <span style="word-break: break-all; white-space: normal; font-size: 0.75em;">Rp100.000</span>
                     <span style="font-size: 0.5em;">/tahun</span>
                 </div>
                 <ul class="pricing-features">
                     <li><i class="fas fa-check"></i> Semua fitur Premium</li>
-                    <li><i class="fas fa-check"></i> Hemat 25% dibanding bulanan</li>
-                    <li><i class="fas fa-check"></i> Baca hingga 50 buku online bersamaan</li>
+                    <li><i class="fas fa-check"></i> Hemat 17% dibanding bulanan</li>
+                    <li><i class="fas fa-check"></i> Baca dan pinjam hingga 50 buku online bersamaan</li>
                     <li><i class="fas fa-check"></i> Laporan membaca mingguan</li>
                     <li><i class="fas fa-check"></i> Prioritas dukungan</li>
                     <li><i class="fas fa-check"></i> Hadiah buku bulanan</li>
                 </ul>
                 <a href="auth/register.php" class="btn btn-outline">Pilih Tahunan</a>
-            </div>
-        </div>
-    </section>
-
-    <!-- Reading Community Section -->
-    <section class="community" id="community">
-        <div class="section-title fade-in">
-            <h2>Komunitas Pembaca</h2>
-            <p>Bergabunglah dengan komunitas pembaca kami dan tingkatkan pengalaman membaca Anda</p>
-        </div>
-
-        <div class="community-container">
-            <!-- Community Stats -->
-            <div class="community-stats fade-in delay-1">
-                <div class="stat-card">
-                    <div class="stat-icon">
-                        <i class="fas fa-users"></i>
-                    </div>
-                    <div class="stat-content">
-                        <h3>25,000+</h3>
-                        <p>Anggota Aktif</p>
-                    </div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-icon">
-                        <i class="fas fa-comments"></i>
-                    </div>
-                    <div class="stat-content">
-                        <h3>500+</h3>
-                        <p>Diskusi Setiap Hari</p>
-                    </div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-icon">
-                        <i class="fas fa-book"></i>
-                    </div>
-                    <div class="stat-content">
-                        <h3>1,200+</h3>
-                        <p>Klub Buku</p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Community Features -->
-            <div class="community-features">
-                <!-- Feature 1 -->
-                <div class="feature-card fade-in delay-2">
-                    <div class="feature-icon">
-                        <i class="fas fa-calendar-check"></i>
-                    </div>
-                    <div class="feature-content">
-                        <h3>Acara Rutin</h3>
-                        <p>Ikuti acara bulanan seperti bedah buku, temu penulis, dan tantangan membaca.</p>
-                        <a href="#" class="feature-link">Lihat Jadwal <i class="fas fa-arrow-right"></i></a>
-                    </div>
-                </div>
-
-                <!-- Feature 2 -->
-                <div class="feature-card fade-in delay-3">
-                    <div class="feature-icon">
-                        <i class="fas fa-trophy"></i>
-                    </div>
-                    <div class="feature-content">
-                        <h3>Tantangan Membaca</h3>
-                        <p>Ikuti tantangan membaca dengan tema berbeda setiap bulan dan dapatkan hadiah.</p>
-                        <a href="#" class="feature-link">Lihat Tantangan <i class="fas fa-arrow-right"></i></a>
-                    </div>
-                </div>
-
-                <!-- Feature 3 -->
-                <div class="feature-card fade-in delay-4">
-                    <div class="feature-icon">
-                        <i class="fas fa-chart-bar"></i>
-                    </div>
-                    <div class="feature-content">
-                        <h3>Statistik Komunitas</h3>
-                        <p>Lihat buku paling populer, rating tertinggi, dan rekomendasi dari anggota lain.</p>
-                        <a href="#" class="feature-link">Lihat Statistik <i class="fas fa-arrow-right"></i></a>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Discussion Highlights -->
-            <div class="discussion-highlights fade-in delay-1">
-                <h3>Diskusi Populer</h3>
-                <div class="discussion-grid">
-                    <!-- Discussion 1 -->
-                    <div class="discussion-card">
-                        <div class="discussion-header">
-                            <img src="https://randomuser.me/api/portraits/women/44.jpg" alt="User" class="user-avatar">
-                            <div class="user-info">
-                                <h4>Sarah Wijaya</h4>
-                                <p>2 hari lalu · Klub Fiksi</p>
-                            </div>
-                        </div>
-                        <div class="discussion-content">
-                            <h4>Pendapat tentang akhir cerita Laskar Pelangi?</h4>
-                            <p>Saya masih bingung dengan akhir cerita ini. Menurut kalian apa makna di balik akhir cerita yang terbuka ini?</p>
-                        </div>
-                        <div class="discussion-stats">
-                            <span><i class="fas fa-comment"></i> 42 komentar</span>
-                            <span><i class="fas fa-heart"></i> 128 suka</span>
-                        </div>
-                    </div>
-
-                    <!-- Discussion 2 -->
-                    <div class="discussion-card">
-                        <div class="discussion-header">
-                            <img src="https://randomuser.me/api/portraits/men/32.jpg" alt="User" class="user-avatar">
-                            <div class="user-info">
-                                <h4>Budi Santoso</h4>
-                                <p>5 hari lalu · Klub Sains</p>
-                            </div>
-                        </div>
-                        <div class="discussion-content">
-                            <h4>Rekomendasi buku sains populer</h4>
-                            <p>Saya baru mulai tertarik dengan sains populer. Apa buku favorit kalian di genre ini?</p>
-                        </div>
-                        <div class="discussion-stats">
-                            <span><i class="fas fa-comment"></i> 35 komentar</span>
-                            <span><i class="fas fa-heart"></i> 89 suka</span>
-                        </div>
-                    </div>
-
-                    <!-- Discussion 3 -->
-                    <div class="discussion-card">
-                        <div class="discussion-header">
-                            <img src="https://randomuser.me/api/portraits/women/68.jpg" alt="User" class="user-avatar">
-                            <div class="user-info">
-                                <h4>Dewi Lestari</h4>
-                                <p>1 minggu lalu · Klub Penulis</p>
-                            </div>
-                        </div>
-                        <div class="discussion-content">
-                            <h4>Tips mengatasi writer's block</h4>
-                            <p>Bagaimana cara kalian mengatasi saat mengalami kebuntuan dalam menulis?</p>
-                        </div>
-                        <div class="discussion-stats">
-                            <span><i class="fas fa-comment"></i> 67 komentar</span>
-                            <span><i class="fas fa-heart"></i> 156 suka</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="view-all-discussions">
-                    <a href="#" class="btn btn-outline">Lihat Semua Diskusi</a>
-                </div>
-            </div>
-
-            <!-- Book Clubs -->
-            <div class="book-clubs fade-in delay-2">
-                <h3>Klub Buku Populer</h3>
-                <div class="clubs-grid">
-                    <!-- Club 1 -->
-                    <div class="club-card">
-                        <div class="club-cover" style="background-image: url('https://images.unsplash.com/photo-1544947950-fa07a98d237f?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80');">
-                            <div class="club-members">
-                                <i class="fas fa-users"></i> 1,245 anggota
-                            </div>
-                        </div>
-                        <div class="club-info">
-                            <h4>Fiksi Modern</h4>
-                            <p>Diskusi buku-buku fiksi kontemporer dari seluruh dunia</p>
-                            <div class="club-actions">
-                                <a href="#" class="btn btn-small">Bergabung</a>
-                                <a href="#" class="btn btn-small btn-outline">Detail</a>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Club 2 -->
-                    <div class="club-card">
-                        <div class="club-cover" style="background-image: url('https://images.unsplash.com/photo-1506880018603-83d5b814b5a6?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80');">
-                            <div class="club-members">
-                                <i class="fas fa-users"></i> 892 anggota
-                            </div>
-                        </div>
-                        <div class="club-info">
-                            <h4>Sains & Teknologi</h4>
-                            <p>Eksplorasi buku sains populer dan perkembangan teknologi</p>
-                            <div class="club-actions">
-                                <a href="#" class="btn btn-small">Bergabung</a>
-                                <a href="#" class="btn btn-small btn-outline">Detail</a>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Club 3 -->
-                    <div class="club-card">
-                        <div class="club-cover" style="background-image: url('https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80');">
-                            <div class="club-members">
-                                <i class="fas fa-users"></i> 1,567 anggota
-                            </div>
-                        </div>
-                        <div class="club-info">
-                            <h4>Sejarah Dunia</h4>
-                            <p>Menelusuri sejarah melalui buku-buku berkualitas</p>
-                            <div class="club-actions">
-                                <a href="#" class="btn btn-small">Bergabung</a>
-                                <a href="#" class="btn btn-small btn-outline">Detail</a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
             </div>
         </div>
     </section>
