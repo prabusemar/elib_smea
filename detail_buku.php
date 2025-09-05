@@ -644,7 +644,7 @@ $avgRating = $buku['Rating'];
                     </div>
                 <?php endwhile; ?>
 
-                <button class="btn btn-primary" style="margin-top: 2rem; display: block; width: 100%; max-width: 300px; margin-left: auto; margin-right: auto;" id="addReviewBtn">
+                <button class="btn btn-primary btn-sm" id="addReviewBtn" style="font-size: 1rem;"></button>
                     <i class="fas fa-plus"></i> Tambah Ulasan Anda
                 </button>
             <?php endif; ?>

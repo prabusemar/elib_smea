@@ -8,6 +8,28 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
     exit;
 }
 
+// Fungsi untuk mengubah multi-paragraf menjadi satu paragraf
+function normalizeParagraph($text)
+{
+    if (empty($text)) {
+        return '';
+    }
+
+    // Hilangkan tag HTML jika ada
+    $text = strip_tags($text);
+
+    // Ganti newlines dan carriage returns dengan spasi
+    $text = str_replace(["\r\n", "\r", "\n"], " ", $text);
+
+    // Hilangkan spasi berlebih
+    $text = preg_replace('/\s+/', ' ', $text);
+
+    // Trim spasi di awal dan akhir
+    $text = trim($text);
+
+    return $text;
+}
+
 // Handle form submissions
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     // Tambah Buku
@@ -19,7 +41,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $isbn = mysqli_real_escape_string($conn, trim($_POST['isbn'] ?? ''));
         $kategori = !empty($_POST['kategori']) ? (int)$_POST['kategori'] : NULL;
         $driveurl = mysqli_real_escape_string($conn, trim($_POST['driveurl']));
-        $deskripsi = mysqli_real_escape_string($conn, trim($_POST['deskripsi'] ?? ''));
+        $deskripsi = mysqli_real_escape_string($conn, normalizeParagraph($_POST['deskripsi'] ?? ''));
         $halaman = !empty($_POST['halaman']) ? (int)$_POST['halaman'] : NULL;
         $bahasa = mysqli_real_escape_string($conn, trim($_POST['bahasa'] ?? 'Indonesia'));
         // Pastikan nilai bahasa valid
@@ -137,7 +159,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $isbn = mysqli_real_escape_string($conn, trim($_POST['isbn'] ?? ''));
         $kategori = !empty($_POST['kategori']) ? (int)$_POST['kategori'] : NULL;
         $driveurl = mysqli_real_escape_string($conn, trim($_POST['driveurl']));
-        $deskripsi = mysqli_real_escape_string($conn, trim($_POST['deskripsi'] ?? ''));
+        $deskripsi = mysqli_real_escape_string($conn, normalizeParagraph($_POST['deskripsi'] ?? ''));
         $halaman = !empty($_POST['halaman']) ? (int)$_POST['halaman'] : NULL;
         $bahasa = mysqli_real_escape_string($conn, trim($_POST['bahasa'] ?? 'Indonesia'));
         $allowed_bahasa = ['Indonesia', 'Inggris', 'Arab', 'Lainnya'];
