@@ -346,7 +346,8 @@ $avgRating = number_format($ratingData['avg_rating'], 1);
         .favorite-btn {
             position: absolute;
             top: 20px;
-            right: 20px;
+            left: 20px;
+            right: auto;
             background: rgba(255, 255, 255, 0.95);
             border: none;
             width: 50px;
@@ -762,7 +763,8 @@ $avgRating = number_format($ratingData['avg_rating'], 1);
                 width: 45px;
                 height: 45px;
                 top: 15px;
-                right: 15px;
+                left: 15px;
+                right: auto;
             }
 
             .favorite-btn i {
@@ -801,25 +803,11 @@ $avgRating = number_format($ratingData['avg_rating'], 1);
                 width: 40px;
                 height: 40px;
                 top: 10px;
-                right: 10px;
-            }
-
-            .favorite-btn i {
-                font-size: 1.2rem;
-            }
-
-            /* Reposition favorite button on mobile */
-            .book-cover-container {
-                display: flex;
-                justify-content: center;
-            }
-
-            .book-cover-container .favorite-btn {
-                position: relative;
-                top: 0;
-                right: 0;
-                margin-top: 15px;
-                align-self: center;
+                left: 10px;
+                right: auto;
+                position: absolute;
+                margin-top: 0;
+                align-self: unset;
             }
         }
 
@@ -897,7 +885,7 @@ $avgRating = number_format($ratingData['avg_rating'], 1);
                     <form method="POST" class="favorite-form">
                         <input type="hidden" name="toggle_favorite" value="1">
                         <button type="submit" class="favorite-btn <?= $isFavorited ? 'active' : '' ?>"
-                            id="favoriteButton">
+                            id="favoriteButton" style="left: 20px; right: auto; top: 20px;">
                             <i class="<?= $isFavorited ? 'fas' : 'far' ?> fa-heart"></i>
                         </button>
                     </form>
@@ -1299,41 +1287,24 @@ $avgRating = number_format($ratingData['avg_rating'], 1);
         function handleMobileLayout() {
             const favoriteBtn = document.getElementById('favoriteButton');
             const bookCoverContainer = document.querySelector('.book-cover-container');
-
+            // Tidak perlu memindahkan tombol favorit ke tengah pada mobile, biarkan tetap absolute di kiri atas
             if (window.innerWidth <= 576) {
-                // Mobile view
-                if (favoriteBtn && bookCoverContainer) {
-                    favoriteBtn.style.position = 'relative';
-                    favoriteBtn.style.top = '0';
-                    favoriteBtn.style.right = '0';
-                    favoriteBtn.style.marginTop = '15px';
-                    favoriteBtn.style.alignSelf = 'center';
-
-                    // Create a container for the button if it doesn't exist
-                    if (!document.querySelector('.favorite-btn-container')) {
-                        const container = document.createElement('div');
-                        container.className = 'favorite-btn-container';
-                        container.style.display = 'flex';
-                        container.style.justifyContent = 'center';
-                        container.style.width = '100%';
-                        container.appendChild(favoriteBtn);
-                        bookCoverContainer.appendChild(container);
-                    }
+                if (favoriteBtn) {
+                    favoriteBtn.style.position = 'absolute';
+                    favoriteBtn.style.top = '10px';
+                    favoriteBtn.style.left = '10px';
+                    favoriteBtn.style.right = 'auto';
+                    favoriteBtn.style.marginTop = '0';
+                    favoriteBtn.style.alignSelf = '';
                 }
             } else {
-                // Desktop view
-                if (favoriteBtn && bookCoverContainer) {
+                if (favoriteBtn) {
                     favoriteBtn.style.position = 'absolute';
                     favoriteBtn.style.top = '20px';
-                    favoriteBtn.style.right = '20px';
+                    favoriteBtn.style.left = '20px';
+                    favoriteBtn.style.right = 'auto';
                     favoriteBtn.style.marginTop = '0';
-
-                    // Remove the container if it exists
-                    const container = document.querySelector('.favorite-btn-container');
-                    if (container) {
-                        container.remove();
-                        bookCoverContainer.appendChild(favoriteBtn);
-                    }
+                    favoriteBtn.style.alignSelf = '';
                 }
             }
         }
