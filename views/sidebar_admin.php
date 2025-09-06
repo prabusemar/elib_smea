@@ -109,13 +109,7 @@ $current_page = basename($_SERVER['PHP_SELF']);
                     <span class="tooltiptext">Staff</span>
                 </div>
             </a>
-            <a href="/library/admin/grup_membaca.php" class="nav-item <?php echo ($current_page == 'grup_membaca.php') ? 'active' : ''; ?>">
-                <div class="tooltip">
-                    <i class="fas fa-user-friends"></i>
-                    <span>Grup Membaca</span>
-                    <span class="tooltiptext">Grup Membaca</span>
-                </div>
-            </a>
+
         </div>
 
         <!-- Transaction Management -->
@@ -141,7 +135,7 @@ $current_page = basename($_SERVER['PHP_SELF']);
                     <span class="tooltiptext">Riwayat Baca</span>
                 </div>
             </a>
-            <a href="/library/admin/favorit.php" class="nav-item <?php echo ($current_page == 'favorit.php') ? 'active' : ''; ?>">
+            <a href="/library/admin/favorit/favorit_admin.php" class="nav-item <?php echo ($current_page == 'favorit_admin.php') ? 'active' : ''; ?>">
                 <div class="tooltip">
                     <i class="fas fa-heart"></i>
                     <span>Favorit</span>

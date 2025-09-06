@@ -102,14 +102,6 @@ include 'views/header_index.php';
                 <p>Temukan buku yang tepat dengan cepat menggunakan sistem pencarian dan rekomendasi kami.</p>
             </div>
 
-            <div class="feature-card fade-in delay-1">
-                <div class="feature-icon">
-                    <i class="fas fa-user-friends"></i>
-                </div>
-                <h3>Komunitas Pembaca</h3>
-                <p>Bergabunglah dengan grup diskusi dan berbagi pemikiran dengan pembaca lainnya.</p>
-            </div>
-
             <div class="feature-card fade-in delay-2">
                 <div class="feature-icon">
                     <i class="fas fa-chart-line"></i>
@@ -310,7 +302,6 @@ include 'views/header_index.php';
                     <li><i class="fas fa-check"></i> Bookmark dasar</li>
                     <li><i class="fas fa-check"></i> Fitur pencarian sederhana</li>
                     <li><i class="fas fa-times"></i> Buku premium</li>
-                    <li><i class="fas fa-times"></i> Fitur komunitas</li>
                 </ul>
                 <a href="auth/register.php" class="btn btn-outline">Daftar Gratis</a>
             </div>
@@ -328,7 +319,6 @@ include 'views/header_index.php';
                     <li><i class="fas fa-check"></i> Akses ke 10.000+ buku premium</li>
                     <li><i class="fas fa-check"></i> Baca dan pinjam hingga 15 buku online bersamaan</li>
                     <li><i class="fas fa-check"></i> Catatan dan highlight</li>
-                    <li><i class="fas fa-check"></i> Akses komunitas pembaca</li>
                     <li><i class="fas fa-check"></i> Rekomendasi personal</li>
                 </ul>
                 <a href="auth/register.php" class="btn btn-primary">Mulai Sekarang</a>
@@ -347,7 +337,6 @@ include 'views/header_index.php';
                     <li><i class="fas fa-check"></i> Baca dan pinjam hingga 50 buku online bersamaan</li>
                     <li><i class="fas fa-check"></i> Laporan membaca mingguan</li>
                     <li><i class="fas fa-check"></i> Prioritas dukungan</li>
-                    <li><i class="fas fa-check"></i> Hadiah buku bulanan</li>
                 </ul>
                 <a href="auth/register.php" class="btn btn-outline">Pilih Tahunan</a>
             </div>

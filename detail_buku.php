@@ -19,6 +19,115 @@ if (!$buku) {
     exit();
 }
 
+// Cek apakah user sudah login
+$isLoggedIn = isset($_SESSION['user_id']);
+$userID = $isLoggedIn ? $_SESSION['user_id'] : 0;
+$memberID = 0;
+
+// Get the correct MemberID from anggota table if user is logged in
+if ($isLoggedIn) {
+    // First get user email from users table
+    $queryUser = "SELECT email FROM users WHERE id = $userID AND is_deleted = 0";
+    $resultUser = mysqli_query($conn, $queryUser);
+
+    if ($resultUser && mysqli_num_rows($resultUser) > 0) {
+        $userData = mysqli_fetch_assoc($resultUser);
+        $userEmail = $userData['email'];
+
+        // Now get MemberID from anggota table using email - HANYA yang tidak dihapus
+        $queryAnggota = "SELECT MemberID FROM anggota WHERE Email = '$userEmail' AND is_deleted = 0";
+        $resultAnggota = mysqli_query($conn, $queryAnggota);
+
+        if ($resultAnggota && mysqli_num_rows($resultAnggota) > 0) {
+            $anggotaData = mysqli_fetch_assoc($resultAnggota);
+            $memberID = $anggotaData['MemberID'];
+        } else {
+            // Jika anggota tidak ditemukan atau dihapus, coba buat record baru
+            $queryUserData = "SELECT full_name, email, password FROM users WHERE id = $userID AND is_deleted = 0";
+            $resultUserData = mysqli_query($conn, $queryUserData);
+
+            if ($resultUserData && mysqli_num_rows($resultUserData) > 0) {
+                $userFullData = mysqli_fetch_assoc($resultUserData);
+
+                $queryCreateAnggota = "INSERT INTO anggota (Nama, Email, Password, TanggalBergabung, Status, JenisAkun) 
+                                      VALUES ('" . mysqli_real_escape_string($conn, $userFullData['full_name']) . "', 
+                                              '" . mysqli_real_escape_string($conn, $userFullData['email']) . "', 
+                                              '" . mysqli_real_escape_string($conn, $userFullData['password']) . "', 
+                                              CURDATE(), 'Active', 'Free')";
+
+                if (mysqli_query($conn, $queryCreateAnggota)) {
+                    $memberID = mysqli_insert_id($conn);
+                }
+            }
+        }
+    }
+}
+
+// Cek apakah buku sudah difavoritkan oleh user
+$isFavorited = false;
+if ($isLoggedIn && $memberID > 0) {
+    $queryFavorit = "SELECT * FROM favorit WHERE MemberID = $memberID AND BukuID = $bukuID";
+    $resultFavorit = mysqli_query($conn, $queryFavorit);
+    $isFavorited = mysqli_num_rows($resultFavorit) > 0;
+}
+
+// Handle add/remove favorite
+if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['toggle_favorite'])) {
+    if (!$isLoggedIn) {
+        $_SESSION['toast'] = [
+            'type' => 'error',
+            'message' => "Anda harus login terlebih dahulu untuk menambahkan ke favorit"
+        ];
+        header("Location: login.php?redirect=" . urlencode($_SERVER['REQUEST_URI']));
+        exit();
+    }
+
+    if ($memberID === 0) {
+        $_SESSION['toast'] = [
+            'type' => 'error',
+            'message' => "Akun anggota tidak ditemukan. Silakan logout dan login kembali."
+        ];
+        header("Location: " . $_SERVER['REQUEST_URI']);
+        exit();
+    }
+
+    if ($isFavorited) {
+        // Remove from favorites
+        $queryDelete = "DELETE FROM favorit WHERE MemberID = $memberID AND BukuID = $bukuID";
+        if (mysqli_query($conn, $queryDelete)) {
+            $isFavorited = false;
+            $_SESSION['toast'] = [
+                'type' => 'success',
+                'message' => "Buku dihapus dari favorit"
+            ];
+        } else {
+            $_SESSION['toast'] = [
+                'type' => 'error',
+                'message' => "Gagal menghapus dari favorit: " . mysqli_error($conn)
+            ];
+        }
+    } else {
+        // Add to favorites
+        $queryInsert = "INSERT INTO favorit (MemberID, BukuID, TanggalDitambahkan) VALUES ($memberID, $bukuID, NOW())";
+        if (mysqli_query($conn, $queryInsert)) {
+            $isFavorited = true;
+            $_SESSION['toast'] = [
+                'type' => 'success',
+                'message' => "Buku ditambahkan ke favorit"
+            ];
+        } else {
+            $_SESSION['toast'] = [
+                'type' => 'error',
+                'message' => "Gagal menambahkan ke favorit: " . mysqli_error($conn)
+            ];
+        }
+    }
+
+    // Redirect to avoid form resubmission
+    header("Location: " . $_SERVER['REQUEST_URI']);
+    exit();
+}
+
 // Query untuk mendapatkan ulasan buku
 $queryUlasan = "SELECT u.*, p.Nama as NamaAnggota, p.FotoProfil
                 FROM ulasan u
@@ -27,6 +136,7 @@ $queryUlasan = "SELECT u.*, p.Nama as NamaAnggota, p.FotoProfil
                 ORDER BY u.TanggalUlas DESC";
 $ulasan = mysqli_query($conn, $queryUlasan);
 $totalUlasan = mysqli_num_rows($ulasan);
+
 // Hitung rata-rata rating
 $avgRating = $buku['Rating'];
 ?>
@@ -58,6 +168,117 @@ $avgRating = $buku['Rating'];
             --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.1), 0 5px 10px rgba(0, 0, 0, 0.05);
             --shadow-xl: 0 20px 40px rgba(0, 0, 0, 0.15), 0 10px 10px rgba(0, 0, 0, 0.05);
             --transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+
+        /* Toast Notification Styles */
+        .toast-container {
+            position: fixed;
+            top: 100px;
+            right: 20px;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            max-width: 350px;
+        }
+
+        .toast {
+            padding: 16px 20px;
+            border-radius: 12px;
+            box-shadow: var(--shadow-xl);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            animation: slideInRight 0.3s ease-out, fadeOut 0.5s ease-in 4.5s forwards;
+            transform: translateX(400px);
+            opacity: 0;
+            transition: transform 0.3s ease-out, opacity 0.3s ease-out;
+        }
+
+        .toast.show {
+            transform: translateX(0);
+            opacity: 1;
+        }
+
+        .toast.hide {
+            transform: translateX(400px);
+            opacity: 0;
+        }
+
+        .toast-success {
+            background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%);
+            color: white;
+            border-left: 4px solid #27ae60;
+        }
+
+        .toast-error {
+            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+            color: white;
+            border-left: 4px solid #c0392b;
+        }
+
+        .toast-icon {
+            font-size: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        .toast-content {
+            flex: 1;
+        }
+
+        .toast-title {
+            font-weight: 600;
+            margin-bottom: 4px;
+            font-size: 1rem;
+        }
+
+        .toast-message {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+
+        .toast-close {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.2rem;
+            cursor: pointer;
+            opacity: 0.7;
+            transition: opacity 0.2s;
+            padding: 0;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+        }
+
+        .toast-close:hover {
+            opacity: 1;
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        @keyframes slideInRight {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes fadeOut {
+            from {
+                opacity: 1;
+            }
+
+            to {
+                opacity: 0;
+            }
         }
 
         /* Custom Styles */
@@ -116,6 +337,52 @@ $avgRating = $buku['Rating'];
         .book-cover-container:hover .book-cover-large {
             transform: translateY(-5px) rotateY(5deg);
             box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Favorite Button Styles */
+        .favorite-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.95);
+            border: none;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: var(--shadow-lg);
+            transition: var(--transition);
+            z-index: 3;
+        }
+
+        .favorite-btn:hover {
+            transform: scale(1.1);
+            background: white;
+        }
+
+        .favorite-btn.active {
+            background: var(--secondary);
+        }
+
+        .favorite-btn.active i {
+            color: white;
+        }
+
+        .favorite-btn i {
+            font-size: 1.5rem;
+            color: var(--secondary);
+            transition: var(--transition);
+        }
+
+        .favorite-btn:hover i {
+            color: var(--secondary);
+        }
+
+        .favorite-btn.active:hover i {
+            color: white;
         }
 
         .book-info {
@@ -354,7 +621,7 @@ $avgRating = $buku['Rating'];
         .review-content {
             line-height: 1.7;
             color: var(--dark);
-            font-size: 1rem;
+            font-size: 1.0rem;
         }
 
         .no-reviews {
@@ -487,6 +754,28 @@ $avgRating = $buku['Rating'];
             .book-author {
                 font-size: 1.1rem;
             }
+
+            .favorite-btn {
+                width: 45px;
+                height: 45px;
+                top: 15px;
+                right: 15px;
+            }
+
+            .favorite-btn i {
+                font-size: 1.3rem;
+            }
+
+            .toast-container {
+                top: 80px;
+                right: 10px;
+                left: 10px;
+                max-width: none;
+            }
+
+            .toast {
+                max-width: 100%;
+            }
         }
 
         @media (max-width: 576px) {
@@ -503,6 +792,31 @@ $avgRating = $buku['Rating'];
             .btn-detail {
                 width: 100%;
                 justify-content: center;
+            }
+
+            .favorite-btn {
+                width: 40px;
+                height: 40px;
+                top: 10px;
+                right: 10px;
+            }
+
+            .favorite-btn i {
+                font-size: 1.2rem;
+            }
+
+            /* Reposition favorite button on mobile */
+            .book-cover-container {
+                display: flex;
+                justify-content: center;
+            }
+
+            .book-cover-container .favorite-btn {
+                position: relative;
+                top: 0;
+                right: 0;
+                margin-top: 15px;
+                align-self: center;
             }
         }
 
@@ -526,11 +840,41 @@ $avgRating = $buku['Rating'];
         .animate-delay-2 {
             animation-delay: 0.4s;
         }
+
+        /* Heart beat animation */
+        @keyframes heartBeat {
+            0% {
+                transform: scale(1);
+            }
+
+            25% {
+                transform: scale(1.3);
+            }
+
+            50% {
+                transform: scale(1);
+            }
+
+            75% {
+                transform: scale(1.3);
+            }
+
+            100% {
+                transform: scale(1);
+            }
+        }
+
+        .heart-beat {
+            animation: heartBeat 0.8s ease-in-out;
+        }
     </style>
 </head>
 
 <body>
     <?php include 'views/navbar_index.php'; ?>
+
+    <!-- Toast Notification Container -->
+    <div class="toast-container" id="toastContainer"></div>
 
     <div class="book-detail-header">
         <div class="floating-shapes">
@@ -546,6 +890,14 @@ $avgRating = $buku['Rating'];
                         class="book-cover-large animate__animated animate__fadeInLeft"
                         onerror="this.src='<?= BASE_URL ?>/assets/icon/default-book.png'">
 
+                    <!-- Tombol Favorit -->
+                    <form method="POST" class="favorite-form">
+                        <input type="hidden" name="toggle_favorite" value="1">
+                        <button type="submit" class="favorite-btn <?= $isFavorited ? 'active' : '' ?>"
+                            id="favoriteButton">
+                            <i class="<?= $isFavorited ? 'fas' : 'far' ?> fa-heart"></i>
+                        </button>
+                    </form>
                 </div>
                 <div class="book-info animate__animated animate__fadeIn animate__delay-1s">
                     <span class="book-category"><?= htmlspecialchars($buku['NamaKategori'] ?? 'Umum') ?></span>
@@ -599,7 +951,7 @@ $avgRating = $buku['Rating'];
                     <h3>Belum ada ulasan</h3>
                     <p>Jadilah yang pertama memberikan ulasan untuk buku ini setelah membacanya!</p>
                     <button class="btn btn-primary" style="margin-top: 1.5rem;" id="addReviewBtn">
-                        <i style="margin-top:22px;color: white;" class="fas fa-plus"></i> Tambah Ulasan
+                        <i class="fas fa-plus" style="margin-right: 8px;"></i> Tambah Ulasan
                     </button>
                 </div>
             <?php else: ?>
@@ -644,70 +996,126 @@ $avgRating = $buku['Rating'];
                     </div>
                 <?php endwhile; ?>
 
-                <button class="btn btn-primary btn-sm" id="addReviewBtn" style="font-size: 1rem;"></button>
-                    <i class="fas fa-plus"></i> Tambah Ulasan Anda
+                <button class="btn btn-primary" id="addReviewBtn" style="margin-top: 1rem;">
+                    <i class="fas fa-plus" style="margin-right: 8px;"></i> Tambah Ulasan Anda
                 </button>
             <?php endif; ?>
         </div>
     </div>
 
-
-
     <?php include 'views/footer_index.php'; ?>
 
+    <!-- SweetAlert2 for beautiful alerts -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
     <script>
+        // Toast notification system
+        function showToast(type, message) {
+            const toastContainer = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = `toast toast-${type}`;
+
+            const icons = {
+                success: 'fa-check-circle',
+                error: 'fa-exclamation-circle'
+            };
+
+            const titles = {
+                success: 'Sukses',
+                error: 'Error'
+            };
+
+            toast.innerHTML = `
+                <i class="toast-icon fas ${icons[type]}"></i>
+                <div class="toast-content">
+                    <div class="toast-title">${titles[type]}</div>
+                    <div class="toast-message">${message}</div>
+                </div>
+                <button class="toast-close" onclick="this.parentElement.remove()">
+                    <i class="fas fa-times"></i>
+                </button>
+            `;
+
+            toastContainer.appendChild(toast);
+
+            // Show toast with animation
+            setTimeout(() => {
+                toast.classList.add('show');
+            }, 10);
+
+            // Auto remove after 5 seconds
+            setTimeout(() => {
+                toast.classList.remove('show');
+                toast.classList.add('hide');
+                setTimeout(() => {
+                    if (toast.parentNode) {
+                        toast.parentNode.removeChild(toast);
+                    }
+                }, 300);
+            }, 5000);
+        }
+
+        // Check for toast message from PHP session
+        <?php if (isset($_SESSION['toast'])): ?>
+            document.addEventListener('DOMContentLoaded', function() {
+                showToast('<?= $_SESSION['toast']['type'] ?>', '<?= addslashes($_SESSION['toast']['message']) ?>');
+            });
+            <?php unset($_SESSION['toast']); ?>
+        <?php endif; ?>
+
         // Handle "Baca Sekarang" button click
         document.querySelectorAll('.btn-detail').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                e.preventDefault();
+            if (btn.getAttribute('data-status')) {
+                btn.addEventListener('click', (e) => {
+                    e.preventDefault();
 
-                const bookStatus = btn.getAttribute('data-status'); // Get book status (Premium or Free)
-                const isLoggedIn = <?= isset($_SESSION['user_id']) ? 'true' : 'false' ?>; // Check if user is logged in
+                    const bookStatus = btn.getAttribute('data-status'); // Get book status (Premium or Free)
+                    const isLoggedIn = <?= isset($_SESSION['user_id']) ? 'true' : 'false' ?>; // Check if user is logged in
 
-                if (bookStatus === 'Premium') {
-                    // If the book is Premium, show alert for login
-                    if (!isLoggedIn) {
-                        Swal.fire({
-                            title: 'Buku Premium',
-                            text: 'Buku ini hanya tersedia untuk anggota berlangganan. Upgrade akun Anda untuk mengakses koleksi premium kami!',
-                            icon: 'info',
-                            confirmButtonText: 'Pelajari Lebih Lanjut',
-                            confirmButtonColor: '#4361ee',
-                            showCancelButton: true,
-                            cancelButtonText: 'Tutup'
-                        }).then((result) => {
-                            if (result.isConfirmed) {
-                                window.location.href = 'premium.php'; // Redirect to premium page
-                            }
-                        });
-                    } else {
-                        // Redirect to the book's content if the user is logged in
-                        window.location.href = btn.href;
+                    if (bookStatus === 'Premium') {
+                        // If the book is Premium, show alert for login
+                        if (!isLoggedIn) {
+                            Swal.fire({
+                                title: 'Buku Premium',
+                                text: 'Buku ini hanya tersedia untuk anggota berlangganan. Upgrade akun Anda untuk mengakses koleksi premium kami!',
+                                icon: 'info',
+                                confirmButtonText: 'Pelajari Lebih Lanjut',
+                                confirmButtonColor: '#4361ee',
+                                showCancelButton: true,
+                                cancelButtonText: 'Tutup'
+                            }).then((result) => {
+                                if (result.isConfirmed) {
+                                    window.location.href = 'premium.php'; // Redirect to premium page
+                                }
+                            });
+                        } else {
+                            // Redirect to the book's content if the user is logged in
+                            window.location.href = btn.href;
+                        }
+                    } else if (bookStatus === 'Free') {
+                        // If the book is Free, check if the user is logged in
+                        if (!isLoggedIn) {
+                            Swal.fire({
+                                title: 'Login Diperlukan',
+                                text: 'Anda harus login terlebih dahulu untuk membaca buku ini.',
+                                icon: 'warning',
+                                confirmButtonText: 'Login Sekarang',
+                                confirmButtonColor: '#4361ee',
+                                showCancelButton: true,
+                                cancelButtonText: 'Nanti Saja'
+                            }).then((result) => {
+                                if (result.isConfirmed) {
+                                    window.location.href = 'login.php?redirect=' + encodeURIComponent(window.location.pathname + window.location.search);
+                                }
+                            });
+                        } else {
+                            // Redirect to the book's content if the user is logged in
+                            window.location.href = btn.href;
+                        }
                     }
-                } else if (bookStatus === 'Free') {
-                    // If the book is Free, check if the user is logged in
-                    if (!isLoggedIn) {
-                        Swal.fire({
-                            title: 'Login Diperlukan',
-                            text: 'Anda harus login terlebih dahulu untuk membaca buku ini.',
-                            icon: 'warning',
-                            confirmButtonText: 'Login Sekarang',
-                            confirmButtonColor: '#4361ee',
-                            showCancelButton: true,
-                            cancelButtonText: 'Nanti Saja'
-                        }).then((result) => {
-                            if (result.isConfirmed) {
-                                window.location.href = 'login.php?redirect=' + encodeURIComponent(window.location.pathname + window.location.search);
-                            }
-                        });
-                    } else {
-                        // Redirect to the book's content if the user is logged in
-                        window.location.href = btn.href;
-                    }
-                }
-            });
+                });
+            }
         });
-
 
         // Share button functionality
         document.getElementById('shareBtn')?.addEventListener('click', () => {
@@ -725,6 +1133,40 @@ $avgRating = $buku['Rating'];
                 window.open(shareUrl, '_blank');
             }
         });
+
+        // Favorite button functionality
+        const favoriteButton = document.getElementById('favoriteButton');
+        if (favoriteButton) {
+            favoriteButton.addEventListener('click', function(e) {
+                const isLoggedIn = <?= isset($_SESSION['user_id']) ? 'true' : 'false' ?>;
+
+                if (!isLoggedIn) {
+                    e.preventDefault();
+                    Swal.fire({
+                        title: 'Login Diperlukan',
+                        text: 'Anda harus login terlebih dahulu untuk menambahkan ke favorit.',
+                        icon: 'warning',
+                        confirmButtonText: 'Login Sekarang',
+                        confirmButtonColor: '#4361ee',
+                        showCancelButton: true,
+                        cancelButtonText: 'Nanti Saja'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            window.location.href = 'login.php?redirect=' + encodeURIComponent(window.location.pathname + window.location.search);
+                        }
+                    });
+                } else {
+                    // Add heart beat animation
+                    const heartIcon = this.querySelector('i');
+                    heartIcon.classList.add('heart-beat');
+
+                    // Remove animation class after animation completes
+                    setTimeout(() => {
+                        heartIcon.classList.remove('heart-beat');
+                    }, 800);
+                }
+            });
+        }
 
         // Add review button
         document.getElementById('addReviewBtn')?.addEventListener('click', () => {
@@ -785,86 +1227,118 @@ $avgRating = $buku['Rating'];
                             .then(response => response.json())
                             .then(data => {
                                 if (data.success) {
-                                    Swal.fire({
-                                        title: 'Terima Kasih!',
-                                        text: 'Ulasan Anda telah berhasil dikirim.',
-                                        icon: 'success',
-                                        confirmButtonColor: '#4361ee'
-                                    }).then(() => {
+                                    showToast('success', 'Ulasan Anda telah berhasil dikirim.');
+                                    setTimeout(() => {
                                         location.reload();
-                                    });
+                                    }, 2000);
                                 } else {
-                                    Swal.fire({
-                                        title: 'Error',
-                                        text: data.message || 'Gagal mengirim ulasan',
-                                        icon: 'error',
-                                        confirmButtonColor: '#4361ee'
-                                    });
+                                    showToast('error', data.message || 'Gagal mengirim ulasan');
                                 }
                             })
                             .catch(error => {
-                                Swal.fire({
-                                    title: 'Error',
-                                    text: 'Terjadi kesalahan saat mengirim ulasan',
-                                    icon: 'error',
-                                    confirmButtonColor: '#4361ee'
-                                });
+                                showToast('error', 'Terjadi kesalahan saat mengirim ulasan');
                             });
                     }
                 });
 
                 // Star rating interaction
-                document.querySelectorAll('.rating-stars i').forEach(star => {
-                    star.addEventListener('click', (e) => {
-                        const rating = parseInt(e.target.getAttribute('data-rating'));
-                        document.getElementById('rating-value').value = rating;
+                setTimeout(() => {
+                    document.querySelectorAll('.rating-stars i').forEach(star => {
+                        star.addEventListener('click', (e) => {
+                            const rating = parseInt(e.target.getAttribute('data-rating'));
+                            document.getElementById('rating-value').value = rating;
 
-                        // Update star display
-                        document.querySelectorAll('.rating-stars i').forEach((s, index) => {
-                            if (index < rating) {
-                                s.classList.remove('far');
-                                s.classList.add('fas');
-                            } else {
-                                s.classList.remove('fas');
-                                s.classList.add('far');
-                            }
+                            // Update star display
+                            document.querySelectorAll('.rating-stars i').forEach((s, index) => {
+                                if (index < rating) {
+                                    s.classList.remove('far');
+                                    s.classList.add('fas');
+                                } else {
+                                    s.classList.remove('fas');
+                                    s.classList.add('far');
+                                }
+                            });
+                        });
+
+                        star.addEventListener('mouseover', (e) => {
+                            const hoverRating = parseInt(e.target.getAttribute('data-rating'));
+
+                            document.querySelectorAll('.rating-stars i').forEach((s, index) => {
+                                if (index < hoverRating) {
+                                    s.classList.remove('far');
+                                    s.classList.add('fas');
+                                } else {
+                                    s.classList.remove('fas');
+                                    s.classList.add('far');
+                                }
+                            });
+                        });
+
+                        star.addEventListener('mouseout', () => {
+                            const currentRating = parseInt(document.getElementById('rating-value').value);
+
+                            document.querySelectorAll('.rating-stars i').forEach((s, index) => {
+                                if (index < currentRating) {
+                                    s.classList.remove('far');
+                                    s.classList.add('fas');
+                                } else {
+                                    s.classList.remove('fas');
+                                    s.classList.add('far');
+                                }
+                            });
                         });
                     });
-
-                    star.addEventListener('mouseover', (e) => {
-                        const hoverRating = parseInt(e.target.getAttribute('data-rating'));
-
-                        document.querySelectorAll('.rating-stars i').forEach((s, index) => {
-                            if (index < hoverRating) {
-                                s.classList.remove('far');
-                                s.classList.add('fas');
-                            } else {
-                                s.classList.remove('fas');
-                                s.classList.add('far');
-                            }
-                        });
-                    });
-
-                    star.addEventListener('mouseout', () => {
-                        const currentRating = parseInt(document.getElementById('rating-value').value);
-
-                        document.querySelectorAll('.rating-stars i').forEach((s, index) => {
-                            if (index < currentRating) {
-                                s.classList.remove('far');
-                                s.classList.add('fas');
-                            } else {
-                                s.classList.remove('fas');
-                                s.classList.add('far');
-                            }
-                        });
-                    });
-                });
+                }, 100);
             }
         });
-    </script>
 
-    <!-- SweetAlert2 for beautiful alerts -->
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+        // Reposition favorite button on mobile
+        function handleMobileLayout() {
+            const favoriteBtn = document.getElementById('favoriteButton');
+            const bookCoverContainer = document.querySelector('.book-cover-container');
+
+            if (window.innerWidth <= 576) {
+                // Mobile view
+                if (favoriteBtn && bookCoverContainer) {
+                    favoriteBtn.style.position = 'relative';
+                    favoriteBtn.style.top = '0';
+                    favoriteBtn.style.right = '0';
+                    favoriteBtn.style.marginTop = '15px';
+                    favoriteBtn.style.alignSelf = 'center';
+
+                    // Create a container for the button if it doesn't exist
+                    if (!document.querySelector('.favorite-btn-container')) {
+                        const container = document.createElement('div');
+                        container.className = 'favorite-btn-container';
+                        container.style.display = 'flex';
+                        container.style.justifyContent = 'center';
+                        container.style.width = '100%';
+                        container.appendChild(favoriteBtn);
+                        bookCoverContainer.appendChild(container);
+                    }
+                }
+            } else {
+                // Desktop view
+                if (favoriteBtn && bookCoverContainer) {
+                    favoriteBtn.style.position = 'absolute';
+                    favoriteBtn.style.top = '20px';
+                    favoriteBtn.style.right = '20px';
+                    favoriteBtn.style.marginTop = '0';
+
+                    // Remove the container if it exists
+                    const container = document.querySelector('.favorite-btn-container');
+                    if (container) {
+                        container.remove();
+                        bookCoverContainer.appendChild(favoriteBtn);
+                    }
+                }
+            }
+        }
+
+        // Initial call and resize listener
+        handleMobileLayout();
+        window.addEventListener('resize', handleMobileLayout);
+    </script>
 </body>
 
 </html>
