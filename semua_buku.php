@@ -71,7 +71,15 @@ if (isset($_GET['ajax']) && $_GET['ajax'] == 'true') {
 
                         <div class="book-meta">
                             <div class="book-rating">
-                                <i class="fas fa-star"></i> <?= number_format($book['Rating'], 1) ?>
+                                <?php
+                                    // Ambil rata-rata rating dari tabel ulasan
+                                    $bukuID = (int)$book['BukuID'];
+                                    $queryRating = "SELECT COALESCE(AVG(Rating), 0.0) as avg_rating FROM ulasan WHERE BukuID = $bukuID";
+                                    $resultRating = mysqli_query($conn, $queryRating);
+                                    $ratingData = mysqli_fetch_assoc($resultRating);
+                                    $avgRating = number_format($ratingData['avg_rating'], 1);
+                                ?>
+                                <i class="fas fa-star"></i> <?= $avgRating ?>
                             </div>
                             <small><?= (int)$book['JumlahBaca'] ?> pembaca</small>
                         </div>
@@ -634,8 +642,18 @@ if (isset($_GET['ajax']) && $_GET['ajax'] == 'true') {
                     </div>
                     <div class="filter-group">
                         <button type="submit" class="search-button">
-                            <i class="fas fa-search"></i> Cari
+                            <i class="fas fa-search"></i>
                         </button>
+                        <style>
+                        @media (max-width: 768px) {
+                            .search-button {
+                                padding: 0 0;
+                                width: 100%;
+                                height: 56px;
+                                font-size: 1.25rem;
+                            }
+                        }
+                        </style></style></style>
                     </div>
                 </form>
             </div>

@@ -138,7 +138,10 @@ $ulasan = mysqli_query($conn, $queryUlasan);
 $totalUlasan = mysqli_num_rows($ulasan);
 
 // Hitung rata-rata rating
-$avgRating = $buku['Rating'];
+$queryRating = "SELECT COALESCE(AVG(Rating), 0.0) as avg_rating FROM ulasan WHERE BukuID = $bukuID";
+$resultRating = mysqli_query($conn, $queryRating);
+$ratingData = mysqli_fetch_assoc($resultRating);
+$avgRating = number_format($ratingData['avg_rating'], 1);
 ?>
 
 <!DOCTYPE html>

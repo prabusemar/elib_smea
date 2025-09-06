@@ -158,7 +158,12 @@ include 'views/header_index.php';
                         $badgeClass = $isPremium ? 'book-badge premium' : 'book-badge';
                         $badgeText = $isPremium ? 'Premium' : 'Free';
                         // Rating
-                        $rating = is_numeric($buku['Rating']) ? number_format($buku['Rating'], 1) : '-';
+                        // Ambil rata-rata rating dari tabel ulasan
+                        $bukuID = (int)$buku['BukuID'];
+                        $queryRating = "SELECT COALESCE(AVG(Rating), 0.0) as avg_rating FROM ulasan WHERE BukuID = $bukuID";
+                        $resultRating = mysqli_query($conn, $queryRating);
+                        $ratingData = mysqli_fetch_assoc($resultRating);
+                        $rating = number_format($ratingData['avg_rating'], 1);
                         // Tahun
                         $tahun = htmlspecialchars($buku['TahunTerbit']);
                         // Penulis
