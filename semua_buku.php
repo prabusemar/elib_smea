@@ -1,32 +1,98 @@
 <?php
-include 'config.php';
+include_once 'config.php';
 
 // Get filter parameters
 $search = isset($_GET['search']) ? mysqli_real_escape_string($conn, $_GET['search']) : '';
 $kategori = isset($_GET['kategori']) ? (int)$_GET['kategori'] : 0;
 $status = isset($_GET['status']) ? mysqli_real_escape_string($conn, $_GET['status']) : '';
 
-// Query to get books
-$query = "SELECT b.*, k.NamaKategori 
-          FROM buku b
-          LEFT JOIN kategori k ON b.KategoriID = k.KategoriID
-          WHERE b.DeletedAt IS NULL";
-
-if (!empty($search)) {
-    $query .= " AND (b.Judul LIKE '%$search%' OR b.Penulis LIKE '%$search%')";
-}
-if ($kategori > 0) {
-    $query .= " AND b.KategoriID = $kategori";
-}
-if (!empty($status)) {
-    $query .= " AND b.Status = '$status'";
-}
-$query .= " ORDER BY b.Judul ASC";
-
-$books = mysqli_query($conn, $query);
-
 // Get categories for dropdown
 $kategories = mysqli_query($conn, "SELECT * FROM kategori ORDER BY NamaKategori");
+
+// Jika ini request AJAX, hanya tampilkan hasil buku
+if (isset($_GET['ajax']) && $_GET['ajax'] == 'true') {
+    // Query to get books
+    $query = "SELECT b.*, k.NamaKategori 
+              FROM buku b
+              LEFT JOIN kategori k ON b.KategoriID = k.KategoriID
+              WHERE b.DeletedAt IS NULL";
+
+    if (!empty($search)) {
+        $query .= " AND (b.Judul LIKE '%$search%' OR b.Penulis LIKE '%$search%')";
+    }
+    if ($kategori > 0) {
+        $query .= " AND b.KategoriID = $kategori";
+    }
+    if (!empty($status)) {
+        $query .= " AND b.Status = '$status'";
+    }
+    $query .= " ORDER BY b.Judul ASC";
+
+    $books = mysqli_query($conn, $query);
+
+    if (mysqli_num_rows($books) === 0): ?>
+        <div class="empty-state animate__animated animate__fadeIn">
+            <div class="empty-state-icon">
+                <i class="fas fa-book-open"></i>
+            </div>
+            <h3 class="empty-state-title">Tidak Ada Buku Ditemukan</h3>
+            <p class="empty-state-text">Kami tidak dapat menemukan buku yang sesuai dengan kriteria pencarian Anda. Coba gunakan kata kunci atau filter yang berbeda.</p>
+            <a href="?" class="btn btn-primary" style="padding: 0.75rem 1.5rem;">
+                <i class="fas fa-undo"></i> Reset Pencarian
+            </a>
+        </div>
+    <?php else: ?>
+        <div class="books-grid">
+            <?php
+            $animationDelays = ['animate-delay-1', 'animate-delay-2', 'animate-delay-3'];
+            $delayIndex = 0;
+            while ($book = mysqli_fetch_assoc($books)):
+                $delayClass = $animationDelays[$delayIndex % 3];
+                $delayIndex++;
+            ?>
+                <div class="book-card animate__animated animate__fadeInUp <?= $delayClass ?>">
+                    <div class="book-cover-container">
+                        <img src="<?= BASE_URL . '/' . htmlspecialchars($book['Cover']) ?>"
+                            alt="Cover Buku <?= htmlspecialchars($book['Judul']) ?>"
+                            class="book-cover"
+                            onerror="this.src='<?= BASE_URL ?>/assets/icon/default-book.png'">
+
+                        <span class="book-badge <?= $book['Status'] === 'Premium' ? 'badge-premium' : 'badge-free' ?>">
+                            <?= $book['Status'] ?>
+                        </span>
+                    </div>
+
+                    <div class="book-details">
+                        <span class="book-category">
+                            <?= htmlspecialchars($book['NamaKategori'] ?? 'Umum') ?>
+                        </span>
+                        <h3 class="book-title"><?= htmlspecialchars($book['Judul']) ?></h3>
+                        <p class="book-author">Oleh <?= htmlspecialchars($book['Penulis']) ?></p>
+
+                        <div class="book-meta">
+                            <div class="book-rating">
+                                <i class="fas fa-star"></i> <?= number_format($book['Rating'], 1) ?>
+                            </div>
+                            <small><?= (int)$book['JumlahBaca'] ?> pembaca</small>
+                        </div>
+
+                        <div class="book-actions">
+                            <a href="detail_buku.php?id=<?= $book['BukuID'] ?>" class="btn-detail">
+                                <i class="fas fa-info-circle"></i> Detail
+                            </a>
+                            <a href="<?= $book['Status'] === 'Premium' ? '#' : $book['DriveURL'] ?>"
+                                class="btn-read"
+                                <?= $book['Status'] === 'Premium' ? 'data-premium="true"' : '' ?>>
+                                <i class="fas fa-book-open"></i> Baca
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            <?php endwhile; ?>
+        </div>
+<?php endif;
+    exit(); // Hentikan eksekusi setelah output untuk AJAX
+}
 ?>
 
 <!DOCTYPE html>
@@ -260,6 +326,8 @@ $kategories = mysqli_query($conn, "SELECT * FROM kategori ORDER BY NamaKategori"
             height: 100%;
             object-fit: cover;
             transition: transform 0.5s ease;
+            background-color: #f0f0f0;
+            /* Placeholder background */
         }
 
         .book-card:hover .book-cover {
@@ -359,6 +427,7 @@ $kategories = mysqli_query($conn, "SELECT * FROM kategori ORDER BY NamaKategori"
             align-items: center;
             justify-content: center;
             gap: 0.5rem;
+            text-decoration: none;
         }
 
         .btn-detail:hover {
@@ -378,6 +447,7 @@ $kategories = mysqli_query($conn, "SELECT * FROM kategori ORDER BY NamaKategori"
             align-items: center;
             justify-content: center;
             gap: 0.5rem;
+            text-decoration: none;
         }
 
         .btn-read:hover {
@@ -409,6 +479,23 @@ $kategories = mysqli_query($conn, "SELECT * FROM kategori ORDER BY NamaKategori"
             color: var(--gray);
             max-width: 500px;
             margin: 0 auto 1.5rem;
+        }
+
+        /* Loading Animation */
+        .loading-spinner {
+            display: inline-block;
+            width: 2rem;
+            height: 2rem;
+            border: 3px solid rgba(79, 70, 229, 0.3);
+            border-radius: 50%;
+            border-top-color: var(--primary);
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
         }
 
         /* Responsive Adjustments */
@@ -485,6 +572,7 @@ $kategories = mysqli_query($conn, "SELECT * FROM kategori ORDER BY NamaKategori"
             z-index: 100;
             cursor: pointer;
             transition: all 0.3s ease;
+            text-decoration: none;
         }
 
         .fabs:hover {
@@ -519,13 +607,13 @@ $kategories = mysqli_query($conn, "SELECT * FROM kategori ORDER BY NamaKategori"
             </p>
 
             <div class="filter-container animate__animated animate__fadeInUp animate__delay-1s">
-                <form method="GET" class="filter-grid">
+                <form method="GET" id="searchForm" class="filter-grid">
                     <div class="filter-group">
                         <input type="text" name="search" class="filter-input" placeholder="🔍 Cari judul atau penulis..."
-                            value="<?= htmlspecialchars($search) ?>">
+                            value="<?= htmlspecialchars($search) ?>" id="searchInput">
                     </div>
                     <div class="filter-group">
-                        <select name="kategori" class="filter-input">
+                        <select name="kategori" class="filter-input" id="kategoriSelect">
                             <option value="">📚 Semua Kategori</option>
                             <?php
                             // Reset pointer untuk kategori
@@ -538,7 +626,7 @@ $kategories = mysqli_query($conn, "SELECT * FROM kategori ORDER BY NamaKategori"
                         </select>
                     </div>
                     <div class="filter-group">
-                        <select name="status" class="filter-input">
+                        <select name="status" class="filter-input" id="statusSelect">
                             <option value="">🏷️ Semua Status</option>
                             <option value="Free" <?= $status == 'Free' ? 'selected' : '' ?>>🌍 Gratis</option>
                             <option value="Premium" <?= $status == 'Premium' ? 'selected' : '' ?>>⭐ Premium</option>
@@ -561,67 +649,15 @@ $kategories = mysqli_query($conn, "SELECT * FROM kategori ORDER BY NamaKategori"
     </section>
 
     <div class="books-container">
-        <?php if (mysqli_num_rows($books) === 0): ?>
-            <div class="empty-state animate__animated animate__fadeIn">
+        <div id="books-results">
+            <!-- Hasil pencarian akan dimuat di sini via AJAX -->
+            <div class="empty-state">
                 <div class="empty-state-icon">
-                    <i class="fas fa-book-open"></i>
+                    <div class="loading-spinner"></div>
                 </div>
-                <h3 class="empty-state-title">Tidak Ada Buku Ditemukan</h3>
-                <p class="empty-state-text">Kami tidak dapat menemukan buku yang sesuai dengan kriteria pencarian Anda. Coba gunakan kata kunci atau filter yang berbeda.</p>
-                <a href="?" class="btn btn-primary" style="padding: 0.75rem 1.5rem;">
-                    <i class="fas fa-undo"></i> Reset Pencarian
-                </a>
+                <h3 class="empty-state-title">Memuat buku...</h3>
             </div>
-        <?php else: ?>
-            <div class="books-grid">
-                <?php
-                $animationDelays = ['animate-delay-1', 'animate-delay-2', 'animate-delay-3'];
-                $delayIndex = 0;
-                while ($book = mysqli_fetch_assoc($books)):
-                    $delayClass = $animationDelays[$delayIndex % 3];
-                    $delayIndex++;
-                ?>
-                    <div class="book-card animate__animated animate__fadeInUp <?= $delayClass ?>">
-                        <div class="book-cover-container">
-                            <img src="<?= BASE_URL . '/' . htmlspecialchars($book['Cover']) ?>"
-                                alt="Cover Buku <?= htmlspecialchars($book['Judul']) ?>"
-                                class="book-cover"
-                                onerror="this.src='<?= BASE_URL ?>/assets/icon/default-book.png'">
-
-                            <span class="book-badge <?= $book['Status'] === 'Premium' ? 'badge-premium' : 'badge-free' ?>">
-                                <?= $book['Status'] ?>
-                            </span>
-                        </div>
-
-                        <div class="book-details">
-                            <span class="book-category">
-                                <?= htmlspecialchars($book['NamaKategori'] ?? 'Umum') ?>
-                            </span>
-                            <h3 class="book-title"><?= htmlspecialchars($book['Judul']) ?></h3>
-                            <p class="book-author">Oleh <?= htmlspecialchars($book['Penulis']) ?></p>
-
-                            <div class="book-meta">
-                                <div class="book-rating">
-                                    <i class="fas fa-star"></i> <?= number_format($book['Rating'], 1) ?>
-                                </div>
-                                <small><?= (int)$book['JumlahBaca'] ?> pembaca</small>
-                            </div>
-
-                            <div class="book-actions">
-                                <a href="detail_buku.php?id=<?= $book['BukuID'] ?>" class="btn-detail">
-                                    <i class="fas fa-info-circle"></i> Detail
-                                </a>
-                                <a href="<?= $book['Status'] === 'Premium' ? '#' : $book['DriveURL'] ?>"
-                                    class="btn-read"
-                                    <?= $book['Status'] === 'Premium' ? 'data-premium="true"' : '' ?>>
-                                    <i class="fas fa-book-open"></i> Baca
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                <?php endwhile; ?>
-            </div>
-        <?php endif; ?>
+        </div>
     </div>
 
     <a href="#" class="fabs animate__animated animate__fadeInUp animate__delay-2s">
@@ -631,9 +667,51 @@ $kategories = mysqli_query($conn, "SELECT * FROM kategori ORDER BY NamaKategori"
     <?php include 'views/footer_index.php'; ?>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
-        // Handle premium book click
-        $(document).ready(function() {
+        // Function untuk load books via AJAX
+        function loadBooks() {
+            const formData = $('#searchForm').serialize() + '&ajax=true';
+
+            $.ajax({
+                url: window.location.pathname,
+                type: 'GET',
+                data: formData,
+                beforeSend: function() {
+                    $('#books-results').html(`
+                        <div class="empty-state">
+                            <div class="empty-state-icon">
+                                <div class="loading-spinner"></div>
+                            </div>
+                            <h3 class="empty-state-title">Memuat buku...</h3>
+                        </div>
+                    `);
+                },
+                success: function(response) {
+                    $('#books-results').html(response);
+                    initializeBookEvents();
+
+                    // Update URL dengan parameter pencarian
+                    const params = new URLSearchParams(formData);
+                    history.replaceState(null, '', '?' + params.toString());
+                },
+                error: function() {
+                    $('#books-results').html(`
+                        <div class="empty-state">
+                            <div class="empty-state-icon">
+                                <i class="fas fa-exclamation-triangle"></i>
+                            </div>
+                            <h3 class="empty-state-title">Terjadi kesalahan</h3>
+                            <p class="empty-state-text">Silakan coba lagi nanti.</p>
+                        </div>
+                    `);
+                }
+            });
+        }
+
+        // Function untuk inisialisasi event handlers
+        function initializeBookEvents() {
+            // Handle premium book click
             $('[data-premium="true"]').on('click', function(e) {
                 e.preventDefault();
                 Swal.fire({
@@ -652,6 +730,30 @@ $kategories = mysqli_query($conn, "SELECT * FROM kategori ORDER BY NamaKategori"
                         window.location.href = 'premium.php';
                     }
                 });
+            });
+
+            // Animate cards on scroll
+            animateOnScroll();
+        }
+
+        // Event handler untuk form submission
+        $(document).ready(function() {
+            // Load books pertama kali
+            loadBooks();
+
+            // Handle form submission
+            $('#searchForm').on('submit', function(e) {
+                e.preventDefault();
+                loadBooks();
+            });
+
+            // Handle perubahan pada input filter (real-time search)
+            $('#searchForm input, #searchForm select').on('change keyup', function() {
+                // Debounce untuk menghindari terlalu banyak request
+                clearTimeout($(this).data('timeout'));
+                $(this).data('timeout', setTimeout(function() {
+                    loadBooks();
+                }, 500));
             });
 
             // Back to top button
@@ -684,8 +786,6 @@ $kategories = mysqli_query($conn, "SELECT * FROM kategori ORDER BY NamaKategori"
                 });
             }
 
-            // Run once on load and then on scroll
-            animateOnScroll();
             $(window).on('scroll', animateOnScroll);
         });
     </script>
