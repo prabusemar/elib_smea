@@ -38,7 +38,6 @@ $kategories = mysqli_query($conn, "SELECT * FROM kategori ORDER BY NamaKategori"
     <title>Semua Buku - SMEA E-Lib</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
-    <?php include 'config.php'; ?>
     <link rel="stylesheet" href="<?= BASE_URL ?>/assets/styles/style.css">
     <style>
         :root {
