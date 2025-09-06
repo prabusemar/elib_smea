@@ -64,45 +64,51 @@ include 'views/header_index.php';
 
     <!-- Features Section -->
     <section class="features" id="features">
+        <style>
+            @media (max-width: 657px) {
+                .features-row {
+                    flex-direction: column !important;
+                    align-items: center;
+                }
+            }
+        </style>
         <div class="section-title fade-in">
             <h2>Mengapa Memilih SMEA E-Lib?</h2>
             <p>Kami menyediakan pengalaman membaca digital yang tak tertandingi dengan fitur-fitur unggulan</p>
         </div>
 
-        <div class="features-grid">
-            <div class="feature-card fade-in delay-1">
+        <div class="features-row" style="display: flex; gap: 2rem; justify-content: center; flex-wrap: wrap;">
+            <div class="feature-card fade-in delay-1" style="max-width: 320px; flex: 1 1 280px; min-width: 220px;">
                 <div class="feature-icon">
                     <i class="fas fa-book-open"></i>
                 </div>
                 <h3>Akses Tanpa Batas</h3>
                 <p>Baca ribuan buku kapan saja dan di mana saja dengan akses 24/7 melalui perangkat apapun.</p>
             </div>
-
-            <div class="feature-card fade-in delay-2">
+            <div class="feature-card fade-in delay-2" style="max-width: 320px; flex: 1 1 280px; min-width: 220px;">
                 <div class="feature-icon">
                     <i class="fas fa-moon"></i>
                 </div>
                 <h3>Mode Malam</h3>
                 <p>Nikmati pengalaman membaca yang nyaman di malam hari dengan tampilan mode gelap.</p>
             </div>
-
-            <div class="feature-card fade-in delay-3">
+            <div class="feature-card fade-in delay-3" style="max-width: 320px; flex: 1 1 280px; min-width: 220px;">
                 <div class="feature-icon">
                     <i class="fas fa-bookmark"></i>
                 </div>
                 <h3>Bookmark & Catatan</h3>
                 <p>Simpan halaman favorit dan buat catatan pribadi untuk meningkatkan pengalaman membaca.</p>
             </div>
-
-            <div class="feature-card fade-in delay-4">
+        </div>
+        <div class="features-row" style="display: flex; gap: 2rem; justify-content: center; margin-top: 2rem;">
+            <div class="feature-card fade-in delay-4" style="max-width: 320px; flex: 1 1 280px; min-width: 220px;">
                 <div class="feature-icon">
                     <i class="fas fa-search"></i>
                 </div>
                 <h3>Pencarian Canggih</h3>
                 <p>Temukan buku yang tepat dengan cepat menggunakan sistem pencarian dan rekomendasi kami.</p>
             </div>
-
-            <div class="feature-card fade-in delay-2">
+            <div class="feature-card fade-in delay-2" style="max-width: 320px; flex: 1 1 280px; min-width: 220px;">
                 <div class="feature-icon">
                     <i class="fas fa-chart-line"></i>
                 </div>
