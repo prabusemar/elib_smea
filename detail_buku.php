@@ -941,8 +941,8 @@ $avgRating = number_format($ratingData['avg_rating'], 1);
                     <i class="fas fa-comment-slash"></i>
                     <h3>Belum ada ulasan</h3>
                     <p>Jadilah yang pertama memberikan ulasan untuk buku ini setelah membacanya!</p>
-                    <button class="btn btn-primary" style="margin-top: 1.5rem;" id="addReviewBtn">
-                        <i class="fas fa-plus" style="margin-right: 8px;"></i> Tambah Ulasan
+                    <button class="btn btn-primary" style="margin-top: 1.5rem; border-radius: 30px; padding: 15px 15px;" id="addReviewBtn">
+                        <i class="fas fa-plus" style="margin-right: 8px; color: #fff; font-size: 1rem; margin: auto;"></i> Tambah Ulasan
                     </button>
                 </div>
             <?php else: ?>
