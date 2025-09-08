@@ -735,7 +735,6 @@ if (isset($_GET['ajax']) && $_GET['ajax'] == 'true') {
                 Swal.fire({
                     title: 'Buku Premium',
                     html: 'Buku ini hanya tersedia untuk anggota premium. <br><b>Upgrade akun Anda</b> untuk mengakses seluruh koleksi premium kami!',
-                    icon: 'info',
                     imageUrl: '<?= BASE_URL ?>/assets/icon/premium-badge.png',
                     imageWidth: 100,
                     imageAlt: 'Premium Badge',

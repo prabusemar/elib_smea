@@ -24,7 +24,7 @@ function safe_redirect($url)
 
 // Get admin data
 $adminId = $_SESSION['user_id'];
-$sql = "SELECT u.*, a.Bio, a.NoTelepon 
+$sql = "SELECT u.*, a.Bio, a.NoTelepon, a.AdminID
         FROM users u
         JOIN admin a ON u.admin_id = a.AdminID
         WHERE u.id = ? AND u.role = 'admin'";
@@ -46,44 +46,80 @@ if (!$admin) {
     die("Error: Data admin tidak ditemukan di database untuk ID: " . htmlspecialchars($adminId));
 }
 
-// Ambil data buku favorit admin
+// Tentukan ID yang akan digunakan untuk query favorit
+// Admin tidak memiliki MemberID, jadi kita perlu alternatif
+$userIdForFavorites = null;
+$userRoleForFavorites = 'admin';
+
+// Cek apakah admin memiliki entri di tabel anggota (jika ada integrasi silang)
+$sqlCheckMember = "SELECT MemberID FROM anggota WHERE Email = ?";
+$stmtCheckMember = mysqli_prepare($conn, $sqlCheckMember);
+mysqli_stmt_bind_param($stmtCheckMember, "s", $admin['email']);
+mysqli_stmt_execute($stmtCheckMember);
+$resultCheckMember = mysqli_stmt_get_result($stmtCheckMember);
+$memberData = mysqli_fetch_assoc($resultCheckMember);
+
+if ($memberData) {
+    // Admin juga memiliki akun member
+    $userIdForFavorites = $memberData['MemberID'];
+    $userRoleForFavorites = 'member';
+} else {
+    // Jika tidak ada, kita perlu menyesuaikan query untuk admin
+    // Dalam kasus ini, mungkin admin tidak seharusnya memiliki favorit
+    // atau sistem perlu diubah untuk mendukung favorit admin
+    $userIdForFavorites = $admin['AdminID'];
+}
+
+// Ambil data buku favorit 
 $favorites = [];
 $hasFavorites = false;
 
-$sqlFavorites = "SELECT f.*, b.Judul, b.Penulis, b.Cover, b.Rating, b.Status, k.NamaKategori 
-                 FROM favorit f 
-                 JOIN buku b ON f.BukuID = b.BukuID 
-                 LEFT JOIN kategori k ON b.KategoriID = k.KategoriID 
-                 WHERE f.MemberID = ? 
-                 ORDER BY f.TanggalDitambahkan DESC";
-$stmtFavorites = mysqli_prepare($conn, $sqlFavorites);
+if ($userRoleForFavorites === 'member' && $userIdForFavorites) {
+    // Query untuk member (menggunakan MemberID)
+    $sqlFavorites = "SELECT f.*, b.Judul, b.Penulis, b.Cover, b.Rating, b.Status, k.NamaKategori 
+                     FROM favorit f 
+                     JOIN buku b ON f.BukuID = b.BukuID 
+                     LEFT JOIN kategori k ON b.KategoriID = k.KategoriID 
+                     WHERE f.MemberID = ? 
+                     ORDER BY f.TanggalDitambahkan DESC";
+    $stmtFavorites = mysqli_prepare($conn, $sqlFavorites);
 
-if ($stmtFavorites) {
-    mysqli_stmt_bind_param($stmtFavorites, "i", $adminId);
-    if (mysqli_stmt_execute($stmtFavorites)) {
-        $resultFavorites = mysqli_stmt_get_result($stmtFavorites);
-        $favorites = mysqli_fetch_all($resultFavorites, MYSQLI_ASSOC);
-        $hasFavorites = count($favorites) > 0;
+    if ($stmtFavorites) {
+        mysqli_stmt_bind_param($stmtFavorites, "i", $userIdForFavorites);
+        if (mysqli_stmt_execute($stmtFavorites)) {
+            $resultFavorites = mysqli_stmt_get_result($stmtFavorites);
+            $favorites = mysqli_fetch_all($resultFavorites, MYSQLI_ASSOC);
+            $hasFavorites = count($favorites) > 0;
+        }
     }
+} else {
+    // Admin tidak memiliki akun member, jadi tidak ada favorit
+    // Atau implementasi query alternatif jika admin bisa memiliki favorit
+    $hasFavorites = false;
+    $_SESSION['info'] = "Admin tidak memiliki daftar favorit. Sistem hanya mendukung favorit untuk anggota.";
 }
 
 // Handle remove from favorites
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['remove_favorite'])) {
     $bukuID = intval($_POST['buku_id']);
 
-    $sqlDelete = "DELETE FROM favorit WHERE MemberID = ? AND BukuID = ?";
-    $stmtDelete = mysqli_prepare($conn, $sqlDelete);
+    if ($userRoleForFavorites === 'member' && $userIdForFavorites) {
+        $sqlDelete = "DELETE FROM favorit WHERE MemberID = ? AND BukuID = ?";
+        $stmtDelete = mysqli_prepare($conn, $sqlDelete);
 
-    if ($stmtDelete) {
-        mysqli_stmt_bind_param($stmtDelete, "ii", $adminId, $bukuID);
-        if (mysqli_stmt_execute($stmtDelete)) {
-            $_SESSION['success'] = "Buku berhasil dihapus dari favorit";
-            safe_redirect("admin_favorites.php");
+        if ($stmtDelete) {
+            mysqli_stmt_bind_param($stmtDelete, "ii", $userIdForFavorites, $bukuID);
+            if (mysqli_stmt_execute($stmtDelete)) {
+                $_SESSION['success'] = "Buku berhasil dihapus dari favorit";
+                safe_redirect("admin_favorites.php");
+            } else {
+                $_SESSION['error'] = "Gagal menghapus dari favorit: " . mysqli_error($conn);
+            }
         } else {
-            $_SESSION['error'] = "Gagal menghapus dari favorit: " . mysqli_error($conn);
+            $_SESSION['error'] = "Terjadi kesalahan sistem";
         }
     } else {
-        $_SESSION['error'] = "Terjadi kesalahan sistem";
+        $_SESSION['error'] = "Anda tidak dapat menghapus favorit karena tidak memiliki akun anggota";
     }
 }
 
@@ -113,6 +149,14 @@ include '../../views/header.php';
             <button type="button" class="close-alert">&times;</button>
         </div>
         <?php unset($_SESSION['error']); ?>
+    <?php endif; ?>
+
+    <?php if (isset($_SESSION['info'])): ?>
+        <div class="alert alert-info">
+            <?= $_SESSION['info'] ?>
+            <button type="button" class="close-alert">&times;</button>
+        </div>
+        <?php unset($_SESSION['info']); ?>
     <?php endif; ?>
 
     <div class="filter-controls">
@@ -151,7 +195,7 @@ include '../../views/header.php';
                 <div class="favorite-card" data-category="<?= htmlspecialchars($favorite['NamaKategori'] ?? 'Uncategorized') ?>"
                     data-rating="<?= $favorite['Rating'] ?>" data-title="<?= htmlspecialchars($favorite['Judul']) ?>">
                     <div class="book-cover">
-                        <img src="../<?= htmlspecialchars($favorite['Cover'] ?? 'uploads/covers/default.jpg') ?>"
+                        <img src="<?= htmlspecialchars(!empty($favorite['Cover']) ? '../../' . $favorite['Cover'] : '../../uploads/covers/default.jpg') ?>"
                             alt="<?= htmlspecialchars($favorite['Judul']) ?>"
                             onerror="this.src='https://via.placeholder.com/300x400/6c757d/ffffff?text=No+Cover'">
                         <span class="book-category"><?= htmlspecialchars($favorite['NamaKategori'] ?? 'Uncategorized') ?></span>
@@ -159,7 +203,7 @@ include '../../views/header.php';
                             <input type="hidden" name="buku_id" value="<?= $favorite['BukuID'] ?>">
                             <button type="submit" name="remove_favorite" class="favorite-badge active"
                                 onclick="return confirm('Hapus buku ini dari favorit?')">
-                                <i class="fas fa-heart"></i>
+                                <i class="fas fa-heart" style="margin: auto;"></i>
                             </button>
                         </form>
                     </div>
@@ -169,10 +213,35 @@ include '../../views/header.php';
                         <div class="book-meta">
                             <div class="book-rating">
                                 <i class="fas fa-star"></i>
-                                <span><?= number_format($favorite['Rating'], 1) ?></span>
+                                <?php
+                                // Ambil rata-rata rating dari tabel ulasan
+                                $avgRating = 0.0;
+                                if (isset($favorite['BukuID'])) {
+                                    $bukuID = intval($favorite['BukuID']);
+                                    $queryRating = "SELECT COALESCE(AVG(Rating), 0.0) as avg_rating FROM ulasan WHERE BukuID = $bukuID";
+                                    $resultRating = mysqli_query($conn, $queryRating);
+                                    if ($resultRating) {
+                                        $ratingData = mysqli_fetch_assoc($resultRating);
+                                        $avgRating = number_format($ratingData['avg_rating'], 1);
+                                    }
+                                }
+                                ?>
+                                <span><?= $avgRating ?></span>
                             </div>
-                            <span class="book-status status-<?= strtolower($favorite['Status']) ?>">
-                                <?= $favorite['Status'] ?>
+                            <?php
+                                $status = strtolower($favorite['Status']);
+                                $statusClass = '';
+                                $statusStyle = 'font-weight:bold;color:#fff;';
+                                if ($status === 'free') {
+                                    $statusClass = 'status-free';
+                                    $statusStyle .= 'background:#28a745;';
+                                } elseif ($status === 'premium') {
+                                    $statusClass = 'status-premium';
+                                    $statusStyle .= 'background:#ffc107;';
+                                }
+                            ?>
+                            <span class="book-status <?= $statusClass ?>" style="<?= $statusStyle ?>">
+                                <?= htmlspecialchars($favorite['Status']) ?>
                             </span>
                         </div>
                         <div class="card-actions">
@@ -594,6 +663,12 @@ include '../../views/header.php';
         body {
             padding: 10px;
         }
+    }
+
+    .alert-info {
+        background-color: #d1ecf1;
+        color: #0c5460;
+        border: 1px solid rgba(12, 84, 96, 0.2);
     }
 </style>
 
