@@ -1306,6 +1306,10 @@ include '../../views/header.php';
             padding: 0.8rem;
         }
     }
+
+    .fa-edit, .fa-trash {
+        margin: 0 auto;
+    }
 </style>
 
 <script src="../../assets/js/buku_script.js"></script>
