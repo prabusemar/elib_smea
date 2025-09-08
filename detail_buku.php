@@ -23,6 +23,8 @@ if (!$buku) {
 $isLoggedIn = isset($_SESSION['user_id']);
 $userID = $isLoggedIn ? $_SESSION['user_id'] : 0;
 $memberID = 0;
+$userRole = isset($_SESSION['role']) ? $_SESSION['role'] : '';
+$userAccountType = 'Free'; // Default value
 
 // Get the correct MemberID from anggota table if user is logged in
 if ($isLoggedIn) {
@@ -35,12 +37,13 @@ if ($isLoggedIn) {
         $userEmail = $userData['email'];
 
         // Now get MemberID from anggota table using email - HANYA yang tidak dihapus
-        $queryAnggota = "SELECT MemberID FROM anggota WHERE Email = '$userEmail' AND is_deleted = 0";
+        $queryAnggota = "SELECT MemberID, JenisAkun FROM anggota WHERE Email = '$userEmail' AND is_deleted = 0";
         $resultAnggota = mysqli_query($conn, $queryAnggota);
 
         if ($resultAnggota && mysqli_num_rows($resultAnggota) > 0) {
             $anggotaData = mysqli_fetch_assoc($resultAnggota);
             $memberID = $anggotaData['MemberID'];
+            $userAccountType = $anggotaData['JenisAkun'];
         } else {
             // Jika anggota tidak ditemukan atau dihapus, coba buat record baru
             $queryUserData = "SELECT full_name, email, password FROM users WHERE id = $userID AND is_deleted = 0";
@@ -57,6 +60,7 @@ if ($isLoggedIn) {
 
                 if (mysqli_query($conn, $queryCreateAnggota)) {
                     $memberID = mysqli_insert_id($conn);
+                    $userAccountType = 'Free';
                 }
             }
         }
@@ -911,7 +915,7 @@ $avgRating = number_format($ratingData['avg_rating'], 1);
                     </div>
 
                     <div class="book-actions">
-                        <a href="<?= $buku['Status'] === 'Premium' ? '#' : $buku['DriveURL'] ?>"
+                        <a href="<?= $buku['DriveURL'] ?>"
                             class="btn btn-primary btn-detail"
                             data-status="<?= $buku['Status'] ?>"
                             style="color: var(--primary-dark); border: 2px solid var(--primary-dark); background: #fff; box-shadow: var(--shadow-sm);">
@@ -1056,19 +1060,42 @@ $avgRating = number_format($ratingData['avg_rating'], 1);
 
         // Handle "Baca Sekarang" button click
         document.querySelectorAll('.btn-detail').forEach(btn => {
-            if (btn.getAttribute('data-status')) {
+            if (btn.href && btn.href !== '#' && btn.getAttribute('data-status')) {
                 btn.addEventListener('click', (e) => {
                     e.preventDefault();
 
-                    const bookStatus = btn.getAttribute('data-status'); // Get book status (Premium or Free)
-                    const isLoggedIn = <?= isset($_SESSION['user_id']) ? 'true' : 'false' ?>; // Check if user is logged in
+                    const bookStatus = btn.getAttribute('data-status');
+                    const isLoggedIn = <?= $isLoggedIn ? 'true' : 'false' ?>;
+                    const userRole = "<?= $userRole ?>";
+                    const userAccountType = "<?= $userAccountType ?>";
 
+                    // Admin atau user premium dapat langsung akses
+                    if (userRole === 'admin' || userAccountType === 'Premium') {
+                        window.location.href = btn.href;
+                        return;
+                    }
+
+                    // Untuk user free atau belum login
                     if (bookStatus === 'Premium') {
-                        // If the book is Premium, show alert for login
+                        // Jika buku premium
                         if (!isLoggedIn) {
                             Swal.fire({
-                                title: 'Buku Premium',
-                                text: 'Buku ini hanya tersedia untuk anggota berlangganan. Upgrade akun Anda untuk mengakses koleksi premium kami!',
+                                title: 'Login Diperlukan',
+                                text: 'Anda harus login terlebih dahulu untuk mengakses buku premium.',
+                                icon: 'warning',
+                                confirmButtonText: 'Login Sekarang',
+                                confirmButtonColor: '#4361ee',
+                                showCancelButton: true,
+                                cancelButtonText: 'Nanti Saja'
+                            }).then((result) => {
+                                if (result.isConfirmed) {
+                                    window.location.href = 'login.php?redirect=' + encodeURIComponent(window.location.pathname + window.location.search);
+                                }
+                            });
+                        } else {
+                            Swal.fire({
+                                title: 'Upgrade ke Premium',
+                                text: 'Buku ini hanya tersedia untuk anggota premium. Upgrade akun Anda untuk mengakses koleksi premium kami!',
                                 icon: 'info',
                                 confirmButtonText: 'Pelajari Lebih Lanjut',
                                 confirmButtonColor: '#4361ee',
@@ -1076,15 +1103,12 @@ $avgRating = number_format($ratingData['avg_rating'], 1);
                                 cancelButtonText: 'Tutup'
                             }).then((result) => {
                                 if (result.isConfirmed) {
-                                    window.location.href = 'premium.php'; // Redirect to premium page
+                                    window.location.href = 'premium.php';
                                 }
                             });
-                        } else {
-                            // Redirect to the book's content if the user is logged in
-                            window.location.href = btn.href;
                         }
                     } else if (bookStatus === 'Free') {
-                        // If the book is Free, check if the user is logged in
+                        // Jika buku gratis
                         if (!isLoggedIn) {
                             Swal.fire({
                                 title: 'Login Diperlukan',
@@ -1100,7 +1124,7 @@ $avgRating = number_format($ratingData['avg_rating'], 1);
                                 }
                             });
                         } else {
-                            // Redirect to the book's content if the user is logged in
+                            // User free yang sudah login bisa akses buku free
                             window.location.href = btn.href;
                         }
                     }
@@ -1129,7 +1153,7 @@ $avgRating = number_format($ratingData['avg_rating'], 1);
         const favoriteButton = document.getElementById('favoriteButton');
         if (favoriteButton) {
             favoriteButton.addEventListener('click', function(e) {
-                const isLoggedIn = <?= isset($_SESSION['user_id']) ? 'true' : 'false' ?>;
+                const isLoggedIn = <?= $isLoggedIn ? 'true' : 'false' ?>;
 
                 if (!isLoggedIn) {
                     e.preventDefault();
@@ -1162,7 +1186,7 @@ $avgRating = number_format($ratingData['avg_rating'], 1);
         // Add review button
         document.getElementById('addReviewBtn')?.addEventListener('click', () => {
             // Check if user is logged in
-            const isLoggedIn = <?= isset($_SESSION['user_id']) ? 'true' : 'false' ?>;
+            const isLoggedIn = <?= $isLoggedIn ? 'true' : 'false' ?>;
 
             if (!isLoggedIn) {
                 Swal.fire({
