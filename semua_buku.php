@@ -72,12 +72,12 @@ if (isset($_GET['ajax']) && $_GET['ajax'] == 'true') {
                         <div class="book-meta">
                             <div class="book-rating">
                                 <?php
-                                    // Ambil rata-rata rating dari tabel ulasan
-                                    $bukuID = (int)$book['BukuID'];
-                                    $queryRating = "SELECT COALESCE(AVG(Rating), 0.0) as avg_rating FROM ulasan WHERE BukuID = $bukuID";
-                                    $resultRating = mysqli_query($conn, $queryRating);
-                                    $ratingData = mysqli_fetch_assoc($resultRating);
-                                    $avgRating = number_format($ratingData['avg_rating'], 1);
+                                // Ambil rata-rata rating dari tabel ulasan
+                                $bukuID = (int)$book['BukuID'];
+                                $queryRating = "SELECT COALESCE(AVG(Rating), 0.0) as avg_rating FROM ulasan WHERE BukuID = $bukuID";
+                                $resultRating = mysqli_query($conn, $queryRating);
+                                $ratingData = mysqli_fetch_assoc($resultRating);
+                                $avgRating = number_format($ratingData['avg_rating'], 1);
                                 ?>
                                 <i class="fas fa-star"></i> <?= $avgRating ?>
                             </div>
@@ -546,6 +546,13 @@ if (isset($_GET['ajax']) && $_GET['ajax'] == 'true') {
             .book-cover-container {
                 height: 320px;
             }
+
+            .search-button {
+                padding: 0 0;
+                width: 100%;
+                height: 56px;
+                font-size: 1.25rem;
+            }
         }
 
         @media (max-width: 480px) {
@@ -642,18 +649,8 @@ if (isset($_GET['ajax']) && $_GET['ajax'] == 'true') {
                     </div>
                     <div class="filter-group">
                         <button type="submit" class="search-button">
-                            <i class="fas fa-search"></i>
+                            <i class="fas fa-search"></i> Cari
                         </button>
-                        <style>
-                        @media (max-width: 768px) {
-                            .search-button {
-                                padding: 0 0;
-                                width: 100%;
-                                height: 56px;
-                                font-size: 1.25rem;
-                            }
-                        }
-                        </style></style></style>
                     </div>
                 </form>
             </div>
@@ -687,11 +684,20 @@ if (isset($_GET['ajax']) && $_GET['ajax'] == 'true') {
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
+        // Variables untuk mengontrol AJAX
+        let searchActive = false;
+        let currentRequest = null;
+
         // Function untuk load books via AJAX
         function loadBooks() {
             const formData = $('#searchForm').serialize() + '&ajax=true';
 
-            $.ajax({
+            // Batalkan request sebelumnya jika masih berjalan
+            if (currentRequest) {
+                currentRequest.abort();
+            }
+
+            currentRequest = $.ajax({
                 url: window.location.pathname,
                 type: 'GET',
                 data: formData,
@@ -711,18 +717,29 @@ if (isset($_GET['ajax']) && $_GET['ajax'] == 'true') {
 
                     // Update URL dengan parameter pencarian
                     const params = new URLSearchParams(formData);
-                    history.replaceState(null, '', '?' + params.toString());
+                    const newUrl = '?' + params.toString();
+                    if (window.location.search !== newUrl) {
+                        history.replaceState(null, '', newUrl);
+                    }
+
+                    // Set searchActive menjadi true setelah pencarian berhasil
+                    searchActive = true;
                 },
-                error: function() {
-                    $('#books-results').html(`
-                        <div class="empty-state">
-                            <div class="empty-state-icon">
-                                <i class="fas fa-exclamation-triangle"></i>
+                error: function(xhr, status, error) {
+                    if (status !== 'abort') {
+                        $('#books-results').html(`
+                            <div class="empty-state">
+                                <div class="empty-state-icon">
+                                    <i class="fas fa-exclamation-triangle"></i>
+                                </div>
+                                <h3 class="empty-state-title">Terjadi kesalahan</h3>
+                                <p class="empty-state-text">Silakan coba lagi nanti.</p>
                             </div>
-                            <h3 class="empty-state-title">Terjadi kesalahan</h3>
-                            <p class="empty-state-text">Silakan coba lagi nanti.</p>
-                        </div>
-                    `);
+                        `);
+                    }
+                },
+                complete: function() {
+                    currentRequest = null;
                 }
             });
         }
@@ -755,22 +772,55 @@ if (isset($_GET['ajax']) && $_GET['ajax'] == 'true') {
 
         // Event handler untuk form submission
         $(document).ready(function() {
-            // Load books pertama kali
+            // Load books pertama kali berdasarkan parameter URL
+            if (window.location.search.includes('search=') ||
+                window.location.search.includes('kategori=') ||
+                window.location.search.includes('status=')) {
+                searchActive = true;
+            }
             loadBooks();
 
             // Handle form submission
             $('#searchForm').on('submit', function(e) {
                 e.preventDefault();
+                searchActive = true; // Aktifkan pencarian saat tombol ditekan
                 loadBooks();
             });
 
-            // Handle perubahan pada input filter (real-time search)
-            $('#searchForm input, #searchForm select').on('change keyup', function() {
-                // Debounce untuk menghindari terlalu banyak request
-                clearTimeout($(this).data('timeout'));
-                $(this).data('timeout', setTimeout(function() {
+            // Handle perubahan pada select filter (real-time search hanya jika search sudah aktif)
+            $('#kategoriSelect, #statusSelect').on('change', function() {
+                if (searchActive) {
+                    clearTimeout($(this).data('timeout'));
+                    $(this).data('timeout', setTimeout(function() {
+                        loadBooks();
+                    }, 300));
+                }
+            });
+
+            // Handle input search dengan debounce
+            let searchTimeout;
+            $('#searchInput').on('input', function() {
+                clearTimeout(searchTimeout);
+                searchTimeout = setTimeout(function() {
+                    if (searchActive) {
+                        loadBooks();
+                    }
+                }, 500);
+            });
+
+            // Aktifkan pencarian saat tombol search ditekan atau saat ada input di search field
+            $('#searchInput').on('keypress', function(e) {
+                if (e.which === 13) { // Enter key
+                    searchActive = true;
                     loadBooks();
-                }, 500));
+                }
+            });
+
+            // Juga aktifkan pencarian saat field search mendapatkan focus dan user mulai mengetik
+            $('#searchInput').on('focus', function() {
+                if (!searchActive && $(this).val().length > 0) {
+                    searchActive = true;
+                }
             });
 
             // Back to top button
@@ -804,6 +854,13 @@ if (isset($_GET['ajax']) && $_GET['ajax'] == 'true') {
             }
 
             $(window).on('scroll', animateOnScroll);
+
+            // Reset searchActive ketika halaman di-refresh tanpa parameter
+            $(window).on('beforeunload', function() {
+                if (!window.location.search) {
+                    searchActive = false;
+                }
+            });
         });
     </script>
 </body>

@@ -309,7 +309,7 @@ include 'views/header_index.php';
                 </div>
                 <ul class="pricing-features">
                     <li><i class="fas fa-check"></i> Akses ke 5.000+ buku gratis</li>
-                    <li><i class="fas fa-check"></i> 1 buku offline</li>
+                    <li><i class="fas fa-check"></i> Baca 1 buku online</li>
                     <li><i class="fas fa-check"></i> Bookmark dasar</li>
                     <li><i class="fas fa-check"></i> Fitur pencarian sederhana</li>
                     <li><i class="fas fa-times"></i> Buku premium</li>
